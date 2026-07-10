@@ -107,6 +107,11 @@
         .site-tertiary .site-label { border-left-color: #f59e0b; }
         .site-tertiary .pin-line { background: linear-gradient(to bottom, #f59e0b, transparent); }
         .site-tertiary .pin-dot { background: #f59e0b; color: #f59e0b; }
+
+        /* NUEVA VARIANTE: SITES EN BORRADOR/DRAFT (LILA / FUCSIA) */
+        .site-draft .site-label { border-left-color: #d946ef; }
+        .site-draft .pin-line { background: linear-gradient(to bottom, #d946ef, transparent); }
+        .site-draft .pin-dot { background: #d946ef; color: #d946ef; }
         /* ==================================================== */
 
         /* Botones Flotantes del Mapa */
@@ -157,9 +162,9 @@
         
         <aside class="glass-panel w-full md:w-[400px] rounded-xl p-5 flex flex-col z-10 relative overflow-hidden h-full">
             
-            <div class="flex-shrink-0 flex flex-col gap-4">
+            <div class="flex-shrink-0 flex flex-col gap-4 overflow-y-auto pr-1 pb-2" style="max-height: 60vh;">
                 
-                <div class="space-y-1.5 pb-4 border-b border-slate-700/50">
+                <div class="space-y-1.5 pb-3 border-b border-slate-700/50">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Perfil de Simulación</label>
                     <select id="sim_profile" onchange="cambiarPerfil()" class="w-full px-4 py-2.5 bg-slate-900/80 border border-slate-600 hover:border-slate-500 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all cursor-pointer font-semibold">
                         <option value="EU" selected>EU</option>
@@ -186,7 +191,33 @@
                     </label>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mt-1">
+                <div class="space-y-1.5 pt-3 border-t border-slate-700/50">
+                    <label class="block text-[10px] font-bold text-purple-400 uppercase tracking-widest">Distribución de Red Automática</label>
+                    <div class="grid grid-cols-3 gap-2 items-center">
+                        <div class="col-span-2">
+                            <input type="number" id="num_antenas" min="1" max="5" value="2" class="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 focus:outline-none transition-all font-mono" placeholder="Nº Antenas">
+                        </div>
+                        <button onclick="calcularUbicacionesOptimas()" class="col-span-1 bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center h-full">
+                            Calcular
+                        </button>
+                    </div>
+                </div>
+
+                <div id="draft-actions-panel" class="hidden space-y-2 p-2.5 bg-purple-950/20 border border-purple-500/20 rounded-lg transition-all animate-fadeIn">
+                    <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest text-center animate-pulse">Propuesta en Borrador (Pines Lilas)</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="descartarPropuesta()" class="bg-slate-800/80 hover:bg-red-950/40 text-red-400 border border-red-500/20 text-xs py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            Descartar
+                        </button>
+                        <button onclick="confirmarYSimularPropuesta()" class="bg-purple-600 hover:bg-purple-500 text-white text-xs py-2 px-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-1 shadow-lg shadow-purple-600/10">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Simular Todo
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mt-1 pt-2 border-t border-slate-700/50">
                     <div class="space-y-1.5">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Latitud</label>
                         <input type="number" id="lat" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
@@ -225,7 +256,7 @@
                 </div>
             </div>
 
-            <div id="historyArea" class="flex-1 flex flex-col min-h-0 border-t border-slate-700/50 pt-4 mt-4">
+            <div id="historyArea" class="flex-1 flex flex-col min-h-0 border-t border-slate-700/50 pt-4 mt-auto">
                 <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex-shrink-0">Historial de Análisis</h3>
                 
                 <p id="emptyHistoryMsg" class="text-slate-500 text-sm italic text-center mt-2 flex-shrink-0">Ninguna simulación activa.</p>
@@ -236,7 +267,7 @@
 
             <div id="admin-tools" class="flex-shrink-0 pt-4 mt-2 border-t border-slate-700/50">
                 <button onclick="descargarHtmlParaCliente()" class="w-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white font-medium py-2.5 px-4 rounded-lg border border-slate-600 transition-all text-sm flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 00-5.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
                     Generar Acceso Cliente (2 Usos)
                 </button>
             </div>
@@ -278,8 +309,12 @@
         let inputMarker = null;
         let cumbreMarkers = []; 
         
+        // Variables para la Optimización Automática
+        let draftMarkers = [];
+        let draftSites = [];
+
         let is3D = false;
-        let nodosVisibles = true; // Control de visibilidad de Cumbres
+        let nodosVisibles = true; 
 
         if (EMBEDDED_DEMO_TOKEN !== "") {
             document.getElementById('admin-tools').style.display = 'none';
@@ -292,23 +327,6 @@
             const selectLandCover = document.getElementById('land_cover');
             if (perfil === 'EU') selectLandCover.value = "0"; 
             else selectLandCover.value = "1"; 
-        }
-
-        function descargarHtmlParaCliente() {
-            const tokenCliente = "cliente_" + Math.random().toString(36).substring(2, 10);
-            let codigoFuente = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-            const regexToken = /const\s+EMBEDDED_DEMO_TOKEN\s*=\s*["']["']\s*;/;
-            if (!regexToken.test(codigoFuente)) return alert("Error de empaquetado.");
-            codigoFuente = codigoFuente.replace(regexToken, `const EMBEDDED_DEMO_TOKEN = "${tokenCliente}";`);
-            const blob = new Blob([codigoFuente], { type: 'text/html' });
-            const urlDescarga = URL.createObjectURL(blob);
-            const linkTemporal = document.createElement('a');
-            linkTemporal.href = urlDescarga;
-            linkTemporal.download = 'simulador_rf_cliente.html';
-            document.body.appendChild(linkTemporal);
-            linkTemporal.click();
-            document.body.removeChild(linkTemporal);
-            URL.revokeObjectURL(urlDescarga);
         }
 
         // =======================================================================
@@ -364,9 +382,6 @@
             map.flyTo({ center: [lng, lat], essential: true });
         }
 
-        // =======================================================================
-        // 🎥 LÓGICA DE BOTONES FLOTANTES
-        // =======================================================================
         function toggle3D() {
             const btn = document.getElementById('btn-3d');
             const icon = document.getElementById('icon-3d');
@@ -389,25 +404,24 @@
             }
         }
 
-        // LÓGICA DE OCULTAR CUMBRES AMSL
         function toggleNodos() {
             nodosVisibles = !nodosVisibles;
             const btn = document.getElementById('btn-nodos');
             const icon = document.getElementById('icon-nodos');
             const text = document.getElementById('text-nodos');
             
+            const displayStyle = nodosVisibles ? 'flex' : 'none';
+            cumbreMarkers.forEach(m => m.getElement().style.display = displayStyle);
+            draftMarkers.forEach(m => m.getElement().style.display = displayStyle);
+
             if (nodosVisibles) {
-                // Modo Activo (Ojito abierto)
                 btn.classList.remove('active-nodos');
                 text.innerText = "Ocultar Cumbres";
                 icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
-                cumbreMarkers.forEach(m => m.getElement().style.display = 'flex');
             } else {
-                // Modo Oculto (Ojito tachado)
                 btn.classList.add('active-nodos');
                 text.innerText = "Ver Cumbres";
                 icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />`;
-                cumbreMarkers.forEach(m => m.getElement().style.display = 'none');
             }
         }
 
@@ -449,10 +463,8 @@
                 map.removeSource('kml-source');
             }
             
-            if (cumbreMarkers.length > 0) { 
-                cumbreMarkers.forEach(m => m.remove()); 
-                cumbreMarkers = []; 
-            }
+            descartarPropuesta();
+            if (cumbreMarkers.length > 0) { cumbreMarkers.forEach(m => m.remove()); cumbreMarkers = []; }
 
             let featuresKML = [];
             let bounds = new mapboxgl.LngLatBounds();
@@ -488,12 +500,7 @@
                 map.fitBounds(bounds, { padding: 50, duration: 1500 });
                 actualizarInterfazGlobal(); 
                 
-                map.once('moveend', () => {
-                    setTimeout(() => {
-                        buscarCumbresInteligente();
-                    }, 1000); 
-                });
-
+                map.once('moveend', () => { setTimeout(() => { buscarCumbresInteligente(); }, 1000); });
             } else {
                 alert("No se pudo extraer el polígono.");
                 geojsonKMLActual = null;
@@ -503,21 +510,17 @@
 
         function buscarCumbresInteligente() {
             if (!geojsonKMLActual) return;
-            
             let parcelas = geojsonKMLActual.type === 'FeatureCollection' ? turf.flatten(geojsonKMLActual).features : [geojsonKMLActual];
             
             parcelas.forEach((parcela) => {
                 const areaKm2 = turf.area(parcela) / 1000000;
-                
                 const maxCumbres = areaKm2 < 0.05 ? 1 : (areaKm2 < 0.2 ? 2 : 3);
-                
                 let spacing = Math.sqrt(areaKm2 / 1000); 
                 if (spacing < 0.03) spacing = 0.03; 
                 
                 const grid = turf.pointGrid(turf.bbox(parcela), spacing, {units: 'kilometers'});
                 let puntosValidos = [];
-                let minElev = 99999;
-                let maxElev = -99999;
+                let minElev = 99999; let maxElev = -99999;
 
                 turf.featureEach(grid, function (pt) {
                     if (turf.booleanPointInPolygon(pt, parcela)) {
@@ -532,49 +535,35 @@
                 });
 
                 if (puntosValidos.length === 0) return;
-
                 let cumbresElegidas = [];
-
                 let pt1 = puntosValidos.reduce((max, pt) => pt.elevation > max.elevation ? pt : max, puntosValidos[0]);
                 cumbresElegidas.push(pt1);
 
-                let elevRange = maxElev - minElev;
-                if (elevRange === 0) elevRange = 1;
+                let elevRange = maxElev - minElev; if (elevRange === 0) elevRange = 1;
 
                 if (puntosValidos.length > 10 && maxCumbres >= 2) {
-                    let bestScore = -1;
-                    let pt2 = null;
+                    let bestScore = -1; let pt2 = null;
                     for (let pt of puntosValidos) {
                         let normElev = (pt.elevation - minElev) / elevRange; 
                         let distToP1 = turf.distance(pt.turfPt, cumbresElegidas[0].turfPt, {units: 'kilometers'});
-
                         if (distToP1 > 0.15) {
                             let score = (normElev * 0.7) + (distToP1 * 0.3);
-                            if (score > bestScore) {
-                                bestScore = score;
-                                pt2 = pt;
-                            }
+                            if (score > bestScore) { bestScore = score; pt2 = pt; }
                         }
                     }
                     if (pt2) cumbresElegidas.push(pt2);
                 }
 
                 if (puntosValidos.length > 20 && maxCumbres >= 3 && cumbresElegidas.length === 2) {
-                    let bestScore = -1;
-                    let pt3 = null;
+                    let bestScore = -1; let pt3 = null;
                     for (let pt of puntosValidos) {
                         let normElev = (pt.elevation - minElev) / elevRange;
                         let distToP1 = turf.distance(pt.turfPt, cumbresElegidas[0].turfPt, {units: 'kilometers'});
                         let distToP2 = turf.distance(pt.turfPt, cumbresElegidas[1].turfPt, {units: 'kilometers'});
-                        
                         let minDist = Math.min(distToP1, distToP2);
-
                         if (minDist > 0.15) { 
                             let score = (normElev * 0.7) + (minDist * 0.3);
-                            if (score > bestScore) {
-                                bestScore = score;
-                                pt3 = pt;
-                            }
+                            if (score > bestScore) { bestScore = score; pt3 = pt; }
                         }
                     }
                     if (pt3) cumbresElegidas.push(pt3);
@@ -582,11 +571,8 @@
 
                 cumbresElegidas.forEach((cumbre, index) => {
                     const el = document.createElement('div');
-                    
                     let rankClass = index === 0 ? 'site-primary' : (index === 1 ? 'site-secondary' : 'site-tertiary');
-
                     el.className = `site-marker-container ${rankClass}`;
-                    // Si el usuario tenía ocultos los nodos al cargar el KML, los creamos ocultos
                     if(!nodosVisibles) el.style.display = 'none';
 
                     el.innerHTML = `
@@ -596,16 +582,157 @@
                         <div class="site-pin">
                             <div class="pin-line"></div>
                             <div class="pin-dot"></div>
-                        </div>
-                    `;
-                    
-                    let marker = new mapboxgl.Marker(el, { anchor: 'bottom' })
-                        .setLngLat(cumbre.coords)
-                        .addTo(map);
-                        
+                        </div>`;
+                    let marker = new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat(cumbre.coords).addTo(map);
                     cumbreMarkers.push(marker);
                 });
             });
+        }
+
+        // =======================================================================
+        // 🧠 NUEVO MOTOR DE OPTIMIZACIÓN AUTOMÁTICA (FASE 3 - BASE)
+        // =======================================================================
+        function calcularUbicacionesOptimas() {
+            if (!geojsonKMLActual) return alert("Primero debes delimitar una zona cargando un archivo KML.");
+            const numAntenas = parseInt(document.getElementById('num_antenas').value) || 1;
+            if (numAntenas < 1) return;
+
+            descartarPropuesta(); // Limpiar residuos anteriores
+
+            // 1. Crear el halo exterior (Buffer de 500 metros = 0.5 km)
+            const buffer500m = turf.buffer(geojsonKMLActual, 0.5, {units: 'kilometers'});
+
+            // 2. Generar Malla de Destinos (Puntos de control dentro de la parcela)
+            const areaFincaKm2 = turf.area(geojsonKMLActual) / 1000000;
+            let spacingDestinos = Math.sqrt(areaFincaKm2 / 300); // Muestreo de control (~300 puntos)
+            if (spacingDestinos < 0.03) spacingDestinos = 0.03;
+            const gridDestinos = turf.pointGrid(turf.bbox(geojsonKMLActual), spacingDestinos, {units: 'kilometers'});
+            
+            let puntosDestino = [];
+            turf.featureEach(gridDestinos, function(pt) {
+                if (puntoCaeEnKML(pt)) {
+                    const elev = map.queryTerrainElevation(pt.geometry.coordinates);
+                    if (elev !== null) puntosDestino.push({ coords: pt.geometry.coordinates, elev: elev, cubierto: false });
+                }
+            });
+
+            if (puntosDestino.length === 0) return alert("Error de texturas 3D. Mueve un poco el mapa y vuelve a intentarlo.");
+
+            // 3. Generar Malla de Candidatos (Finca + Halo exterior de 500m)
+            let spacingCandidatos = Math.sqrt(turf.area(buffer500m) / 1000000 / 500); 
+            if (spacingCandidatos < 0.035) spacingCandidatos = 0.035;
+            const gridCandidatos = turf.pointGrid(turf.bbox(buffer500m), spacingCandidatos, {units: 'kilometers'});
+            
+            let candidatos = [];
+            turf.featureEach(gridCandidatos, function(pt) {
+                let esInterno = puntoCaeEnKML(pt);
+                let esExterno = turf.booleanPointInPolygon(pt, buffer500m);
+                if (esInterno || esExterno) {
+                    const coords = pt.geometry.coordinates;
+                    const elev = map.queryTerrainElevation(coords);
+                    if (elev !== null) {
+                        candidatos.push({
+                            coords: coords, elev: elev, esInterno: esInterno,
+                            peso: esInterno ? 1.0 : 0.65 // 🔥 35% DE CASTIGO POR IRSE FUERA DE LA PARCELA
+                        });
+                    }
+                }
+            });
+
+            // 4. Algoritmo Greedy + Filtro de Oclusión de Punto Medio
+            const txHeight = parseFloat(document.getElementById('tx_height').value) || 3;
+            let propuestas = [];
+
+            for (let a = 0; a < numAntenas; a++) {
+                let mejorCandidato = null;
+                let maxPuntuacion = -1;
+                let puntosParaMarcar = [];
+
+                for (let cand of candidatos) {
+                    let coberturaCount = 0;
+                    let puntosCubiertosPorCand = [];
+
+                    for (let dest of puntosDestino) {
+                        if (dest.cubierto) continue;
+                        
+                        let dist = turf.distance(turf.point(cand.coords), turf.point(dest.coords), {units: 'kilometers'});
+                        if (dist > 7) continue; // Límite de propagación física visual para torres bajas
+
+                        if (cand.elev + txHeight > dest.elev) {
+                            // 🏔️ Test de punto medio: Evalúa si hay una loma bloqueando la línea de vista
+                            let midLon = (cand.coords[0] + dest.coords[0]) / 2;
+                            let midLat = (cand.coords[1] + dest.coords[1]) / 2;
+                            let midElev = map.queryTerrainElevation([midLon, midLat]);
+
+                            if (midElev !== null && midElev > (cand.elev + txHeight) && midElev > dest.elev) {
+                                continue; // Obstáculo detectado, descartado
+                            }
+
+                            coberturaCount++;
+                            puntosCubiertosPorCand.push(dest);
+                        }
+                    }
+
+                    let score = coberturaCount * cand.peso; // Aplica la penalización geográfica
+                    if (score > maxPuntuacion && coberturaCount > 0) {
+                        maxPuntuacion = score;
+                        mejorCandidato = cand;
+                        puntosParaMarcar = puntosCubiertosPorCand;
+                    }
+                }
+
+                if (mejorCandidato) {
+                    propuestas.push(mejorCandidato);
+                    puntosParaMarcar.forEach(p => p.cubierto = true); // Restamos el área para la siguiente antena
+                    candidatos = candidatos.filter(c => c !== mejorCandidato);
+                } else {
+                    break;
+                }
+            }
+
+            // 5. Dibujar pines lilas en estado de Borrador
+            propuestas.forEach((prop) => {
+                const el = document.createElement('div');
+                el.className = 'site-marker-container site-draft';
+                if (!nodosVisibles) el.style.display = 'none';
+
+                el.innerHTML = `
+                    <div class="site-label">
+                        <div class="site-elev">${Math.round(prop.elev)} <span class="text-[9px] text-purple-300 font-normal ml-0.5">AMSL</span></div>
+                    </div>
+                    <div class="site-pin">
+                        <div class="pin-line"></div>
+                        <div class="pin-dot"></div>
+                    </div>`;
+                
+                let marker = new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat(prop.coords).addTo(map);
+                draftMarkers.push(marker);
+                draftSites.push({ lat: prop.coords[1], lon: prop.coords[0] });
+            });
+
+            if (draftSites.length > 0) {
+                document.getElementById('draft-actions-panel').classList.remove('hidden');
+            } else {
+                alert("No se encontraron puntos viables que aporten cobertura útil.");
+            }
+        }
+
+        function descartarPropuesta() {
+            draftMarkers.forEach(m => m.remove());
+            draftMarkers = [];
+            draftSites = [];
+            document.getElementById('draft-actions-panel').classList.add('hidden');
+        }
+
+        async function confirmarYSimularPropuesta() {
+            if (draftSites.length === 0) return;
+            const copiasSitios = [...draftSites];
+            descartarPropuesta(); // Limpiamos el borrador para que no ensucie la pantalla
+
+            // Dispara las simulaciones en cola ordenada hacia el Worker de Cloudflare
+            for (let i = 0; i < copiasSitios.length; i++) {
+                await realizarSimulacion(copiasSitios[i].lat, copiasSitios[i].lon);
+            }
         }
 
         // =======================================================================
@@ -646,22 +773,17 @@
                         ctx.drawImage(img, 0, 0);
 
                         const n = boundsSimulacion[0], e = boundsSimulacion[1], s = boundsSimulacion[2], w = boundsSimulacion[3];
-
                         const grid = obtenerMallaDinamica();
-                        let puntosFinca = 0;
-                        let puntosConSenal = 0;
+                        let puntosFinca = 0; let puntosConSenal = 0;
 
                         turf.featureEach(grid, function (pt) {
                             if (puntoCaeEnKML(pt)) {
                                 puntosFinca++;
-                                const ptLon = pt.geometry.coordinates[0];
-                                const ptLat = pt.geometry.coordinates[1];
+                                const ptLon = pt.geometry.coordinates[0]; const ptLat = pt.geometry.coordinates[1];
 
                                 if (ptLat >= s && ptLat <= n && ptLon >= w && ptLon <= e) {
-                                    const pctX = (ptLon - w) / (e - w);
-                                    const pctY = (n - ptLat) / (n - s); 
-                                    const pixelX = Math.floor(pctX * img.width);
-                                    const pixelY = Math.floor(pctY * img.height);
+                                    const pctX = (ptLon - w) / (e - w); const pctY = (n - ptLat) / (n - s); 
+                                    const pixelX = Math.floor(pctX * img.width); const pixelY = Math.floor(pctY * img.height);
 
                                     if (pixelX >= 0 && pixelX < img.width && pixelY >= 0 && pixelY < img.height) {
                                         if (ctx.getImageData(pixelX, pixelY, 1, 1).data[3] > 10) puntosConSenal++;
@@ -669,7 +791,6 @@
                                 }
                             }
                         });
-
                         if (puntosFinca === 0) return resolve(0);
                         resolve(parseFloat(((puntosConSenal / puntosFinca) * 100).toFixed(1)));
                     } catch (err) { resolve(null); }
@@ -680,7 +801,6 @@
 
         async function calcularPorcentajeGlobal() {
             if (!geojsonKMLActual || simulaciones.length === 0) return null;
-
             const activas = simulaciones.filter(s => s.visible && s.imageUrl && s.boundsCloudRF);
             if (activas.length === 0) return 0;
 
@@ -704,36 +824,28 @@
             if(validCanvases.length === 0) return 0;
 
             const grid = obtenerMallaDinamica();
-            let puntosFinca = 0;
-            let puntosCubiertos = 0;
+            let puntosFinca = 0; let puntosCubiertos = 0;
 
             turf.featureEach(grid, function (pt) {
                 if (puntoCaeEnKML(pt)) {
                     puntosFinca++;
-                    const ptLon = pt.geometry.coordinates[0];
-                    const ptLat = pt.geometry.coordinates[1];
+                    const ptLon = pt.geometry.coordinates[0]; const ptLat = pt.geometry.coordinates[1];
                     let cubierto = false;
 
                     for (let c of validCanvases) {
                         const n = c.bounds[0], e = c.bounds[1], s = c.bounds[2], w = c.bounds[3];
-
                         if (ptLat >= s && ptLat <= n && ptLon >= w && ptLon <= e) {
-                            const pctX = (ptLon - w) / (e - w);
-                            const pctY = (n - ptLat) / (n - s); 
-                            const pixelX = Math.floor(pctX * c.imgWidth);
-                            const pixelY = Math.floor(pctY * c.imgHeight);
+                            const pctX = (ptLon - w) / (e - w); const pctY = (n - ptLat) / (n - s); 
+                            const pixelX = Math.floor(pctX * c.imgWidth); const pixelY = Math.floor(pctY * c.imgHeight);
 
                             if (pixelX >= 0 && pixelX < c.imgWidth && pixelY >= 0 && pixelY < c.imgHeight) {
-                                if (c.ctx.getImageData(pixelX, pixelY, 1, 1).data[3] > 10) {
-                                    cubierto = true; break; 
-                                }
+                                if (c.ctx.getImageData(pixelX, pixelY, 1, 1).data[3] > 10) { cubierto = true; break; }
                             }
                         }
                     }
                     if (cubierto) puntosCubiertos++;
                 }
             });
-
             if (puntosFinca === 0) return 0;
             return parseFloat(((puntosCubiertos / puntosFinca) * 100).toFixed(1));
         }
@@ -741,8 +853,7 @@
         async function actualizarInterfazGlobal() {
             if (!geojsonKMLActual) {
                 if (etiquetaCoberturaActual) { etiquetaCoberturaActual.remove(); etiquetaCoberturaActual = null; }
-                renderizarHistorial(null);
-                return;
+                renderizarHistorial(null); return;
             }
 
             const globalPct = await calcularPorcentajeGlobal();
@@ -751,29 +862,22 @@
             if (globalPct !== null) {
                 const centroTurf = turf.center(geojsonKMLActual);
                 const coordsCentro = [centroTurf.geometry.coordinates[0], centroTurf.geometry.coordinates[1]]; 
-
                 const el = document.createElement('div');
                 el.className = 'cobertura-badge';
                 el.innerHTML = `<div style="color:#ef4444; font-size:17px;">Global: ${globalPct}%</div>`;
-
-                etiquetaCoberturaActual = new mapboxgl.Marker(el, { anchor: 'center' })
-                    .setLngLat(coordsCentro)
-                    .addTo(map);
+                etiquetaCoberturaActual = new mapboxgl.Marker(el, { anchor: 'center' }).setLngLat(coordsCentro).addTo(map);
             }
-            
             renderizarHistorial(globalPct);
         }
 
         function renderizarHistorial(globalPct = null) {
             const lista = document.getElementById('simulationList');
             const msg = document.getElementById('emptyHistoryMsg');
-            
             if (msg) msg.style.display = simulaciones.length > 0 ? 'none' : 'block';
             lista.innerHTML = '';
             
             [...simulaciones].reverse().forEach(sim => {
                 const checkedStr = sim.visible ? 'checked' : '';
-                
                 let statsHtml = '';
                 if (sim.coberturaLocal !== null && sim.coberturaLocal !== undefined) {
                     statsHtml += `<span class="text-[#ff7e00] font-bold">Loc: ${sim.coberturaLocal}%</span>`;
@@ -782,7 +886,7 @@
                     if (statsHtml !== '') statsHtml += `<span class="text-slate-500 mx-1.5">|</span>`;
                     statsHtml += `<span class="text-red-500 font-bold">Glb: ${globalPct}%</span>`;
                 }
-                if (statsHtml === '') statsHtml = `<span class="text-slate-400 font-medium">Análisis de espectro listo</span>`;
+                if (statsHtml === '') statsHtml = `<span class="text-slate-400 font-medium">Análisis listo</span>`;
                 
                 const itemHtml = `
                 <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700 shadow-sm flex items-center justify-between gap-3 group hover:border-slate-600 transition-colors">
@@ -813,36 +917,35 @@
                     map.setLayoutProperty(`sim-layer-${id}`, 'visibility', 'none');
                     if(sim.labelMarker) sim.labelMarker.remove();
                 }
-                
                 document.getElementById('loader').classList.remove('hidden');
                 await actualizarInterfazGlobal(); 
                 document.getElementById('loader').classList.add('hidden');
             }
         }
         
-        async function realizarSimulacion() {
+        async function realizarSimulacion(customLat = null, customLon = null) {
             if (EMBEDDED_DEMO_TOKEN !== "") {
                 let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0');
                 if (usos >= LIMITE_USOS) return; 
             }
 
-            const lat = document.getElementById('lat').value;
-            const lon = document.getElementById('lon').value;
+            // REFACTORIZACIÓN PARA EL LOOP AUTOMÁTICO
+            const lat = customLat !== null ? customLat : document.getElementById('lat').value;
+            const lon = customLon !== null ? customLon : document.getElementById('lon').value;
             const txHeight = document.getElementById('tx_height').value;
             const perfilActivo = document.getElementById('sim_profile').value;
             const landCover = parseInt(document.getElementById('land_cover').value);
 
-            if (!lat || !lon) return alert("Faltan coordenadas. Haz clic en el mapa.");
+            if (!lat || !lon) return alert("Faltan coordenadas.");
 
             document.getElementById('btnSimular').classList.add('hidden');
             document.getElementById('loader').classList.remove('hidden');
 
             try {
                 let payload = {};
-
                 if (perfilActivo === 'EU') {
                     payload = {
-                        site: "Simulador EU", network: "Demo",
+                        site: `Punto ${simCounter}`, network: "Demo",
                         transmitter: { lat: parseFloat(lat), lon: parseFloat(lon), alt: parseFloat(txHeight), frq: 868, txw: 0.025, bwi: 0.1 },
                         receiver: { alt: 1, rxg: 1, rxs: -120 },
                         antenna: { txg: 4.3, txl: 1.14, ant: 1, pol: "v" },
@@ -852,7 +955,7 @@
                     };
                 } else {
                     payload = {
-                        site: "Simulador LATAM", network: "Demo",
+                        site: `Punto ${simCounter}`, network: "Demo",
                         transmitter: { lat: parseFloat(lat), lon: parseFloat(lon), alt: parseFloat(txHeight), frq: 915, txw: 0.025, bwi: 0.1 },
                         receiver: { alt: 1, rxg: 1, rxs: -120 },
                         antenna: { txg: 4.3, txl: 1.14, ant: 1, pol: "v" },
@@ -867,20 +970,15 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-
                 const data = await response.json();
 
                 if (response.ok && data.kmz) {
-                    
                     if (EMBEDDED_DEMO_TOKEN !== "") {
-                        let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0');
-                        usos++;
-                        localStorage.setItem('uso_demo_' + EMBEDDED_DEMO_TOKEN, usos);
-                        actualizarBannerCliente(usos);
+                        let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0'); usos++;
+                        localStorage.setItem('uso_demo_' + EMBEDDED_DEMO_TOKEN, usos); actualizarBannerCliente(usos);
                     }
 
-                    const pinEl = document.createElement('div');
-                    pinEl.className = 'neon-orange-pin';
+                    const pinEl = document.createElement('div'); pinEl.className = 'neon-orange-pin';
                     pinEl.innerHTML = `
                         <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <ellipse cx="16" cy="38" rx="8" ry="3" fill="black" fill-opacity="0.3"/>
@@ -888,35 +986,16 @@
                             <path d="M16 3C8.8203 3 3 8.8203 3 16C3 24.7 16 38.3 16 38.3C16 38.3 29 24.7 29 16C29 8.8203 23.1797 3 16 3Z" fill="#ff7e00"/>
                             <circle cx="16" cy="16" r="5" fill="white"/>
                         </svg>`;
-                    
-                    const marker = new mapboxgl.Marker(pinEl, { anchor: 'bottom' })
-                        .setLngLat([parseFloat(lon), parseFloat(lat)])
-                        .addTo(map);
+                    new mapboxgl.Marker(pinEl, { anchor: 'bottom' }).setLngLat([parseFloat(lon), parseFloat(lat)]).addTo(map);
 
                     let imageUrl = data.PNG_WGS84 || data.png || data.PNG_Mercator;
                     let boundsCloudRF = data.bounds; 
-
                     const sourceId = `sim-source-${simCounter}`;
+
                     if (imageUrl && boundsCloudRF) {
                         const n = boundsCloudRF[0], e = boundsCloudRF[1], s = boundsCloudRF[2], w = boundsCloudRF[3];
-                        
-                        map.addSource(sourceId, {
-                            'type': 'image',
-                            'url': imageUrl,
-                            'coordinates': [
-                                [w, n], 
-                                [e, n], 
-                                [e, s], 
-                                [w, s]  
-                            ]
-                        });
-                        
-                        map.addLayer({
-                            'id': `sim-layer-${simCounter}`,
-                            'type': 'raster',
-                            'source': sourceId,
-                            'paint': { 'raster-opacity': 0.65 }
-                        });
+                        map.addSource(sourceId, { 'type': 'image', 'url': imageUrl, 'coordinates': [[w, n], [e, n], [e, s], [w, s]] });
+                        map.addLayer({ 'id': `sim-layer-${simCounter}`, 'type': 'raster', 'source': sourceId, 'paint': { 'raster-opacity': 0.65 } });
                     }
 
                     if(inputMarker) { inputMarker.remove(); inputMarker = null; }
@@ -926,42 +1005,27 @@
                         porcentajeLocal = await calcularPorcentajeLocal(boundsCloudRF, imageUrl);
                     }
 
-                    const labelEl = document.createElement('div');
-                    labelEl.className = 'cobertura-badge';
+                    const labelEl = document.createElement('div'); labelEl.className = 'cobertura-badge';
                     let tooltipHtml = `<div style="color:white; font-size:15px; margin-bottom:1px;">Punto ${simCounter}</div>`;
-                    if (porcentajeLocal !== null) {
-                        tooltipHtml += `<div style="color:#ff7e00; font-size:14px;">Local: ${porcentajeLocal}%</div>`;
-                    }
+                    if (porcentajeLocal !== null) tooltipHtml += `<div style="color:#ff7e00; font-size:14px;">Local: ${porcentajeLocal}%</div>`;
                     labelEl.innerHTML = tooltipHtml;
                     
                     const labelMarker = new mapboxgl.Marker(labelEl, { anchor: 'bottom', offset: [0, -45] })
-                        .setLngLat([parseFloat(lon), parseFloat(lat)])
-                        .addTo(map);
+                        .setLngLat([parseFloat(lon), parseFloat(lat)]).addTo(map);
 
                     simulaciones.push({
-                        id: simCounter,
-                        name: `Punto ${simCounter}`,
-                        freq: perfilActivo === 'EU' ? 868 : 915,
-                        alt: txHeight,
-                        kmz: data.kmz,
-                        layerGroup: sourceId,
-                        visible: true,
-                        coberturaLocal: porcentajeLocal, 
-                        imageUrl: imageUrl,              
-                        boundsCloudRF: boundsCloudRF,
-                        labelMarker: labelMarker
+                        id: simCounter, name: `Punto ${simCounter}`, freq: perfilActivo === 'EU' ? 868 : 915,
+                        alt: txHeight, kmz: data.kmz, layerGroup: sourceId, visible: true,
+                        coberturaLocal: porcentajeLocal, imageUrl: imageUrl, boundsCloudRF: boundsCloudRF, labelMarker: labelMarker
                     });
                     
                     simCounter++;
-                    
                     await actualizarInterfazGlobal();
-
                 } else {
                     alert("Error en la simulación: " + (data.error || "Revisa la consola."));
                 }
             } catch (error) {
                 console.error("Error:", error);
-                alert("Error de conexión. Revisa que tu Worker de Cloudflare esté desplegado.");
             } finally {
                 document.getElementById('btnSimular').classList.remove('hidden');
                 document.getElementById('loader').classList.add('hidden');
