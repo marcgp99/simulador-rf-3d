@@ -8,169 +8,90 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css' rel='stylesheet' />
-    
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     
     <style>
         body { background-color: #0B1120; color: #e2e8f0; font-family: 'Inter', sans-serif; }
         #map { height: 100%; width: 100%; border-radius: 0.75rem; z-index: 1; }
-        
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
         .toggle-checkbox:checked { right: 0; border-color: #10b981; }
         .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
-        
         .glow-hover:hover { box-shadow: 0 0 20px rgba(57, 255, 20, 0.4); }
-
         .mapboxgl-marker { cursor: pointer; z-index: 20; }
         .neon-orange-pin { filter: drop-shadow(0 0 5px rgba(255, 126, 0, 0.8)); }
         
-        .cobertura-badge {
-            text-align: center;
-            font-family: 'Inter', sans-serif !important;
-            font-weight: 800 !important;
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0px 4px 10px rgba(0,0,0,0.8);
-            pointer-events: none;
-        }
-
-        /* PINES TOPOGRÁFICOS MINIMALISTAS */
-        .site-marker-container { 
-            display: flex; flex-direction: column; align-items: center; 
-            pointer-events: none; transform: translateY(5px); 
-        }
-        .site-label { 
-            background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.08); 
-            border-left: 3px solid; padding: 5px 10px; border-radius: 6px; 
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); margin-bottom: 2px; backdrop-filter: blur(8px); 
-        }
-        .site-elev { 
-            font-size: 15px; font-weight: 700; color: #f8fafc; 
-            display: flex; align-items: baseline; gap: 4px;
-        }
+        .cobertura-badge { text-align: center; font-family: 'Inter', sans-serif !important; font-weight: 800 !important; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0px 4px 10px rgba(0,0,0,0.8); pointer-events: none; }
+        .site-marker-container { display: flex; flex-direction: column; align-items: center; pointer-events: none; transform: translateY(5px); }
+        .site-label { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.08); border-left: 3px solid; padding: 5px 10px; border-radius: 6px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); margin-bottom: 2px; backdrop-filter: blur(8px); }
+        .site-elev { font-size: 15px; font-weight: 700; color: #f8fafc; display: flex; align-items: baseline; gap: 4px; }
         .site-pin { display: flex; flex-direction: column; align-items: center; }
         .pin-line { width: 1.5px; height: 35px; opacity: 0.75; }
         .pin-dot { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid #0B1120; box-shadow: 0 0 12px currentColor; }
         
-        .site-primary .site-label { border-left-color: #39FF14; }
-        .site-primary .pin-line { background: linear-gradient(to bottom, #39FF14, transparent); }
-        .site-primary .pin-dot { background: #39FF14; color: #39FF14; }
+        .site-primary .site-label { border-left-color: #39FF14; } .site-primary .pin-line { background: linear-gradient(to bottom, #39FF14, transparent); } .site-primary .pin-dot { background: #39FF14; color: #39FF14; }
+        .site-secondary .site-label { border-left-color: #0ea5e9; } .site-secondary .pin-line { background: linear-gradient(to bottom, #0ea5e9, transparent); } .site-secondary .pin-dot { background: #0ea5e9; color: #0ea5e9; }
+        .site-tertiary .site-label { border-left-color: #f59e0b; } .site-tertiary .pin-line { background: linear-gradient(to bottom, #f59e0b, transparent); } .site-tertiary .pin-dot { background: #f59e0b; color: #f59e0b; }
+        .site-draft .site-label { border-left-color: #d946ef; } .site-draft .pin-line { background: linear-gradient(to bottom, #d946ef, transparent); } .site-draft .pin-dot { background: #d946ef; color: #d946ef; }
 
-        .site-secondary .site-label { border-left-color: #0ea5e9; }
-        .site-secondary .pin-line { background: linear-gradient(to bottom, #0ea5e9, transparent); }
-        .site-secondary .pin-dot { background: #0ea5e9; color: #0ea5e9; }
-
-        .site-tertiary .site-label { border-left-color: #f59e0b; }
-        .site-tertiary .pin-line { background: linear-gradient(to bottom, #f59e0b, transparent); }
-        .site-tertiary .pin-dot { background: #f59e0b; color: #f59e0b; }
-
-        .site-draft .site-label { border-left-color: #d946ef; }
-        .site-draft .pin-line { background: linear-gradient(to bottom, #d946ef, transparent); }
-        .site-draft .pin-dot { background: #d946ef; color: #d946ef; }
-
-        /* Botones Flotantes del Mapa */
-        .map-controls-container {
-            position: absolute; top: 15px; right: 15px; z-index: 10; display: flex; gap: 10px;
-        }
-        .map-btn {
-            background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); color: #fff;
-            padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.875rem;
-            cursor: pointer; backdrop-filter: blur(8px); transition: all 0.3s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5); display: flex; align-items: center; gap: 8px;
-        }
+        .map-controls-container { position: absolute; top: 15px; right: 15px; z-index: 10; display: flex; gap: 10px; }
+        .map-btn { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); color: #fff; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.875rem; cursor: pointer; backdrop-filter: blur(8px); transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5); display: flex; align-items: center; gap: 8px; }
         .map-btn:hover { background: #1e293b; border-color: #64748b; }
         .map-btn.active-3d { background: #10b981; border-color: #34d399; box-shadow: 0 0 15px rgba(16, 185, 129, 0.5); }
         .map-btn.active-nodos { color: #94a3b8; border-color: rgba(255,255,255,0.05); }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
-
     <div id="demo-banner" class="hidden w-full text-center py-2 text-xs font-semibold tracking-wide shadow-md z-20 relative bg-amber-500/10 text-amber-400 border-b border-amber-500/20 uppercase"></div>
-
     <header class="bg-[#0B1120]/95 backdrop-blur border-b border-slate-800/80 py-4 px-6 flex items-center justify-between z-10 relative">
         <div class="flex items-center gap-3 w-1/3">
             <svg class="w-7 h-7 text-[#39FF14] drop-shadow-[0_0_8px_rgba(57,255,20,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.106-.53-.106a.75.75 0 01-.6-1.07l.6-.8a.75.75 0 011.2 0l.6.8a.75.75 0 01-.6 1.07z"></path></svg>
-            <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-500">
-                IXORIGUE RF Coverage Simulator <span class="text-slate-500 font-medium text-sm ml-1 uppercase tracking-widest">| Pro 3D</span>
-            </h1>
+            <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-500">IXORIGUE RF Coverage Simulator <span class="text-slate-500 font-medium text-sm ml-1 uppercase tracking-widest">| Pro 3D</span></h1>
         </div>
         <div class="w-1/3"></div> 
     </header>
 
     <main class="flex-1 flex flex-col md:flex-row p-4 gap-4 h-full relative overflow-hidden">
-        
         <aside class="glass-panel w-full md:w-[400px] rounded-xl p-5 flex flex-col z-10 relative overflow-hidden h-full">
-            
             <div class="flex-shrink-0 flex flex-col gap-4 overflow-y-auto pr-1 pb-2" style="max-height: 60vh;">
-                
                 <div class="space-y-1.5 pb-3 border-b border-slate-700/50">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Perfil de Simulación</label>
                     <select id="sim_profile" onchange="cambiarPerfil()" class="w-full px-4 py-2.5 bg-slate-900/80 border border-slate-600 hover:border-slate-500 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all cursor-pointer font-semibold">
-                        <option value="EU" selected>EU</option>
-                        <option value="LATAM">LATAM</option>
+                        <option value="EU" selected>EU</option><option value="LATAM">LATAM</option>
                     </select>
                 </div>
-
                 <div class="space-y-1.5">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Importar de Google Maps</label>
                     <div class="flex gap-2">
                         <input type="text" id="gmaps_url" placeholder="URL larga de Google Maps..." class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all">
-                        <button onclick="extraerDeMaps()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        </button>
+                        <button onclick="extraerDeMaps()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
                     </div>
                 </div>
-
                 <div class="space-y-1.5">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Delimitar Zona (KML)</label>
                     <input type="file" id="kml_upload" accept=".kml" class="hidden" onchange="cargarKML(event)">
-                    <label for="kml_upload" class="w-full bg-slate-900/50 hover:bg-slate-800 text-slate-300 hover:text-green-400 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center cursor-pointer border border-slate-600 border-dashed group">
-                        <svg class="w-4 h-4 mr-2 group-hover:text-green-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        Seleccionar polígono .kml
-                    </label>
+                    <label for="kml_upload" class="w-full bg-slate-900/50 hover:bg-slate-800 text-slate-300 hover:text-green-400 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center cursor-pointer border border-slate-600 border-dashed group"><svg class="w-4 h-4 mr-2 group-hover:text-green-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>Seleccionar polígono .kml</label>
                 </div>
-
                 <div class="space-y-1.5 pt-3 border-t border-slate-700/50">
                     <label class="block text-[10px] font-bold text-purple-400 uppercase tracking-widest">Antenas Contratadas</label>
                     <div class="grid grid-cols-3 gap-2 items-center">
-                        <div class="col-span-2">
-                            <input type="number" id="num_antenas" min="1" max="10" value="2" class="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 focus:outline-none transition-all font-mono" placeholder="Nº Antenas">
-                        </div>
-                        <button onclick="calcularUbicacionesOptimas()" class="col-span-1 bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center h-full">
-                            Calcular
-                        </button>
+                        <div class="col-span-2"><input type="number" id="num_antenas" min="1" max="10" value="2" class="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 focus:outline-none transition-all font-mono" placeholder="Nº Antenas"></div>
+                        <button onclick="calcularUbicacionesOptimas()" class="col-span-1 bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center h-full">Calcular</button>
                     </div>
                 </div>
-
                 <div id="draft-actions-panel" class="hidden space-y-2 p-2.5 bg-purple-950/20 border border-purple-500/20 rounded-lg transition-all animate-fadeIn">
                     <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest text-center animate-pulse">Propuesta en Borrador</div>
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="descartarPropuesta()" class="bg-slate-800/80 hover:bg-red-950/40 text-red-400 border border-red-500/20 text-xs py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            Descartar
-                        </button>
-                        <button onclick="confirmarYSimularPropuesta()" class="bg-purple-600 hover:bg-purple-500 text-white text-xs py-2 px-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-1 shadow-lg shadow-purple-600/10">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Simular Todo
-                        </button>
+                        <button onclick="descartarPropuesta()" class="bg-slate-800/80 hover:bg-red-950/40 text-red-400 border border-red-500/20 text-xs py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>Descartar</button>
+                        <button onclick="confirmarYSimularPropuesta()" class="bg-purple-600 hover:bg-purple-500 text-white text-xs py-2 px-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-1 shadow-lg shadow-purple-600/10"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Simular Todo</button>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4 mt-1 pt-2 border-t border-slate-700/50">
                     <div class="space-y-1.5">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Latitud</label>
@@ -181,94 +102,51 @@
                         <input type="number" id="lon" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
                     </div>
                 </div>
-                
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1.5">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Land Cover (Bosques)</label>
-                        <select id="land_cover" class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 hover:border-slate-500 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all cursor-pointer font-semibold">
-                            <option value="1">ON</option>
-                            <option value="0" selected>OFF</option>
-                        </select>
+                        <select id="land_cover" class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 hover:border-slate-500 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all cursor-pointer font-semibold"><option value="1">ON</option><option value="0" selected>OFF</option></select>
                     </div>
                     <div class="space-y-1.5">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Altura Antena (m)</label>
                         <input type="number" id="tx_height" value="3" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
                     </div>
                 </div>
-
-                <button id="btnSimular" onclick="realizarSimulacion()" class="mt-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold py-3 px-4 rounded-lg glow-hover transition-all duration-300 flex justify-center items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    Iniciar Simulación
-                </button>
-
+                <button id="btnSimular" onclick="realizarSimulacion()" class="mt-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold py-3 px-4 rounded-lg glow-hover transition-all duration-300 flex justify-center items-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>Iniciar Simulación</button>
                 <div id="loader" class="hidden flex-col items-center justify-center py-2">
-                    <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-green-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-green-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                     <p class="text-[10px] text-green-400/80 font-bold animate-pulse uppercase tracking-widest">Procesando modelo ITM...</p>
                 </div>
             </div>
-
             <div id="historyArea" class="flex-1 flex flex-col min-h-0 border-t border-slate-700/50 pt-4 mt-auto">
                 <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex-shrink-0">Historial de Análisis</h3>
-                
                 <p id="emptyHistoryMsg" class="text-slate-500 text-sm italic text-center mt-2 flex-shrink-0">Ninguna simulación activa.</p>
-                
-                <div id="simulationList" class="flex-1 overflow-y-auto pr-2 flex flex-col gap-2.5">
-                </div>
+                <div id="simulationList" class="flex-1 overflow-y-auto pr-2 flex flex-col gap-2.5"></div>
             </div>
-
             <div id="admin-tools" class="flex-shrink-0 pt-4 mt-2 border-t border-slate-700/50">
-                <button onclick="descargarHtmlParaCliente()" class="w-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white font-medium py-2.5 px-4 rounded-lg border border-slate-600 transition-all text-sm flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 00-5.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                    Generar Acceso Cliente (2 Usos)
-                </button>
+                <button onclick="descargarHtmlParaCliente()" class="w-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white font-medium py-2.5 px-4 rounded-lg border border-slate-600 transition-all text-sm flex items-center justify-center gap-2"><svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>Generar Acceso Cliente (2 Usos)</button>
             </div>
-
         </aside>
 
         <section class="flex-1 bg-slate-900 rounded-xl shadow-2xl relative h-full overflow-hidden border border-slate-800">
             <div class="map-controls-container">
-                <button id="btn-nodos" onclick="toggleNodos()" class="map-btn">
-                    <svg id="icon-nodos" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                    <span id="text-nodos">Ocultar Cumbres</span>
-                </button>
-                
-                <button id="btn-3d" onclick="toggle3D()" class="map-btn" style="position:static;">
-                    <svg id="icon-3d" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span id="text-3d">Modo 3D</span>
-                </button>
+                <button id="btn-nodos" onclick="toggleNodos()" class="map-btn"><svg id="icon-nodos" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg><span id="text-nodos">Ocultar Cumbres</span></button>
+                <button id="btn-3d" onclick="toggle3D()" class="map-btn" style="position:static;"><svg id="icon-3d" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span id="text-3d">Modo 3D</span></button>
             </div>
             <div id="map"></div>
         </section>
-        
     </main>
 
     <script>
-        // =======================================================================
-        // 🔒 CONFIGURACIÓN CORE
-        // =======================================================================
         const PROXY_URL = "https://ixorigue.small-leaf-5935.workers.dev";
         mapboxgl.accessToken = 'pk.eyJ1IjoibWFyY2dwdDk5IiwiYSI6ImNtcmVxbWZzbDByenoyenBkdWU5cXBkYzcifQ.KRu6WKoui20OAQltTw11sQ';
         
-        const EMBEDDED_DEMO_TOKEN = ""; 
-        const LIMITE_USOS = 2;
-        
-        let simulaciones = []; 
-        let simCounter = 1;
-
-        let geojsonKMLActual = null;
-        let etiquetaCoberturaActual = null; 
-        let inputMarker = null;
-        let cumbreMarkers = []; 
-        
-        // Variables para Optimización Automática
-        let draftMarkers = [];
-        let draftSites = [];
-
-        let is3D = false;
-        let nodosVisibles = true; 
+        const EMBEDDED_DEMO_TOKEN = ""; const LIMITE_USOS = 2;
+        let simulaciones = []; let simCounter = 1;
+        let geojsonKMLActual = null; let etiquetaCoberturaActual = null; 
+        let inputMarker = null; let cumbreMarkers = []; 
+        let draftMarkers = []; let draftSites = [];
+        let is3D = false; let nodosVisibles = true; 
 
         if (EMBEDDED_DEMO_TOKEN !== "") {
             document.getElementById('admin-tools').style.display = 'none';
@@ -295,9 +173,6 @@
             linkTemporal.click(); document.body.removeChild(linkTemporal); URL.revokeObjectURL(urlDescarga);
         }
 
-        // =======================================================================
-        // 🗺️ INICIALIZACIÓN DE MAPBOX GL JS
-        // =======================================================================
         const map = new mapboxgl.Map({
             container: 'map', style: 'mapbox://styles/mapbox/satellite-v9',
             center: [1.669, 42.025], zoom: 13, pitch: 0, maxPitch: 0
@@ -360,9 +235,6 @@
             else { alert("No se encontraron coordenadas en el enlace."); }
         }
 
-        // =======================================================================
-        // 📁 PROCESAMIENTO KML (SOPORTA MULTIPOLÍGONOS)
-        // =======================================================================
         function cargarKML(event) {
             const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader(); reader.onload = function(e) { procesarKML(e.target.result); }; reader.readAsText(file);
@@ -381,7 +253,7 @@
             let featuresKML = []; let bounds = new mapboxgl.LngLatBounds();
 
             for (let i = 0; i < coordinatesList.length; i++) {
-                const tuples = coordinatesList[i].textContent.match(/-?\d+(Y:\.\d+)?,-?\d+(Y:\.\d+)?(?:,-?\d+(Y:\.\d+)?)?/g);
+                const tuples = coordinatesList[i].textContent.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?(?:,-?\d+(?:\.\d+)?)?/g);
                 if (tuples && tuples.length > 2) {
                     const turfCoords = [];
                     tuples.forEach(tuple => {
@@ -409,14 +281,12 @@
         }
 
         // =======================================================================
-        // 🧠 CEREBRO V2: RAY-TRACING + MULTI-KML + FALLBACK SEGURO
+        // 🧠 CEREBRO V2: MULTI-KML Y RAY TRACING
         // =======================================================================
         function puntoCaeEnKML(pt) {
             if (!geojsonKMLActual) return false;
             if (geojsonKMLActual.type === 'FeatureCollection') {
-                for (let f of geojsonKMLActual.features) {
-                    if (turf.booleanPointInPolygon(pt, f)) return true;
-                }
+                for (let f of geojsonKMLActual.features) { if (turf.booleanPointInPolygon(pt, f)) return true; }
                 return false;
             }
             return turf.booleanPointInPolygon(pt, geojsonKMLActual);
@@ -435,15 +305,18 @@
             if (!geojsonKMLActual) return alert("Primero debes delimitar una zona (KML).");
             const numAntenas = parseInt(document.getElementById('num_antenas').value) || 1;
             if (numAntenas < 1) return;
-
             descartarPropuesta();
 
             let areaBusqueda;
-            try {
-                areaBusqueda = turf.buffer(geojsonKMLActual, 0.5, {units: 'kilometers'});
-            } catch(e) {
-                console.warn("Turf Buffer falló por topología compleja. Se usará KML estricto.");
-                areaBusqueda = geojsonKMLActual; 
+            if (geojsonKMLActual.type === 'FeatureCollection') {
+                let buffers = [];
+                turf.featureEach(geojsonKMLActual, function(currentFeature) {
+                    try { buffers.push(turf.buffer(currentFeature, 0.5, {units: 'kilometers'})); } catch(e){}
+                });
+                areaBusqueda = buffers.length > 0 ? turf.featureCollection(buffers) : geojsonKMLActual;
+            } else {
+                try { areaBusqueda = turf.buffer(geojsonKMLActual, 0.5, {units: 'kilometers'}); }
+                catch(e) { areaBusqueda = geojsonKMLActual; }
             }
 
             let parcelas = geojsonKMLActual.type === 'FeatureCollection' ? turf.flatten(geojsonKMLActual).features : [geojsonKMLActual];
@@ -479,7 +352,7 @@
                     if (elev !== null) {
                         candidatos.push({
                             coords: pt.geometry.coordinates, elev: elev,
-                            peso: esInterno ? 1.0 : 0.85 
+                            peso: esInterno ? 1.0 : 0.85 // Penalización rebajada al 15%
                         });
                     }
                 }
@@ -489,49 +362,40 @@
             let propuestas = [];
 
             for (let a = 0; a < numAntenas; a++) {
-                let mejorCandidato = null;
-                let maxPuntuacion = -1;
-                let puntosParaMarcar = [];
+                let mejorCandidato = null; let maxPuntuacion = -1; let puntosParaMarcar = [];
 
                 for (let cand of candidatos) {
-                    let coberturaCount = 0;
-                    let puntosCubiertosCand = [];
+                    let coberturaCount = 0; let puntosCubiertosCand = [];
 
                     for (let dest of puntosDestino) {
                         if (dest.cubierto) continue;
-                        
                         let dist = turf.distance(turf.point(cand.coords), turf.point(dest.coords), {units: 'kilometers'});
                         if (dist > 12) continue; 
 
-                        let candAlt = cand.elev + txHeight;
-                        let destAlt = dest.elev + 1; 
+                        let candAlt = cand.elev + txHeight; let destAlt = dest.elev + 1; 
                         if (candAlt > destAlt) {
+                            let deltaZ = destAlt - candAlt; let bloqueado = false;
                             
-                            let deltaZ = destAlt - candAlt;
-                            let bloqueado = false;
-                            
+                            // Ray-Tracing 3D
                             for(let i=1; i<=3; i++) {
                                 let f = i / 4.0;
                                 let midLon = cand.coords[0] + (dest.coords[0] - cand.coords[0]) * f;
                                 let midLat = cand.coords[1] + (dest.coords[1] - cand.coords[1]) * f;
                                 let midElev = map.queryTerrainElevation([midLon, midLat]);
                                 let expectedZ = candAlt + (deltaZ * f);
-                                
                                 if (midElev !== null && midElev > expectedZ) { bloqueado = true; break; }
                             }
-
                             if (!bloqueado) { coberturaCount++; puntosCubiertosCand.push(dest); }
                         }
                     }
 
                     let score = coberturaCount * cand.peso; 
                     if (score > maxPuntuacion && coberturaCount > 0) {
-                        maxPuntuacion = score;
-                        mejorCandidato = cand;
-                        puntosParaMarcar = puntosCubiertosCand;
+                        maxPuntuacion = score; mejorCandidato = cand; puntosParaMarcar = puntosCubiertosCand;
                     }
                 }
 
+                // Fallback Inteligente si no suma cobertura nueva
                 if (!mejorCandidato || maxPuntuacion === 0) {
                     candidatos.sort((a,b) => b.elev - a.elev); 
                     for(let c of candidatos) {
@@ -556,13 +420,10 @@
                 const el = document.createElement('div'); el.className = 'site-marker-container site-draft';
                 if (!nodosVisibles) el.style.display = 'none';
 
-                el.innerHTML = `
-                    <div class="site-label"><div class="site-elev">${Math.round(prop.elev)} <span class="text-[9px] text-purple-300 font-normal ml-0.5">AMSL</span></div></div>
-                    <div class="site-pin"><div class="pin-line"></div><div class="pin-dot"></div></div>`;
+                el.innerHTML = `<div class="site-label"><div class="site-elev">${Math.round(prop.elev)} <span class="text-[9px] text-purple-300 font-normal ml-0.5">AMSL</span></div></div><div class="site-pin"><div class="pin-line"></div><div class="pin-dot"></div></div>`;
                 
                 let marker = new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat(prop.coords).addTo(map);
-                draftMarkers.push(marker);
-                draftSites.push({ lat: prop.coords[1], lon: prop.coords[0] });
+                draftMarkers.push(marker); draftSites.push({ lat: prop.coords[1], lon: prop.coords[0] });
             });
 
             if (draftSites.length > 0) document.getElementById('draft-actions-panel').classList.remove('hidden');
@@ -729,7 +590,7 @@
 
         async function actualizarInterfazGlobal() {
             if (!geojsonKMLActual) {
-                if (etiquetaCoverageActual) { etiquetaCoberturaActual.remove(); etiquetaCoberturaActual = null; }
+                if (etiquetaCoberturaActual) { etiquetaCoberturaActual.remove(); etiquetaCoberturaActual = null; }
                 renderizarHistorial(null); return;
             }
             const globalPct = await calcularPorcentajeGlobal();
