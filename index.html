@@ -38,7 +38,6 @@
         
         .glow-hover:hover { box-shadow: 0 0 20px rgba(57, 255, 20, 0.4); }
 
-        /* Contenedores para Pines HTML en Mapbox */
         .mapboxgl-marker { cursor: pointer; z-index: 20; }
         .neon-orange-pin { filter: drop-shadow(0 0 5px rgba(255, 126, 0, 0.8)); }
         
@@ -50,7 +49,6 @@
             pointer-events: none;
         }
 
-        /* Botón 3D Flotante en el Mapa */
         #btn-3d {
             position: absolute;
             top: 15px;
@@ -193,8 +191,6 @@
         // 🔒 CONFIGURACIÓN CORE
         // =======================================================================
         const PROXY_URL = "https://ixorigue.small-leaf-5935.workers.dev";
-        
-        // TOKEN PÚBLICO DE MAPBOX RESTRINGIDO
         mapboxgl.accessToken = 'pk.eyJ1IjoibWFyY2dwdDk5IiwiYSI6ImNtcmVxbWZzbDByenoyenBkdWU5cXBkYzcifQ.KRu6WKoui20OAQltTw11sQ';
         
         const EMBEDDED_DEMO_TOKEN = ""; 
@@ -206,7 +202,7 @@
         let geojsonKMLActual = null;
         let etiquetaCoberturaActual = null; 
         let inputMarker = null;
-        let cumbreMarkers = []; // ARRAY AHORA PARA MÚLTIPLES PINOS DE CUMBRE
+        let cumbreMarkers = []; 
         
         let is3D = false;
 
@@ -336,7 +332,7 @@
         }
 
         // =======================================================================
-        // 📁 PROCESAMIENTO KML Y RECOMENDADOR INTELIGENTE (CERROS / MAXIMOS LOCALES)
+        // 📁 PROCESAMIENTO KML Y RECOMENDADOR INTELIGENTE
         // =======================================================================
         function cargarKML(event) {
             const file = event.target.files[0];
@@ -361,7 +357,6 @@
                 map.removeSource('kml-source');
             }
             
-            // Limpiamos todo el array de pines de cumbres anteriores
             if (cumbreMarkers.length > 0) { 
                 cumbreMarkers.forEach(m => m.remove()); 
                 cumbreMarkers = []; 
@@ -414,71 +409,103 @@
             document.getElementById('kml_upload').value = ''; 
         }
 
-        // 🧠 EL CEREBRO: ALGORITMO DE PROMINENCIA (CERROS MÚLTIPLES Y MULTIPARCELA)
+        // 🧠 EL CEREBRO: ALGORITMO DE DISTRIBUCIÓN ESPACIAL PONDERADA
         function buscarCumbresInteligente() {
             if (!geojsonKMLActual) return;
             
-            // 1. Extraemos las parcelas independientes (aunque sea 1 o sean 10)
-            let parcelas = geojsonKMLActual.type === 'FeatureCollection' ? geojsonKMLActual.features : [geojsonKMLActual];
+            // 1. Extraemos las parcelas independientes ("Flatten" de multipolígonos)
+            // Asegura que en la multi-parcela evalúe cada trozo de tierra por separado
+            let parcelas = geojsonKMLActual.type === 'FeatureCollection' ? turf.flatten(geojsonKMLActual).features : [geojsonKMLActual];
             
-            // Iteramos parcela a parcela
             parcelas.forEach((parcela) => {
                 const areaKm2 = turf.area(parcela) / 1000000;
-                // Cuadrícula más densa para detectar bien la orografía de la parcela
-                let spacing = Math.sqrt(areaKm2 / 1500); 
-                if (spacing < 0.04) spacing = 0.04;
+                
+                // Si la parcela es muy pequeña, solo buscaremos 1 cumbre. Si es grande, hasta 3.
+                const maxCumbres = areaKm2 < 0.05 ? 1 : (areaKm2 < 0.2 ? 2 : 3);
+                
+                let spacing = Math.sqrt(areaKm2 / 1000); 
+                if (spacing < 0.03) spacing = 0.03; // Mayor resolución para no perder lomas
                 
                 const grid = turf.pointGrid(turf.bbox(parcela), spacing, {units: 'kilometers'});
                 let puntosValidos = [];
+                let minElev = 99999;
+                let maxElev = -99999;
 
-                // 2. Extraer altitud real de Mapbox de todos los puntos dentro de ESTA parcela
+                // 2. Extraer altitud de Mapbox de todos los puntos de ESTA parcela
                 turf.featureEach(grid, function (pt) {
                     if (turf.booleanPointInPolygon(pt, parcela)) {
                         const coords = pt.geometry.coordinates;
                         const elevation = map.queryTerrainElevation(coords);
                         if (elevation !== null) {
-                            puntosValidos.push({ coords: coords, elevation: elevation });
+                            puntosValidos.push({ coords: coords, elevation: elevation, turfPt: pt });
+                            if (elevation < minElev) minElev = elevation;
+                            if (elevation > maxElev) maxElev = elevation;
                         }
                     }
                 });
 
-                // 3. Ordenamos de más alto a más bajo
-                puntosValidos.sort((a, b) => b.elevation - a.elevation);
+                if (puntosValidos.length === 0) return;
 
-                // 4. Lógica de Cerros Distintos (Separación de al menos 300 metros)
                 let cumbresElegidas = [];
-                const DISTANCIA_MINIMA_KM = 0.3; // 300 metros de separación obligatoria para considerar que es otro cerro/meseta
-                const MAX_CUMBRES_POR_PARCELA = 3; // Mostrar top 3 opciones
 
-                for (let pt of puntosValidos) {
-                    if (cumbresElegidas.length >= MAX_CUMBRES_POR_PARCELA) break;
-                    
-                    let esDistinto = true;
-                    let ptTurf = turf.point(pt.coords);
-                    
-                    // Comprobamos la distancia contra las cumbres que ya hemos guardado
-                    for (let cumbre of cumbresElegidas) {
-                        let dist = turf.distance(ptTurf, turf.point(cumbre.coords), {units: 'kilometers'});
-                        if (dist < DISTANCIA_MINIMA_KM) {
-                            esDistinto = false; // Está en la misma ladera/montaña, lo descartamos
-                            break;
+                // 🏔️ Cumbre 1: El punto óptimo absoluto
+                let pt1 = puntosValidos.reduce((max, pt) => pt.elevation > max.elevation ? pt : max, puntosValidos[0]);
+                cumbresElegidas.push(pt1);
+
+                let elevRange = maxElev - minElev;
+                if (elevRange === 0) elevRange = 1;
+
+                // 🏔️ Cumbre 2: Matemática de Ponderación (Altura + Lejanía a Cumbre 1)
+                if (puntosValidos.length > 10 && maxCumbres >= 2) {
+                    let bestScore = -1;
+                    let pt2 = null;
+                    for (let pt of puntosValidos) {
+                        let normElev = (pt.elevation - minElev) / elevRange; // Normaliza la altura de 0 a 1
+                        let distToP1 = turf.distance(pt.turfPt, cumbresElegidas[0].turfPt, {units: 'kilometers'});
+
+                        // Exigimos separación de al menos 150m (0.15 km) para considerar que es "otro" cerro
+                        if (distToP1 > 0.15) {
+                            // Puntuación: 70% importa la altura, 30% importa aislarse del pico 1
+                            let score = (normElev * 0.7) + (distToP1 * 0.3);
+                            if (score > bestScore) {
+                                bestScore = score;
+                                pt2 = pt;
+                            }
                         }
                     }
-                    
-                    if (esDistinto) {
-                        cumbresElegidas.push(pt);
-                    }
+                    if (pt2) cumbresElegidas.push(pt2);
                 }
 
-                // 5. Dibujar las chinchetas en el mapa (Verde para el #1, Naranja #2, Azul #3)
+                // 🏔️ Cumbre 3: Ponderación (Altura + Lejanía a las Cumbres 1 y 2)
+                if (puntosValidos.length > 20 && maxCumbres >= 3 && cumbresElegidas.length === 2) {
+                    let bestScore = -1;
+                    let pt3 = null;
+                    for (let pt of puntosValidos) {
+                        let normElev = (pt.elevation - minElev) / elevRange;
+                        let distToP1 = turf.distance(pt.turfPt, cumbresElegidas[0].turfPt, {units: 'kilometers'});
+                        let distToP2 = turf.distance(pt.turfPt, cumbresElegidas[1].turfPt, {units: 'kilometers'});
+                        
+                        // Miramos qué tan lejos está del pico MÁS CERCANO a él
+                        let minDist = Math.min(distToP1, distToP2);
+
+                        if (minDist > 0.15) { 
+                            let score = (normElev * 0.7) + (minDist * 0.3);
+                            if (score > bestScore) {
+                                bestScore = score;
+                                pt3 = pt;
+                            }
+                        }
+                    }
+                    if (pt3) cumbresElegidas.push(pt3);
+                }
+
+                // 3. Pintar en el mapa
                 cumbresElegidas.forEach((cumbre, index) => {
                     const el = document.createElement('div');
-                    
-                    // Lógica de colores según su ranking en la parcela
                     let iconColor = index === 0 ? 'text-emerald-400' : (index === 1 ? 'text-amber-400' : 'text-blue-400');
                     let borderColor = index === 0 ? 'border-emerald-500/50' : (index === 1 ? 'border-amber-500/50' : 'border-blue-500/50');
                     let rankText = index === 0 ? 'Óptimo' : `Alt. ${index+1}`;
-                    let bounce = index === 0 ? 'animate-bounce' : ''; // Solo salta el número 1
+                    let bounce = index === 0 ? 'animate-bounce' : '';
 
                     el.className = `cobertura-badge ${iconColor}`;
                     el.innerHTML = `
@@ -490,7 +517,7 @@
                         .setLngLat(cumbre.coords)
                         .addTo(map);
                         
-                    cumbreMarkers.push(marker); // Guardamos para poder borrarlos luego
+                    cumbreMarkers.push(marker);
                 });
             });
         }
