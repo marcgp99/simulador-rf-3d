@@ -681,7 +681,12 @@
                         let dist = turf.distance(turf.point(cand.coords), turf.point(dest.coords), {units: 'kilometers'});
                         if (dist > 7) continue; // Límite de propagación física visual para torres bajas
 
-                        if (cand.elev + txHeight > dest.elev) {
+                        // === AQUÍ ESTABA EL ERROR: Declarar explícitamente candAlt y destAlt antes de usarlas ===
+                        let candAlt = cand.elev + txHeight;
+                        let destAlt = dest.elev + 1; // Rx a 1 metro de altura
+                        // =========================================================================================
+
+                        if (candAlt > destAlt) {
                             
                             // 🏔️ MINI RAY-TRACING (Comprueba al 25%, 50% y 75% del trayecto)
                             let deltaZ = destAlt - candAlt;
@@ -982,6 +987,7 @@
                 if (usos >= LIMITE_USOS) return; 
             }
 
+            // REFACTORIZACIÓN PARA EL LOOP AUTOMÁTICO
             const lat = customLat !== null ? customLat : document.getElementById('lat').value;
             const lon = customLon !== null ? customLon : document.getElementById('lon').value;
             const txHeight = document.getElementById('tx_height').value;
