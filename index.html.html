@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ixorigue RF Simulator | Pro 3D</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css' rel='stylesheet' />
+    
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    
+    <style>
+        body { background-color: #0B1120; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        #map { height: 100%; width: 100%; border-radius: 0.75rem; z-index: 1; }
+        
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .toggle-checkbox:checked { right: 0; border-color: #10b981; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
+        
+        .glow-hover:hover { box-shadow: 0 0 20px rgba(57, 255, 20, 0.4); }
+
+        /* Contenedores para Pines HTML en Mapbox */
+        .mapboxgl-marker { cursor: pointer; }
+        .neon-orange-pin { filter: drop-shadow(0 0 5px rgba(255, 126, 0, 0.8)); }
+        
+        .cobertura-badge {
+            text-align: center;
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 800 !important;
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0px 4px 10px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+
+        /* Botón 3D Flotante en el Mapa */
+        #btn-3d {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 10;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #btn-3d:hover { background: #10b981; border-color: #34d399; }
+        #btn-3d.active { background: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.5); }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <div id="demo-banner" class="hidden w-full text-center py-2 text-xs font-semibold tracking-wide shadow-md z-20 relative bg-amber-500/10 text-amber-400 border-b border-amber-500/20 uppercase"></div>
+
+    <header class="bg-[#0B1120]/95 backdrop-blur border-b border-slate-800/80 py-4 px-6 flex items-center justify-between z-10 relative">
+        <div class="flex items-center gap-3">
+            <svg class="w-7 h-7 text-[#39FF14] drop-shadow-[0_0_8px_rgba(57,255,20,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.106-.53-.106a.75.75 0 01-.6-1.07l.6-.8a.75.75 0 011.2 0l.6.8a.75.75 0 01-.6 1.07z"></path></svg>
+            <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-500">
+                IXORIGUE RF Coverage Simulator <span class="text-slate-500 font-medium text-sm ml-1 uppercase tracking-widest">| Pro 3D</span>
+            </h1>
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col md:flex-row p-4 gap-4 h-full relative overflow-hidden">
+        
+        <aside class="glass-panel w-full md:w-[400px] rounded-xl p-5 flex flex-col z-10 relative overflow-hidden h-full">
+            
+            <div class="flex-shrink-0 flex flex-col gap-4">
+                
+                <div class="space-y-1.5 pb-4 border-b border-slate-700/50">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Perfil de Simulación</label>
+                    <select id="sim_profile" onchange="cambiarPerfil()" class="w-full px-4 py-2.5 bg-slate-900/80 border border-slate-600 hover:border-slate-500 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all cursor-pointer font-semibold">
+                        <option value="EU" selected>EU</option>
+                        <option value="LATAM">LATAM</option>
+                    </select>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Importar de Google Maps</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="gmaps_url" placeholder="URL larga de Google Maps..." class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all">
+                        <button onclick="extraerDeMaps()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Delimitar Zona (KML)</label>
+                    <input type="file" id="kml_upload" accept=".kml" class="hidden" onchange="cargarKML(event)">
+                    <label for="kml_upload" class="w-full bg-slate-900/50 hover:bg-slate-800 text-slate-300 hover:text-green-400 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center cursor-pointer border border-slate-600 border-dashed group">
+                        <svg class="w-4 h-4 mr-2 group-hover:text-green-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        Seleccionar polígono .kml
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mt-1">
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Latitud</label>
+                        <input type="number" id="lat" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Longitud</label>
+                        <input type="number" id="lon" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Land Cover (Bosques)</label>
+                        <select id="land_cover" class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 hover:border-slate-500 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all cursor-pointer font-semibold">
+                            <option value="1">ON</option>
+                            <option value="0" selected>OFF</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Altura Antena (m)</label>
+                        <input type="number" id="tx_height" value="3" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
+                    </div>
+                </div>
+
+                <button id="btnSimular" onclick="realizarSimulacion()" class="mt-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold py-3 px-4 rounded-lg glow-hover transition-all duration-300 flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Iniciar Simulación
+                </button>
+
+                <div id="loader" class="hidden flex-col items-center justify-center py-2">
+                    <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-green-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="text-[10px] text-green-400/80 font-bold animate-pulse uppercase tracking-widest">Procesando modelo ITM...</p>
+                </div>
+            </div>
+
+            <div id="historyArea" class="flex-1 flex flex-col min-h-0 border-t border-slate-700/50 pt-4 mt-4">
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex-shrink-0">Historial de Análisis</h3>
+                
+                <p id="emptyHistoryMsg" class="text-slate-500 text-sm italic text-center mt-2 flex-shrink-0">Ninguna simulación activa.</p>
+                
+                <div id="simulationList" class="flex-1 overflow-y-auto pr-2 flex flex-col gap-2.5">
+                </div>
+            </div>
+
+            <div id="admin-tools" class="flex-shrink-0 pt-4 mt-2 border-t border-slate-700/50">
+                <button onclick="descargarHtmlParaCliente()" class="w-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white font-medium py-2.5 px-4 rounded-lg border border-slate-600 transition-all text-sm flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                    Generar Acceso Cliente (2 Usos)
+                </button>
+            </div>
+
+        </aside>
+
+        <section class="flex-1 bg-slate-900 rounded-xl shadow-2xl relative h-full overflow-hidden border border-slate-800">
+            <button id="btn-3d" onclick="toggle3D()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Modo 3D
+            </button>
+            <div id="map"></div>
+        </section>
+        
+    </main>
+
+    <script>
+        // =======================================================================
+        // 🔒 CONFIGURACIÓN CORE
+        // =======================================================================
+        const PROXY_URL = "https://ixorigue.small-leaf-5935.workers.dev";
+        
+        // TU TOKEN DE MAPBOX DE LA CAPTURA
+        mapboxgl.accessToken = 'pk.eyJ1IjoibWFyY2dwdDk5IiwiYSI6ImNtVvZG16cTBtbXAyeHI5NzhpMG5nNwYifQ.RB5ytD7sDUCXdXMwTRMcVA';
+        
+        const EMBEDDED_DEMO_TOKEN = ""; 
+        const LIMITE_USOS = 2;
+        
+        let simulaciones = []; 
+        let simCounter = 1;
+
+        let geojsonKMLActual = null;
+        let etiquetaCoberturaActual = null; 
+        let inputMarker = null;
+        let cumbreMarker = null; 
+        
+        let is3D = false;
+
+        // Configuración Modo Demo
+        if (EMBEDDED_DEMO_TOKEN !== "") {
+            document.getElementById('admin-tools').style.display = 'none';
+            let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0');
+            actualizarBannerCliente(usos);
+        }
+
+        function cambiarPerfil() {
+            const perfil = document.getElementById('sim_profile').value;
+            const selectLandCover = document.getElementById('land_cover');
+            if (perfil === 'EU') selectLandCover.value = "0"; 
+            else selectLandCover.value = "1"; 
+        }
+
+        // =======================================================================
+        // 🗺️ INICIALIZACIÓN DE MAPBOX GL JS
+        // =======================================================================
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/satellite-v9', // Estilo Satélite Puro
+            center: [1.669, 42.025], // Mapbox usa [Longitud, Latitud] !Importante!
+            zoom: 13,
+            pitch: 0 // Empieza en 2D plano
+        });
+
+        // Controles de navegación nativos
+        map.addControl(new mapboxgl.NavigationControl(), 'top-left');
+
+        map.on('load', () => {
+            // Añadir la fuente de terreno (Elevación DEM) en secreto
+            map.addSource('mapbox-dem', {
+                'type': 'raster-dem',
+                'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+                'tileSize': 512,
+                'maxzoom': 14
+            });
+            // Habilitamos el terreno por defecto para poder calcular la cumbre, pero la cámara está a 0 grados.
+            map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.2 });
+        });
+
+        // Evento Click para mover la chincheta
+        map.on('click', (e) => {
+            const lng = e.lngLat.lng;
+            const lat = e.lngLat.lat;
+            colocarMarcador(lat, lng);
+        });
+
+        function colocarMarcador(lat, lng) {
+            document.getElementById('lat').value = parseFloat(lat).toFixed(6);
+            document.getElementById('lon').value = parseFloat(lng).toFixed(6);
+            
+            if(inputMarker) { inputMarker.remove(); }
+
+            // Creamos un HTML custom para el pin para mantener tu diseño
+            const el = document.createElement('div');
+            el.className = 'neon-orange-pin';
+            el.innerHTML = `
+                <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="16" cy="38" rx="8" ry="3" fill="black" fill-opacity="0.3"/>
+                    <path d="M16 1C7.71573 1 1 7.71573 1 16C1 26 16 41 16 41C16 41 31 26 31 16C31 7.71573 24.2843 1 16 1Z" fill="white"/>
+                    <path d="M16 3C8.8203 3 3 8.8203 3 16C3 24.7 16 38.3 16 38.3C16 38.3 29 24.7 29 16C29 8.8203 23.1797 3 16 3Z" fill="#ff7e00"/>
+                    <circle cx="16" cy="16" r="5" fill="white"/>
+                </svg>`;
+
+            // En Mapbox el ancla se define distinto
+            inputMarker = new mapboxgl.Marker(el, { anchor: 'bottom' })
+                .setLngLat([lng, lat])
+                .addTo(map);
+                
+            map.flyTo({ center: [lng, lat], essential: true });
+        }
+
+        // Animación Cinematográfica del botón 3D
+        function toggle3D() {
+            const btn = document.getElementById('btn-3d');
+            is3D = !is3D;
+            
+            if (is3D) {
+                btn.classList.add('active');
+                map.easeTo({ pitch: 65, bearing: map.getBearing() + 45, duration: 2000 });
+            } else {
+                btn.classList.remove('active');
+                map.easeTo({ pitch: 0, bearing: 0, duration: 2000 });
+            }
+        }
+
+        function extraerDeMaps() {
+            const url = document.getElementById('gmaps_url').value;
+            if (!url) return;
+            let match = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+            if (match) {
+                colocarMarcador(match[1], match[2]); // lat, lng
+                document.getElementById('gmaps_url').value = ''; 
+            } else {
+                alert("No se encontraron coordenadas en el enlace.");
+            }
+        }
+
+        // =======================================================================
+        // 📁 PROCESAMIENTO KML Y RECOMENDADOR DE CUMBRES (MAPBOX STYLE)
+        // =======================================================================
+        function cargarKML(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) { procesarKML(e.target.result); };
+            reader.readAsText(file);
+        }
+
+        function procesarKML(kmlText) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(kmlText, "text/xml");
+            
+            let coordinatesList = xmlDoc.getElementsByTagNameNS("*", "coordinates");
+            if (coordinatesList.length === 0) coordinatesList = xmlDoc.getElementsByTagName("coordinates");
+
+            if (coordinatesList.length === 0) return alert("No se encontraron coordenadas en este KML.");
+
+            // Limpiar KML anterior si existe
+            if (map.getSource('kml-source')) {
+                map.removeLayer('kml-fill');
+                map.removeLayer('kml-line');
+                map.removeSource('kml-source');
+            }
+            if (cumbreMarker) { cumbreMarker.remove(); cumbreMarker = null; }
+
+            let featuresKML = [];
+            let bounds = new mapboxgl.LngLatBounds();
+
+            for (let i = 0; i < coordinatesList.length; i++) {
+                const tuples = coordinatesList[i].textContent.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?(?:,-?\d+(?:\.\d+)?)?/g);
+                if (tuples && tuples.length > 2) {
+                    const turfCoords = [];
+                    tuples.forEach(tuple => {
+                        const parts = tuple.split(',');
+                        const lng = parseFloat(parts[0]); 
+                        const lat = parseFloat(parts[1]);
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            turfCoords.push([lng, lat]);
+                            bounds.extend([lng, lat]);
+                        }
+                    });
+
+                    // Cerrar el polígono si no está cerrado
+                    if (turfCoords[0][0] !== turfCoords[turfCoords.length-1][0] || turfCoords[0][1] !== turfCoords[turfCoords.length-1][1]) {
+                        turfCoords.push(turfCoords[0]);
+                    }
+                    featuresKML.push(turf.polygon([turfCoords]));
+                }
+            }
+
+            if (featuresKML.length > 0) {
+                geojsonKMLActual = featuresKML.length === 1 ? featuresKML[0] : turf.featureCollection(featuresKML);
+                
+                // Dibujar en Mapbox usando GeoJSON
+                map.addSource('kml-source', { type: 'geojson', data: geojsonKMLActual });
+                
+                // Capa de relleno (transparente)
+                map.addLayer({
+                    'id': 'kml-fill',
+                    'type': 'fill',
+                    'source': 'kml-source',
+                    'paint': { 'fill-color': '#ec4899', 'fill-opacity': 0.1 }
+                });
+                
+                // Capa de línea punteada
+                map.addLayer({
+                    'id': 'kml-line',
+                    'type': 'line',
+                    'source': 'kml-source',
+                    'paint': { 'line-color': '#ec4899', 'line-width': 3, 'line-dasharray': [2, 2] }
+                });
+
+                map.fitBounds(bounds, { padding: 50, duration: 1500 });
+                actualizarInterfazGlobal(); 
+                
+                // Lanza el buscador de cumbres
+                buscarCumbreOptima();
+
+            } else {
+                alert("No se pudo extraer el polígono.");
+                geojsonKMLActual = null;
+            }
+            document.getElementById('kml_upload').value = ''; 
+        }
+
+        // 🏔️ ALGORITMO: El Buscador de Cumbres (Killer Feature)
+        function buscarCumbreOptima() {
+            if (!geojsonKMLActual) return;
+            
+            // Creamos una malla interna usando Turf
+            const areaKm2 = turf.area(geojsonKMLActual) / 1000000;
+            let spacing = Math.sqrt(areaKm2 / 1000); // 1000 puntos de análisis
+            if (spacing < 0.05) spacing = 0.05;
+            
+            const grid = turf.pointGrid(turf.bbox(geojsonKMLActual), spacing, {units: 'kilometers'});
+            
+            let maxHeight = -9999;
+            let bestPoint = null;
+
+            turf.featureEach(grid, function (pt) {
+                // Comprobamos si el punto cae dentro del polígono
+                let isInside = false;
+                if (geojsonKMLActual.type === 'FeatureCollection') {
+                    for (let f of geojsonKMLActual.features) {
+                        if (turf.booleanPointInPolygon(pt, f)) { isInside = true; break; }
+                    }
+                } else {
+                    isInside = turf.booleanPointInPolygon(pt, geojsonKMLActual);
+                }
+
+                if (isInside) {
+                    const coords = pt.geometry.coordinates;
+                    // Interrogamos a la GPU de Mapbox sobre la altitud en ese punto
+                    const elevation = map.queryTerrainElevation(coords);
+                    if (elevation !== null && elevation > maxHeight) {
+                        maxHeight = elevation;
+                        bestPoint = coords;
+                    }
+                }
+            });
+
+            if (bestPoint && maxHeight > -9999) {
+                const el = document.createElement('div');
+                el.className = 'cobertura-badge text-emerald-400';
+                el.innerHTML = `
+                    <svg class="w-6 h-6 mx-auto drop-shadow-md text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
+                    <div class="text-[12px] bg-slate-900/80 px-2 py-0.5 rounded border border-emerald-500/50 mt-1">Cumbre: ${Math.round(maxHeight)}m</div>
+                `;
+                
+                cumbreMarker = new mapboxgl.Marker(el, { anchor: 'bottom' })
+                    .setLngLat(bestPoint)
+                    .addTo(map);
+            }
+        }
+
+        // =======================================================================
+        // 📡 MOTORES DE ESCANEO (Matemática pura, funciona igual que en Leaflet)
+        // =======================================================================
+        function puntoCaeEnKML(pt) {
+            if (!geojsonKMLActual) return false;
+            if (geojsonKMLActual.type === 'FeatureCollection') {
+                for (let i = 0; i < geojsonKMLActual.features.length; i++) {
+                    if (turf.booleanPointInPolygon(pt, geojsonKMLActual.features[i])) return true;
+                }
+                return false;
+            }
+            return turf.booleanPointInPolygon(pt, geojsonKMLActual);
+        }
+
+        function obtenerMallaDinamica() {
+            const areaKm2 = turf.area(geojsonKMLActual) / 1000000;
+            let gridSpacing = Math.sqrt(areaKm2 / 3000); 
+            if (gridSpacing < 0.03) gridSpacing = 0.03;  
+            if (gridSpacing > 0.5) gridSpacing = 0.5;    
+            return turf.pointGrid(turf.bbox(geojsonKMLActual), gridSpacing, {units: 'kilometers'});
+        }
+
+        function calcularPorcentajeLocal(boundsSimulacion, imageUrl) {
+            return new Promise((resolve) => {
+                if (!geojsonKMLActual || !boundsSimulacion) return resolve(null);
+
+                const img = new Image();
+                img.crossOrigin = "Anonymous"; 
+                img.src = imageUrl;
+
+                img.onload = function() {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width; canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+
+                        // Los bounds de CloudRF vienen en [N, E, S, W]
+                        const n = boundsSimulacion[0], e = boundsSimulacion[1], s = boundsSimulacion[2], w = boundsSimulacion[3];
+
+                        const grid = obtenerMallaDinamica();
+                        let puntosFinca = 0;
+                        let puntosConSenal = 0;
+
+                        turf.featureEach(grid, function (pt) {
+                            if (puntoCaeEnKML(pt)) {
+                                puntosFinca++;
+                                const ptLon = pt.geometry.coordinates[0];
+                                const ptLat = pt.geometry.coordinates[1];
+
+                                if (ptLat >= s && ptLat <= n && ptLon >= w && ptLon <= e) {
+                                    const pctX = (ptLon - w) / (e - w);
+                                    const pctY = (n - ptLat) / (n - s); 
+                                    const pixelX = Math.floor(pctX * img.width);
+                                    const pixelY = Math.floor(pctY * img.height);
+
+                                    if (pixelX >= 0 && pixelX < img.width && pixelY >= 0 && pixelY < img.height) {
+                                        if (ctx.getImageData(pixelX, pixelY, 1, 1).data[3] > 10) puntosConSenal++;
+                                    }
+                                }
+                            }
+                        });
+
+                        if (puntosFinca === 0) return resolve(0);
+                        resolve(parseFloat(((puntosConSenal / puntosFinca) * 100).toFixed(1)));
+                    } catch (err) { resolve(null); }
+                };
+                img.onerror = () => resolve(null);
+            });
+        }
+
+        async function calcularPorcentajeGlobal() {
+            if (!geojsonKMLActual || simulaciones.length === 0) return null;
+
+            const activas = simulaciones.filter(s => s.visible && s.imageUrl && s.boundsCloudRF);
+            if (activas.length === 0) return 0;
+
+            const canvases = await Promise.all(activas.map(sim => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous";
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width; canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        resolve({ ctx, imgWidth: img.width, imgHeight: img.height, bounds: sim.boundsCloudRF });
+                    };
+                    img.onerror = () => resolve(null);
+                    img.src = sim.imageUrl;
+                });
+            }));
+
+            const validCanvases = canvases.filter(c => c !== null);
+            if(validCanvases.length === 0) return 0;
+
+            const grid = obtenerMallaDinamica();
+            let puntosFinca = 0;
+            let puntosCubiertos = 0;
+
+            turf.featureEach(grid, function (pt) {
+                if (puntoCaeEnKML(pt)) {
+                    puntosFinca++;
+                    const ptLon = pt.geometry.coordinates[0];
+                    const ptLat = pt.geometry.coordinates[1];
+                    let cubierto = false;
+
+                    for (let c of validCanvases) {
+                        const n = c.bounds[0], e = c.bounds[1], s = c.bounds[2], w = c.bounds[3];
+
+                        if (ptLat >= s && ptLat <= n && ptLon >= w && ptLon <= e) {
+                            const pctX = (ptLon - w) / (e - w);
+                            const pctY = (n - ptLat) / (n - s); 
+                            const pixelX = Math.floor(pctX * c.imgWidth);
+                            const pixelY = Math.floor(pctY * c.imgHeight);
+
+                            if (pixelX >= 0 && pixelX < c.imgWidth && pixelY >= 0 && pixelY < c.imgHeight) {
+                                if (c.ctx.getImageData(pixelX, pixelY, 1, 1).data[3] > 10) {
+                                    cubierto = true; break; 
+                                }
+                            }
+                        }
+                    }
+                    if (cubierto) puntosCubiertos++;
+                }
+            });
+
+            if (puntosFinca === 0) return 0;
+            return parseFloat(((puntosCubiertos / puntosFinca) * 100).toFixed(1));
+        }
+
+        async function actualizarInterfazGlobal() {
+            if (!geojsonKMLActual) {
+                if (etiquetaCoberturaActual) { etiquetaCoberturaActual.remove(); etiquetaCoberturaActual = null; }
+                renderizarHistorial(null);
+                return;
+            }
+
+            const globalPct = await calcularPorcentajeGlobal();
+            if (etiquetaCoberturaActual) { etiquetaCoberturaActual.remove(); }
+
+            if (globalPct !== null) {
+                const centroTurf = turf.center(geojsonKMLActual);
+                const coordsCentro = [centroTurf.geometry.coordinates[0], centroTurf.geometry.coordinates[1]]; // [lng, lat]
+
+                const el = document.createElement('div');
+                el.className = 'cobertura-badge';
+                el.innerHTML = `<div style="color:#ef4444; font-size:17px;">Global: ${globalPct}%</div>`;
+
+                etiquetaCoberturaActual = new mapboxgl.Marker(el, { anchor: 'center' })
+                    .setLngLat(coordsCentro)
+                    .addTo(map);
+            }
+            
+            renderizarHistorial(globalPct);
+        }
+
+        function renderizarHistorial(globalPct = null) {
+            const lista = document.getElementById('simulationList');
+            const msg = document.getElementById('emptyHistoryMsg');
+            
+            if (msg) msg.style.display = simulaciones.length > 0 ? 'none' : 'block';
+            lista.innerHTML = '';
+            
+            [...simulaciones].reverse().forEach(sim => {
+                const checkedStr = sim.visible ? 'checked' : '';
+                
+                let statsHtml = '';
+                if (sim.coberturaLocal !== null && sim.coberturaLocal !== undefined) {
+                    statsHtml += `<span class="text-[#ff7e00] font-bold">Loc: ${sim.coberturaLocal}%</span>`;
+                }
+                if (globalPct !== null && sim.visible) {
+                    if (statsHtml !== '') statsHtml += `<span class="text-slate-500 mx-1.5">|</span>`;
+                    statsHtml += `<span class="text-red-500 font-bold">Glb: ${globalPct}%</span>`;
+                }
+                if (statsHtml === '') statsHtml = `<span class="text-slate-400 font-medium">Análisis de espectro listo</span>`;
+                
+                const itemHtml = `
+                <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700 shadow-sm flex items-center justify-between gap-3 group hover:border-slate-600 transition-colors">
+                    <div class="relative inline-block w-9 mr-1 align-middle select-none flex-shrink-0">
+                        <input type="checkbox" id="toggle_${sim.id}" onchange="toggleCapa(${sim.id}, this.checked)" ${checkedStr} class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-slate-200 border-2 border-slate-600 appearance-none cursor-pointer transition-all duration-300 z-10 top-0.5 left-0.5"/>
+                        <label for="toggle_${sim.id}" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-700 cursor-pointer transition-colors duration-300"></label>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-slate-200 truncate" title="${sim.name}">${sim.name}</p>
+                        <div class="text-[11px] mt-0.5">${statsHtml}</div>
+                    </div>
+                    <a href="${sim.kmz}" target="_blank" title="Descargar KMZ" class="bg-slate-700 hover:bg-green-600 text-slate-300 hover:text-white p-2 rounded-md transition-colors flex-shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </a>
+                </div>`;
+                lista.insertAdjacentHTML('beforeend', itemHtml);
+            });
+        }
+
+        async function toggleCapa(id, isVisible) {
+            const sim = simulaciones.find(s => s.id === id);
+            if (sim) {
+                sim.visible = isVisible;
+                if (isVisible) {
+                    map.setLayoutProperty(`sim-layer-${id}`, 'visibility', 'visible');
+                    if(sim.labelMarker) sim.labelMarker.addTo(map);
+                } else {
+                    map.setLayoutProperty(`sim-layer-${id}`, 'visibility', 'none');
+                    if(sim.labelMarker) sim.labelMarker.remove();
+                }
+                
+                document.getElementById('loader').classList.remove('hidden');
+                await actualizarInterfazGlobal(); 
+                document.getElementById('loader').classList.add('hidden');
+            }
+        }
+        
+        async function realizarSimulacion() {
+            if (EMBEDDED_DEMO_TOKEN !== "") {
+                let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0');
+                if (usos >= LIMITE_USOS) return; 
+            }
+
+            const lat = document.getElementById('lat').value;
+            const lon = document.getElementById('lon').value;
+            const txHeight = document.getElementById('tx_height').value;
+            const perfilActivo = document.getElementById('sim_profile').value;
+            const landCover = parseInt(document.getElementById('land_cover').value);
+
+            if (!lat || !lon) return alert("Faltan coordenadas. Haz clic en el mapa.");
+
+            document.getElementById('btnSimular').classList.add('hidden');
+            document.getElementById('loader').classList.remove('hidden');
+
+            try {
+                let payload = {};
+
+                if (perfilActivo === 'EU') {
+                    payload = {
+                        site: "Simulador EU", network: "Demo",
+                        transmitter: { lat: parseFloat(lat), lon: parseFloat(lon), alt: parseFloat(txHeight), frq: 868, txw: 0.025, bwi: 0.1 },
+                        receiver: { alt: 1, rxg: 1, rxs: -120 },
+                        antenna: { txg: 4.3, txl: 1.14, ant: 1, pol: "v" },
+                        model: { pm: 1, pe: 3, cli: 1, rel: 80, ked: 1 },
+                        environment: { ele: 1, cll: landCover, clb: 0 },
+                        output: { res: 10, rad: 10, fmt: "kmz", out: 2, col: "LORA.dBm" }
+                    };
+                } else {
+                    payload = {
+                        site: "Simulador LATAM", network: "Demo",
+                        transmitter: { lat: parseFloat(lat), lon: parseFloat(lon), alt: parseFloat(txHeight), frq: 915, txw: 0.025, bwi: 0.1 },
+                        receiver: { alt: 1, rxg: 1, rxs: -120 },
+                        antenna: { txg: 4.3, txl: 1.14, ant: 1, pol: "v" },
+                        model: { pm: 1, pe: 3, cli: 1, rel: 80, ked: 1 },
+                        environment: { ele: 1, cll: landCover, clb: 0 },
+                        output: { res: 10, rad: 8, fmt: "kmz", out: 2, col: "LORA.dBm" }
+                    };
+                }
+
+                const response = await fetch(PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.kmz) {
+                    
+                    if (EMBEDDED_DEMO_TOKEN !== "") {
+                        let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0');
+                        usos++;
+                        localStorage.setItem('uso_demo_' + EMBEDDED_DEMO_TOKEN, usos);
+                        actualizarBannerCliente(usos);
+                    }
+
+                    // Creación del Pin de Antena en Mapbox
+                    const pinEl = document.createElement('div');
+                    pinEl.className = 'neon-orange-pin';
+                    pinEl.innerHTML = `
+                        <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <ellipse cx="16" cy="38" rx="8" ry="3" fill="black" fill-opacity="0.3"/>
+                            <path d="M16 1C7.71573 1 1 7.71573 1 16C1 26 16 41 16 41C16 41 31 26 31 16C31 7.71573 24.2843 1 16 1Z" fill="white"/>
+                            <path d="M16 3C8.8203 3 3 8.8203 3 16C3 24.7 16 38.3 16 38.3C16 38.3 29 24.7 29 16C29 8.8203 23.1797 3 16 3Z" fill="#ff7e00"/>
+                            <circle cx="16" cy="16" r="5" fill="white"/>
+                        </svg>`;
+                    
+                    const marker = new mapboxgl.Marker(pinEl, { anchor: 'bottom' })
+                        .setLngLat([parseFloat(lon), parseFloat(lat)])
+                        .addTo(map);
+
+                    let imageUrl = data.PNG_WGS84 || data.png || data.PNG_Mercator;
+                    let boundsCloudRF = data.bounds; // Usualmente [n, e, s, w]
+
+                    // Añadir la imagen al mapa Mapbox (Raster Overlay)
+                    const sourceId = `sim-source-${simCounter}`;
+                    if (imageUrl && boundsCloudRF) {
+                        const n = boundsCloudRF[0], e = boundsCloudRF[1], s = boundsCloudRF[2], w = boundsCloudRF[3];
+                        
+                        map.addSource(sourceId, {
+                            'type': 'image',
+                            'url': imageUrl,
+                            'coordinates': [
+                                [w, n], // Top left
+                                [e, n], // Top right
+                                [e, s], // Bottom right
+                                [w, s]  // Bottom left
+                            ]
+                        });
+                        
+                        map.addLayer({
+                            'id': `sim-layer-${simCounter}`,
+                            'type': 'raster',
+                            'source': sourceId,
+                            'paint': { 'raster-opacity': 0.65 }
+                        });
+                    }
+
+                    if(inputMarker) { inputMarker.remove(); inputMarker = null; }
+
+                    let porcentajeLocal = null;
+                    if (geojsonKMLActual && boundsCloudRF && imageUrl) {
+                        porcentajeLocal = await calcularPorcentajeLocal(boundsCloudRF, imageUrl);
+                    }
+
+                    // Etiqueta flotante con el porcentaje local
+                    const labelEl = document.createElement('div');
+                    labelEl.className = 'cobertura-badge';
+                    let tooltipHtml = `<div style="color:white; font-size:15px; margin-bottom:1px;">Punto ${simCounter}</div>`;
+                    if (porcentajeLocal !== null) {
+                        tooltipHtml += `<div style="color:#ff7e00; font-size:14px;">Local: ${porcentajeLocal}%</div>`;
+                    }
+                    labelEl.innerHTML = tooltipHtml;
+                    
+                    const labelMarker = new mapboxgl.Marker(labelEl, { anchor: 'bottom', offset: [0, -45] })
+                        .setLngLat([parseFloat(lon), parseFloat(lat)])
+                        .addTo(map);
+
+                    simulaciones.push({
+                        id: simCounter,
+                        name: `Punto ${simCounter}`,
+                        freq: perfilActivo === 'EU' ? 868 : 915,
+                        alt: txHeight,
+                        kmz: data.kmz,
+                        visible: true,
+                        coberturaLocal: porcentajeLocal, 
+                        imageUrl: imageUrl,              
+                        boundsCloudRF: boundsCloudRF,
+                        labelMarker: labelMarker
+                    });
+                    
+                    simCounter++;
+                    
+                    await actualizarInterfazGlobal();
+
+                } else {
+                    alert("Error en la simulación.");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error de conexión. Revisa que tu Worker de Cloudflare esté desplegado.");
+            } finally {
+                document.getElementById('btnSimular').classList.remove('hidden');
+                document.getElementById('loader').classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
