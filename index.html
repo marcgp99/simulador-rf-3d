@@ -11,6 +11,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- NUEVO MOTOR GRÁFICO: MAPBOX GL JS -->
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css' rel='stylesheet' />
     
@@ -41,6 +42,7 @@
         .mapboxgl-marker { cursor: pointer; z-index: 20; }
         .neon-orange-pin { filter: drop-shadow(0 0 5px rgba(255, 126, 0, 0.8)); }
         
+        /* PIN DE COBERTURA GLOBAL (El rojo del centro de la parcela) */
         .cobertura-badge {
             text-align: center;
             font-family: 'Inter', sans-serif !important;
@@ -49,6 +51,76 @@
             pointer-events: none;
         }
 
+        /* ====================================================
+           NUEVOS PINES TOPOGRÁFICOS (ESTILO TELECOM PROFESIONAL)
+           ==================================================== */
+        .site-marker-container { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            pointer-events: none; 
+            transform: translateY(5px); 
+        }
+        .site-label { 
+            background: rgba(15, 23, 42, 0.9); 
+            border: 1px solid rgba(255,255,255,0.08); 
+            border-left: 3px solid; 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); 
+            margin-bottom: 2px; 
+            backdrop-filter: blur(8px); 
+        }
+        .site-title { 
+            font-size: 8.5px; 
+            font-weight: 800; 
+            letter-spacing: 0.05em; 
+            margin-bottom: 2px; 
+        }
+        .site-elev { 
+            font-size: 15px; 
+            font-weight: 700; 
+            color: #f8fafc; 
+            display: flex; 
+            align-items: baseline; 
+            gap: 4px;
+        }
+        .site-pin { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        .pin-line { 
+            width: 1.5px; 
+            height: 35px; 
+            opacity: 0.75; 
+        }
+        .pin-dot { 
+            width: 9px; 
+            height: 9px; 
+            border-radius: 50%; 
+            border: 1.5px solid #0B1120; 
+            box-shadow: 0 0 12px currentColor; 
+        }
+        
+        /* Variantes de Color por Ranking */
+        .site-primary .site-label { border-left-color: #39FF14; }
+        .site-primary .site-title { color: #39FF14; }
+        .site-primary .pin-line { background: linear-gradient(to bottom, #39FF14, transparent); }
+        .site-primary .pin-dot { background: #39FF14; color: #39FF14; }
+
+        .site-secondary .site-label { border-left-color: #0ea5e9; }
+        .site-secondary .site-title { color: #0ea5e9; }
+        .site-secondary .pin-line { background: linear-gradient(to bottom, #0ea5e9, transparent); }
+        .site-secondary .pin-dot { background: #0ea5e9; color: #0ea5e9; }
+
+        .site-tertiary .site-label { border-left-color: #f59e0b; }
+        .site-tertiary .site-title { color: #f59e0b; }
+        .site-tertiary .pin-line { background: linear-gradient(to bottom, #f59e0b, transparent); }
+        .site-tertiary .pin-dot { background: #f59e0b; color: #f59e0b; }
+        /* ==================================================== */
+
+        /* Botón 3D Flotante */
         #btn-3d {
             position: absolute;
             top: 15px;
@@ -177,6 +249,7 @@
         </aside>
 
         <section class="flex-1 bg-slate-900 rounded-xl shadow-2xl relative h-full overflow-hidden border border-slate-800">
+            <!-- BOTÓN 3D MAPBOX -->
             <button id="btn-3d" onclick="toggle3D()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Modo 3D
@@ -409,29 +482,25 @@
             document.getElementById('kml_upload').value = ''; 
         }
 
-        // 🧠 EL CEREBRO: ALGORITMO DE DISTRIBUCIÓN ESPACIAL PONDERADA
+        // 🧠 EL CEREBRO: ALGORITMO DE DISTRIBUCIÓN ESPACIAL PONDERADA CON HUD PROFESIONAL
         function buscarCumbresInteligente() {
             if (!geojsonKMLActual) return;
             
-            // 1. Extraemos las parcelas independientes ("Flatten" de multipolígonos)
-            // Asegura que en la multi-parcela evalúe cada trozo de tierra por separado
             let parcelas = geojsonKMLActual.type === 'FeatureCollection' ? turf.flatten(geojsonKMLActual).features : [geojsonKMLActual];
             
             parcelas.forEach((parcela) => {
                 const areaKm2 = turf.area(parcela) / 1000000;
                 
-                // Si la parcela es muy pequeña, solo buscaremos 1 cumbre. Si es grande, hasta 3.
                 const maxCumbres = areaKm2 < 0.05 ? 1 : (areaKm2 < 0.2 ? 2 : 3);
                 
                 let spacing = Math.sqrt(areaKm2 / 1000); 
-                if (spacing < 0.03) spacing = 0.03; // Mayor resolución para no perder lomas
+                if (spacing < 0.03) spacing = 0.03; 
                 
                 const grid = turf.pointGrid(turf.bbox(parcela), spacing, {units: 'kilometers'});
                 let puntosValidos = [];
                 let minElev = 99999;
                 let maxElev = -99999;
 
-                // 2. Extraer altitud de Mapbox de todos los puntos de ESTA parcela
                 turf.featureEach(grid, function (pt) {
                     if (turf.booleanPointInPolygon(pt, parcela)) {
                         const coords = pt.geometry.coordinates;
@@ -448,24 +517,20 @@
 
                 let cumbresElegidas = [];
 
-                // 🏔️ Cumbre 1: El punto óptimo absoluto
                 let pt1 = puntosValidos.reduce((max, pt) => pt.elevation > max.elevation ? pt : max, puntosValidos[0]);
                 cumbresElegidas.push(pt1);
 
                 let elevRange = maxElev - minElev;
                 if (elevRange === 0) elevRange = 1;
 
-                // 🏔️ Cumbre 2: Matemática de Ponderación (Altura + Lejanía a Cumbre 1)
                 if (puntosValidos.length > 10 && maxCumbres >= 2) {
                     let bestScore = -1;
                     let pt2 = null;
                     for (let pt of puntosValidos) {
-                        let normElev = (pt.elevation - minElev) / elevRange; // Normaliza la altura de 0 a 1
+                        let normElev = (pt.elevation - minElev) / elevRange; 
                         let distToP1 = turf.distance(pt.turfPt, cumbresElegidas[0].turfPt, {units: 'kilometers'});
 
-                        // Exigimos separación de al menos 150m (0.15 km) para considerar que es "otro" cerro
                         if (distToP1 > 0.15) {
-                            // Puntuación: 70% importa la altura, 30% importa aislarse del pico 1
                             let score = (normElev * 0.7) + (distToP1 * 0.3);
                             if (score > bestScore) {
                                 bestScore = score;
@@ -476,7 +541,6 @@
                     if (pt2) cumbresElegidas.push(pt2);
                 }
 
-                // 🏔️ Cumbre 3: Ponderación (Altura + Lejanía a las Cumbres 1 y 2)
                 if (puntosValidos.length > 20 && maxCumbres >= 3 && cumbresElegidas.length === 2) {
                     let bestScore = -1;
                     let pt3 = null;
@@ -485,7 +549,6 @@
                         let distToP1 = turf.distance(pt.turfPt, cumbresElegidas[0].turfPt, {units: 'kilometers'});
                         let distToP2 = turf.distance(pt.turfPt, cumbresElegidas[1].turfPt, {units: 'kilometers'});
                         
-                        // Miramos qué tan lejos está del pico MÁS CERCANO a él
                         let minDist = Math.min(distToP1, distToP2);
 
                         if (minDist > 0.15) { 
@@ -499,18 +562,23 @@
                     if (pt3) cumbresElegidas.push(pt3);
                 }
 
-                // 3. Pintar en el mapa
+                // 3. Pintar en el mapa (HUDs de Telecomunicaciones)
                 cumbresElegidas.forEach((cumbre, index) => {
                     const el = document.createElement('div');
-                    let iconColor = index === 0 ? 'text-emerald-400' : (index === 1 ? 'text-amber-400' : 'text-blue-400');
-                    let borderColor = index === 0 ? 'border-emerald-500/50' : (index === 1 ? 'border-amber-500/50' : 'border-blue-500/50');
-                    let rankText = index === 0 ? 'Óptimo' : `Alt. ${index+1}`;
-                    let bounce = index === 0 ? 'animate-bounce' : '';
+                    
+                    let rankClass = index === 0 ? 'site-primary' : (index === 1 ? 'site-secondary' : 'site-tertiary');
+                    let rankText = index === 0 ? 'NODO PRINCIPAL' : (index === 1 ? 'NODO SECUNDARIO' : 'NODO TERCIARIO');
 
-                    el.className = `cobertura-badge ${iconColor}`;
+                    el.className = `site-marker-container ${rankClass}`;
                     el.innerHTML = `
-                        <svg class="w-6 h-6 mx-auto drop-shadow-md ${iconColor} ${bounce}" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
-                        <div class="text-[11px] font-bold bg-slate-900/90 px-2 py-0.5 rounded border ${borderColor} mt-0.5 shadow-lg backdrop-blur" style="white-space:nowrap;">🏔️ ${rankText}: ${Math.round(cumbre.elevation)}m</div>
+                        <div class="site-label">
+                            <div class="site-title">${rankText}</div>
+                            <div class="site-elev">${Math.round(cumbre.elevation)} <span class="text-[9px] text-slate-400 font-normal ml-0.5">AMSL</span></div>
+                        </div>
+                        <div class="site-pin">
+                            <div class="pin-line"></div>
+                            <div class="pin-dot"></div>
+                        </div>
                     `;
                     
                     let marker = new mapboxgl.Marker(el, { anchor: 'bottom' })
