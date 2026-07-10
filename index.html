@@ -192,10 +192,10 @@
                 </div>
 
                 <div class="space-y-1.5 pt-3 border-t border-slate-700/50">
-                    <label class="block text-[10px] font-bold text-purple-400 uppercase tracking-widest">Distribución de Red Automática</label>
+                    <label class="block text-[10px] font-bold text-purple-400 uppercase tracking-widest">Antenas Contratadas</label>
                     <div class="grid grid-cols-3 gap-2 items-center">
                         <div class="col-span-2">
-                            <input type="number" id="num_antenas" min="1" max="5" value="2" class="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 focus:outline-none transition-all font-mono" placeholder="Nº Antenas">
+                            <input type="number" id="num_antenas" min="1" max="10" value="2" class="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 focus:outline-none transition-all font-mono" placeholder="Nº Antenas">
                         </div>
                         <button onclick="calcularUbicacionesOptimas()" class="col-span-1 bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center h-full">
                             Calcular
@@ -599,8 +599,18 @@
 
             descartarPropuesta(); // Limpiar residuos anteriores
 
-            // 1. Crear el halo exterior (Buffer de 500 metros = 0.5 km)
-            const buffer500m = turf.buffer(geojsonKMLActual, 0.5, {units: 'kilometers'});
+            // 1. Crear el halo exterior (Buffer de 500 metros = 0.5 km) - AHORA ROBUSTO PARA MULTI-KML
+            let areaBusqueda;
+            if (geojsonKMLActual.type === 'FeatureCollection') {
+                let buffers = [];
+                turf.featureEach(geojsonKMLActual, function(currentFeature) {
+                    try { buffers.push(turf.buffer(currentFeature, 0.5, {units: 'kilometers'})); } catch(e){}
+                });
+                areaBusqueda = buffers.length > 0 ? turf.featureCollection(buffers) : geojsonKMLActual;
+            } else {
+                try { areaBusqueda = turf.buffer(geojsonKMLActual, 0.5, {units: 'kilometers'}); }
+                catch(e) { areaBusqueda = geojsonKMLActual; }
+            }
 
             // 2. Generar Malla de Destinos (Puntos de control dentro de la parcela)
             const areaFincaKm2 = turf.area(geojsonKMLActual) / 1000000;
@@ -619,27 +629,40 @@
             if (puntosDestino.length === 0) return alert("Error de texturas 3D. Mueve un poco el mapa y vuelve a intentarlo.");
 
             // 3. Generar Malla de Candidatos (Finca + Halo exterior de 500m)
-            let spacingCandidatos = Math.sqrt(turf.area(buffer500m) / 1000000 / 500); 
+            let boxTotal = turf.bboxPolygon(turf.bbox(areaBusqueda));
+            let areaBox = turf.area(boxTotal) / 1000000;
+            let spacingCandidatos = Math.sqrt(areaBox / 400); 
             if (spacingCandidatos < 0.035) spacingCandidatos = 0.035;
-            const gridCandidatos = turf.pointGrid(turf.bbox(buffer500m), spacingCandidatos, {units: 'kilometers'});
+            if (spacingCandidatos > 0.5) spacingCandidatos = 0.5;
+            
+            const gridCandidatos = turf.pointGrid(turf.bbox(areaBusqueda), spacingCandidatos, {units: 'kilometers'});
             
             let candidatos = [];
             turf.featureEach(gridCandidatos, function(pt) {
                 let esInterno = puntoCaeEnKML(pt);
-                let esExterno = turf.booleanPointInPolygon(pt, buffer500m);
+                // Si la malla principal no era válida por complejidad de polígono, caemos a comprobación manual
+                let esExterno = false;
+                if(areaBusqueda.type === 'FeatureCollection') {
+                    turf.featureEach(areaBusqueda, function(feat) {
+                        if(turf.booleanPointInPolygon(pt, feat)) esExterno = true;
+                    });
+                } else {
+                    esExterno = turf.booleanPointInPolygon(pt, areaBusqueda);
+                }
+
                 if (esInterno || esExterno) {
                     const coords = pt.geometry.coordinates;
                     const elev = map.queryTerrainElevation(coords);
                     if (elev !== null) {
                         candidatos.push({
                             coords: coords, elev: elev, esInterno: esInterno,
-                            peso: esInterno ? 1.0 : 0.65 // 🔥 35% DE CASTIGO POR IRSE FUERA DE LA PARCELA
+                            peso: esInterno ? 1.0 : 0.85 // 🔥 NUEVO CASTIGO REDUCIDO AL 15%
                         });
                     }
                 }
             });
 
-            // 4. Algoritmo Greedy + Filtro de Oclusión de Punto Medio
+            // 4. Algoritmo Greedy + Filtro de Oclusión Ray Tracing
             const txHeight = parseFloat(document.getElementById('tx_height').value) || 3;
             let propuestas = [];
 
@@ -659,17 +682,28 @@
                         if (dist > 7) continue; // Límite de propagación física visual para torres bajas
 
                         if (cand.elev + txHeight > dest.elev) {
-                            // 🏔️ Test de punto medio: Evalúa si hay una loma bloqueando la línea de vista
-                            let midLon = (cand.coords[0] + dest.coords[0]) / 2;
-                            let midLat = (cand.coords[1] + dest.coords[1]) / 2;
-                            let midElev = map.queryTerrainElevation([midLon, midLat]);
-
-                            if (midElev !== null && midElev > (cand.elev + txHeight) && midElev > dest.elev) {
-                                continue; // Obstáculo detectado, descartado
+                            
+                            // 🏔️ MINI RAY-TRACING (Comprueba al 25%, 50% y 75% del trayecto)
+                            let deltaZ = destAlt - candAlt;
+                            let bloqueado = false;
+                            
+                            for(let i=1; i<=3; i++) {
+                                let f = i / 4.0;
+                                let checkLon = cand.coords[0] + (dest.coords[0] - cand.coords[0]) * f;
+                                let checkLat = cand.coords[1] + (dest.coords[1] - cand.coords[1]) * f;
+                                let checkElev = map.queryTerrainElevation([checkLon, checkLat]);
+                                let expectedZ = candAlt + (deltaZ * f);
+                                
+                                if (checkElev !== null && checkElev > expectedZ) {
+                                    bloqueado = true;
+                                    break;
+                                }
                             }
 
-                            coberturaCount++;
-                            puntosCubiertosPorCand.push(dest);
+                            if (!bloqueado) {
+                                coberturaCount++;
+                                puntosCubiertosPorCand.push(dest);
+                            }
                         }
                     }
 
@@ -678,6 +712,24 @@
                         maxPuntuacion = score;
                         mejorCandidato = cand;
                         puntosParaMarcar = puntosCubiertosPorCand;
+                    }
+                }
+
+                // 🔥 FALLBACK INTELIGENTE (Soluciona el problema de pedir 5 y que solo devuelva 1)
+                if (!mejorCandidato || maxPuntuacion <= 0) {
+                    candidatos.sort((a, b) => b.elev - a.elev); 
+                    for (let c of candidatos) {
+                        let muyCerca = false;
+                        for (let p of propuestas) {
+                            if (turf.distance(turf.point(c.coords), turf.point(p.coords), {units: 'kilometers'}) < 0.4) {
+                                muyCerca = true;
+                                break; 
+                            }
+                        }
+                        if (!muyCerca) {
+                            mejorCandidato = c;
+                            break;
+                        }
                     }
                 }
 
@@ -853,7 +905,8 @@
         async function actualizarInterfazGlobal() {
             if (!geojsonKMLActual) {
                 if (etiquetaCoberturaActual) { etiquetaCoberturaActual.remove(); etiquetaCoberturaActual = null; }
-                renderizarHistorial(null); return;
+                renderizarHistorial(null);
+                return;
             }
 
             const globalPct = await calcularPorcentajeGlobal();
@@ -929,7 +982,6 @@
                 if (usos >= LIMITE_USOS) return; 
             }
 
-            // REFACTORIZACIÓN PARA EL LOOP AUTOMÁTICO
             const lat = customLat !== null ? customLat : document.getElementById('lat').value;
             const lon = customLon !== null ? customLon : document.getElementById('lon').value;
             const txHeight = document.getElementById('tx_height').value;
