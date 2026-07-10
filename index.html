@@ -39,7 +39,7 @@
         .glow-hover:hover { box-shadow: 0 0 20px rgba(57, 255, 20, 0.4); }
 
         /* Contenedores para Pines HTML en Mapbox */
-        .mapboxgl-marker { cursor: pointer; }
+        .mapboxgl-marker { cursor: pointer; z-index: 20; }
         .neon-orange-pin { filter: drop-shadow(0 0 5px rgba(255, 126, 0, 0.8)); }
         
         .cobertura-badge {
@@ -206,7 +206,7 @@
         let geojsonKMLActual = null;
         let etiquetaCoberturaActual = null; 
         let inputMarker = null;
-        let cumbreMarker = null; 
+        let cumbreMarkers = []; // ARRAY AHORA PARA MÚLTIPLES PINOS DE CUMBRE
         
         let is3D = false;
 
@@ -223,6 +223,41 @@
             else selectLandCover.value = "1"; 
         }
 
+        function descargarHtmlParaCliente() {
+            const tokenCliente = "cliente_" + Math.random().toString(36).substring(2, 10);
+            let codigoFuente = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            const regexToken = /const\s+EMBEDDED_DEMO_TOKEN\s*=\s*["']["']\s*;/;
+            if (!regexToken.test(codigoFuente)) return alert("Error de empaquetado.");
+            codigoFuente = codigoFuente.replace(regexToken, `const EMBEDDED_DEMO_TOKEN = "${tokenCliente}";`);
+            const blob = new Blob([codigoFuente], { type: 'text/html' });
+            const urlDescarga = URL.createObjectURL(blob);
+            const linkTemporal = document.createElement('a');
+            linkTemporal.href = urlDescarga;
+            linkTemporal.download = 'simulador_rf_cliente.html';
+            document.body.appendChild(linkTemporal);
+            linkTemporal.click();
+            document.body.removeChild(linkTemporal);
+            URL.revokeObjectURL(urlDescarga);
+        }
+
+        function actualizarBannerCliente(usos) {
+            const restantes = LIMITE_USOS - usos;
+            const banner = document.getElementById('demo-banner');
+            const btnSimular = document.getElementById('btnSimular');
+            banner.classList.remove('hidden');
+            if (restantes > 0) {
+                banner.innerHTML = `MODO PRUEBA CLIENTE — QUEDAN ${restantes} SIMULACIONES`;
+            } else {
+                banner.className = "bg-red-900/80 text-red-300 border-b border-red-500/50 w-full text-center py-2 text-xs font-semibold tracking-wide shadow-md z-20 relative uppercase";
+                banner.innerHTML = `LÍMITE DE PRUEBA ALCANZADO. CONTACTE A SU DISTRIBUIDOR.`;
+                btnSimular.disabled = true;
+                btnSimular.classList.replace('from-green-600', 'from-slate-700');
+                btnSimular.classList.replace('to-emerald-600', 'to-slate-800');
+                btnSimular.classList.replace('hover:from-green-500', 'cursor-not-allowed');
+                btnSimular.classList.remove('glow-hover');
+            }
+        }
+
         // =======================================================================
         // 🗺️ INICIALIZACIÓN DE MAPBOX GL JS
         // =======================================================================
@@ -237,7 +272,6 @@
         map.addControl(new mapboxgl.NavigationControl(), 'top-left');
 
         map.on('load', () => {
-            // Se carga la elevación silenciosamente
             map.addSource('mapbox-dem', {
                 'type': 'raster-dem',
                 'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
@@ -302,7 +336,7 @@
         }
 
         // =======================================================================
-        // 📁 PROCESAMIENTO KML Y RECOMENDADOR DE CUMBRES INTELIGENTE
+        // 📁 PROCESAMIENTO KML Y RECOMENDADOR INTELIGENTE (CERROS / MAXIMOS LOCALES)
         // =======================================================================
         function cargarKML(event) {
             const file = event.target.files[0];
@@ -326,7 +360,12 @@
                 map.removeLayer('kml-line');
                 map.removeSource('kml-source');
             }
-            if (cumbreMarker) { cumbreMarker.remove(); cumbreMarker = null; }
+            
+            // Limpiamos todo el array de pines de cumbres anteriores
+            if (cumbreMarkers.length > 0) { 
+                cumbreMarkers.forEach(m => m.remove()); 
+                cumbreMarkers = []; 
+            }
 
             let featuresKML = [];
             let bounds = new mapboxgl.LngLatBounds();
@@ -359,16 +398,12 @@
                 map.addLayer({ 'id': 'kml-fill', 'type': 'fill', 'source': 'kml-source', 'paint': { 'fill-color': '#ec4899', 'fill-opacity': 0.1 } });
                 map.addLayer({ 'id': 'kml-line', 'type': 'line', 'source': 'kml-source', 'paint': { 'line-color': '#ec4899', 'line-width': 3, 'line-dasharray': [2, 2] } });
 
-                // Vuelo hacia el KML
                 map.fitBounds(bounds, { padding: 50, duration: 1500 });
                 actualizarInterfazGlobal(); 
                 
-                // 🛠️ CORRECCIÓN: ESPERAR A QUE LA MONTAÑA (EL TERRENO) SE CARGUE
-                // Esperamos a que la cámara pare de moverse y le damos 1 segundo extra de gracia 
-                // para asegurar que las texturas de relieve 3D han bajado de internet.
                 map.once('moveend', () => {
                     setTimeout(() => {
-                        buscarCumbreOptima();
+                        buscarCumbresInteligente();
                     }, 1000); 
                 });
 
@@ -379,51 +414,85 @@
             document.getElementById('kml_upload').value = ''; 
         }
 
-        function buscarCumbreOptima() {
+        // 🧠 EL CEREBRO: ALGORITMO DE PROMINENCIA (CERROS MÚLTIPLES Y MULTIPARCELA)
+        function buscarCumbresInteligente() {
             if (!geojsonKMLActual) return;
             
-            const areaKm2 = turf.area(geojsonKMLActual) / 1000000;
-            let spacing = Math.sqrt(areaKm2 / 1000); 
-            if (spacing < 0.05) spacing = 0.05;
+            // 1. Extraemos las parcelas independientes (aunque sea 1 o sean 10)
+            let parcelas = geojsonKMLActual.type === 'FeatureCollection' ? geojsonKMLActual.features : [geojsonKMLActual];
             
-            const grid = turf.pointGrid(turf.bbox(geojsonKMLActual), spacing, {units: 'kilometers'});
-            
-            let maxHeight = -9999;
-            let bestPoint = null;
-
-            turf.featureEach(grid, function (pt) {
-                let isInside = false;
-                if (geojsonKMLActual.type === 'FeatureCollection') {
-                    for (let f of geojsonKMLActual.features) {
-                        if (turf.booleanPointInPolygon(pt, f)) { isInside = true; break; }
-                    }
-                } else {
-                    isInside = turf.booleanPointInPolygon(pt, geojsonKMLActual);
-                }
-
-                if (isInside) {
-                    const coords = pt.geometry.coordinates;
-                    // Ahora la interrogación funcionará porque el terreno ya existe
-                    const elevation = map.queryTerrainElevation(coords);
-                    if (elevation !== null && elevation > maxHeight) {
-                        maxHeight = elevation;
-                        bestPoint = coords;
-                    }
-                }
-            });
-
-            if (bestPoint && maxHeight > -9999) {
-                const el = document.createElement('div');
-                el.className = 'cobertura-badge text-emerald-400';
-                el.innerHTML = `
-                    <svg class="w-7 h-7 mx-auto drop-shadow-md text-emerald-400 animate-bounce" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
-                    <div class="text-[13px] font-bold bg-slate-900/90 px-2 py-1 rounded border border-emerald-500/50 mt-1 shadow-lg backdrop-blur">🏔️ Cumbre: ${Math.round(maxHeight)}m</div>
-                `;
+            // Iteramos parcela a parcela
+            parcelas.forEach((parcela) => {
+                const areaKm2 = turf.area(parcela) / 1000000;
+                // Cuadrícula más densa para detectar bien la orografía de la parcela
+                let spacing = Math.sqrt(areaKm2 / 1500); 
+                if (spacing < 0.04) spacing = 0.04;
                 
-                cumbreMarker = new mapboxgl.Marker(el, { anchor: 'bottom' })
-                    .setLngLat(bestPoint)
-                    .addTo(map);
-            }
+                const grid = turf.pointGrid(turf.bbox(parcela), spacing, {units: 'kilometers'});
+                let puntosValidos = [];
+
+                // 2. Extraer altitud real de Mapbox de todos los puntos dentro de ESTA parcela
+                turf.featureEach(grid, function (pt) {
+                    if (turf.booleanPointInPolygon(pt, parcela)) {
+                        const coords = pt.geometry.coordinates;
+                        const elevation = map.queryTerrainElevation(coords);
+                        if (elevation !== null) {
+                            puntosValidos.push({ coords: coords, elevation: elevation });
+                        }
+                    }
+                });
+
+                // 3. Ordenamos de más alto a más bajo
+                puntosValidos.sort((a, b) => b.elevation - a.elevation);
+
+                // 4. Lógica de Cerros Distintos (Separación de al menos 300 metros)
+                let cumbresElegidas = [];
+                const DISTANCIA_MINIMA_KM = 0.3; // 300 metros de separación obligatoria para considerar que es otro cerro/meseta
+                const MAX_CUMBRES_POR_PARCELA = 3; // Mostrar top 3 opciones
+
+                for (let pt of puntosValidos) {
+                    if (cumbresElegidas.length >= MAX_CUMBRES_POR_PARCELA) break;
+                    
+                    let esDistinto = true;
+                    let ptTurf = turf.point(pt.coords);
+                    
+                    // Comprobamos la distancia contra las cumbres que ya hemos guardado
+                    for (let cumbre of cumbresElegidas) {
+                        let dist = turf.distance(ptTurf, turf.point(cumbre.coords), {units: 'kilometers'});
+                        if (dist < DISTANCIA_MINIMA_KM) {
+                            esDistinto = false; // Está en la misma ladera/montaña, lo descartamos
+                            break;
+                        }
+                    }
+                    
+                    if (esDistinto) {
+                        cumbresElegidas.push(pt);
+                    }
+                }
+
+                // 5. Dibujar las chinchetas en el mapa (Verde para el #1, Naranja #2, Azul #3)
+                cumbresElegidas.forEach((cumbre, index) => {
+                    const el = document.createElement('div');
+                    
+                    // Lógica de colores según su ranking en la parcela
+                    let iconColor = index === 0 ? 'text-emerald-400' : (index === 1 ? 'text-amber-400' : 'text-blue-400');
+                    let borderColor = index === 0 ? 'border-emerald-500/50' : (index === 1 ? 'border-amber-500/50' : 'border-blue-500/50');
+                    let rankText = index === 0 ? 'Óptimo' : `Alt. ${index+1}`;
+                    let bounce = index === 0 ? 'animate-bounce' : ''; // Solo salta el número 1
+
+                    el.className = `cobertura-badge ${iconColor}`;
+                    el.innerHTML = `
+                        <svg class="w-6 h-6 mx-auto drop-shadow-md ${iconColor} ${bounce}" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
+                        <div class="text-[11px] font-bold bg-slate-900/90 px-2 py-0.5 rounded border ${borderColor} mt-0.5 shadow-lg backdrop-blur" style="white-space:nowrap;">🏔️ ${rankText}: ${Math.round(cumbre.elevation)}m</div>
+                    `;
+                    
+                    let marker = new mapboxgl.Marker(el, { anchor: 'bottom' })
+                        .setLngLat(cumbre.coords)
+                        .addTo(map);
+                        
+                    cumbreMarkers.push(marker); // Guardamos para poder borrarlos luego
+                });
+            });
         }
 
         // =======================================================================
