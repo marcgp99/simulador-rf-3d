@@ -79,12 +79,13 @@
     <div id="demo-banner" class="hidden w-full text-center py-2 text-xs font-semibold tracking-wide shadow-md z-20 relative bg-amber-500/10 text-amber-400 border-b border-amber-500/20 uppercase"></div>
 
     <header class="bg-[#0B1120]/95 backdrop-blur border-b border-slate-800/80 py-4 px-6 flex items-center justify-between z-10 relative">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 w-1/3">
             <svg class="w-7 h-7 text-[#39FF14] drop-shadow-[0_0_8px_rgba(57,255,20,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.106-.53-.106a.75.75 0 01-.6-1.07l.6-.8a.75.75 0 011.2 0l.6.8a.75.75 0 01-.6 1.07z"></path></svg>
             <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-500">
                 IXORIGUE RF Coverage Simulator <span class="text-slate-500 font-medium text-sm ml-1 uppercase tracking-widest">| Pro 3D</span>
             </h1>
         </div>
+        <div class="w-1/3"></div> 
     </header>
 
     <main class="flex-1 flex flex-col md:flex-row p-4 gap-4 h-full relative overflow-hidden">
@@ -193,7 +194,7 @@
         // =======================================================================
         const PROXY_URL = "https://ixorigue.small-leaf-5935.workers.dev";
         
-        // TU TOKEN DE MAPBOX DE LA CAPTURA
+        // TOKEN PÚBLICO DE MAPBOX RESTRINGIDO
         mapboxgl.accessToken = 'pk.eyJ1IjoibWFyY2dwdDk5IiwiYSI6ImNtcmVxbWZzbDByenoyenBkdWU5cXBkYzcifQ.KRu6WKoui20OAQltTw11sQ';
         
         const EMBEDDED_DEMO_TOKEN = ""; 
@@ -209,7 +210,6 @@
         
         let is3D = false;
 
-        // Configuración Modo Demo
         if (EMBEDDED_DEMO_TOKEN !== "") {
             document.getElementById('admin-tools').style.display = 'none';
             let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0');
@@ -228,28 +228,25 @@
         // =======================================================================
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/satellite-v9', // Estilo Satélite Puro
-            center: [1.669, 42.025], // Mapbox usa [Longitud, Latitud] !Importante!
+            style: 'mapbox://styles/mapbox/satellite-v9',
+            center: [1.669, 42.025], 
             zoom: 13,
-            pitch: 0 // Empieza en 2D plano
+            pitch: 0 
         });
 
-        // Controles de navegación nativos
         map.addControl(new mapboxgl.NavigationControl(), 'top-left');
 
         map.on('load', () => {
-            // Añadir la fuente de terreno (Elevación DEM) en secreto
+            // Se carga la elevación silenciosamente
             map.addSource('mapbox-dem', {
                 'type': 'raster-dem',
                 'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
                 'tileSize': 512,
                 'maxzoom': 14
             });
-            // Habilitamos el terreno por defecto para poder calcular la cumbre, pero la cámara está a 0 grados.
             map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.2 });
         });
 
-        // Evento Click para mover la chincheta
         map.on('click', (e) => {
             const lng = e.lngLat.lng;
             const lat = e.lngLat.lat;
@@ -262,7 +259,6 @@
             
             if(inputMarker) { inputMarker.remove(); }
 
-            // Creamos un HTML custom para el pin para mantener tu diseño
             const el = document.createElement('div');
             el.className = 'neon-orange-pin';
             el.innerHTML = `
@@ -273,7 +269,6 @@
                     <circle cx="16" cy="16" r="5" fill="white"/>
                 </svg>`;
 
-            // En Mapbox el ancla se define distinto
             inputMarker = new mapboxgl.Marker(el, { anchor: 'bottom' })
                 .setLngLat([lng, lat])
                 .addTo(map);
@@ -281,7 +276,6 @@
             map.flyTo({ center: [lng, lat], essential: true });
         }
 
-        // Animación Cinematográfica del botón 3D
         function toggle3D() {
             const btn = document.getElementById('btn-3d');
             is3D = !is3D;
@@ -300,7 +294,7 @@
             if (!url) return;
             let match = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
             if (match) {
-                colocarMarcador(match[1], match[2]); // lat, lng
+                colocarMarcador(match[1], match[2]); 
                 document.getElementById('gmaps_url').value = ''; 
             } else {
                 alert("No se encontraron coordenadas en el enlace.");
@@ -308,7 +302,7 @@
         }
 
         // =======================================================================
-        // 📁 PROCESAMIENTO KML Y RECOMENDADOR DE CUMBRES (MAPBOX STYLE)
+        // 📁 PROCESAMIENTO KML Y RECOMENDADOR DE CUMBRES INTELIGENTE
         // =======================================================================
         function cargarKML(event) {
             const file = event.target.files[0];
@@ -327,7 +321,6 @@
 
             if (coordinatesList.length === 0) return alert("No se encontraron coordenadas en este KML.");
 
-            // Limpiar KML anterior si existe
             if (map.getSource('kml-source')) {
                 map.removeLayer('kml-fill');
                 map.removeLayer('kml-line');
@@ -352,7 +345,6 @@
                         }
                     });
 
-                    // Cerrar el polígono si no está cerrado
                     if (turfCoords[0][0] !== turfCoords[turfCoords.length-1][0] || turfCoords[0][1] !== turfCoords[turfCoords.length-1][1]) {
                         turfCoords.push(turfCoords[0]);
                     }
@@ -363,30 +355,22 @@
             if (featuresKML.length > 0) {
                 geojsonKMLActual = featuresKML.length === 1 ? featuresKML[0] : turf.featureCollection(featuresKML);
                 
-                // Dibujar en Mapbox usando GeoJSON
                 map.addSource('kml-source', { type: 'geojson', data: geojsonKMLActual });
-                
-                // Capa de relleno (transparente)
-                map.addLayer({
-                    'id': 'kml-fill',
-                    'type': 'fill',
-                    'source': 'kml-source',
-                    'paint': { 'fill-color': '#ec4899', 'fill-opacity': 0.1 }
-                });
-                
-                // Capa de línea punteada
-                map.addLayer({
-                    'id': 'kml-line',
-                    'type': 'line',
-                    'source': 'kml-source',
-                    'paint': { 'line-color': '#ec4899', 'line-width': 3, 'line-dasharray': [2, 2] }
-                });
+                map.addLayer({ 'id': 'kml-fill', 'type': 'fill', 'source': 'kml-source', 'paint': { 'fill-color': '#ec4899', 'fill-opacity': 0.1 } });
+                map.addLayer({ 'id': 'kml-line', 'type': 'line', 'source': 'kml-source', 'paint': { 'line-color': '#ec4899', 'line-width': 3, 'line-dasharray': [2, 2] } });
 
+                // Vuelo hacia el KML
                 map.fitBounds(bounds, { padding: 50, duration: 1500 });
                 actualizarInterfazGlobal(); 
                 
-                // Lanza el buscador de cumbres
-                buscarCumbreOptima();
+                // 🛠️ CORRECCIÓN: ESPERAR A QUE LA MONTAÑA (EL TERRENO) SE CARGUE
+                // Esperamos a que la cámara pare de moverse y le damos 1 segundo extra de gracia 
+                // para asegurar que las texturas de relieve 3D han bajado de internet.
+                map.once('moveend', () => {
+                    setTimeout(() => {
+                        buscarCumbreOptima();
+                    }, 1000); 
+                });
 
             } else {
                 alert("No se pudo extraer el polígono.");
@@ -395,13 +379,11 @@
             document.getElementById('kml_upload').value = ''; 
         }
 
-        // 🏔️ ALGORITMO: El Buscador de Cumbres (Killer Feature)
         function buscarCumbreOptima() {
             if (!geojsonKMLActual) return;
             
-            // Creamos una malla interna usando Turf
             const areaKm2 = turf.area(geojsonKMLActual) / 1000000;
-            let spacing = Math.sqrt(areaKm2 / 1000); // 1000 puntos de análisis
+            let spacing = Math.sqrt(areaKm2 / 1000); 
             if (spacing < 0.05) spacing = 0.05;
             
             const grid = turf.pointGrid(turf.bbox(geojsonKMLActual), spacing, {units: 'kilometers'});
@@ -410,7 +392,6 @@
             let bestPoint = null;
 
             turf.featureEach(grid, function (pt) {
-                // Comprobamos si el punto cae dentro del polígono
                 let isInside = false;
                 if (geojsonKMLActual.type === 'FeatureCollection') {
                     for (let f of geojsonKMLActual.features) {
@@ -422,7 +403,7 @@
 
                 if (isInside) {
                     const coords = pt.geometry.coordinates;
-                    // Interrogamos a la GPU de Mapbox sobre la altitud en ese punto
+                    // Ahora la interrogación funcionará porque el terreno ya existe
                     const elevation = map.queryTerrainElevation(coords);
                     if (elevation !== null && elevation > maxHeight) {
                         maxHeight = elevation;
@@ -435,8 +416,8 @@
                 const el = document.createElement('div');
                 el.className = 'cobertura-badge text-emerald-400';
                 el.innerHTML = `
-                    <svg class="w-6 h-6 mx-auto drop-shadow-md text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
-                    <div class="text-[12px] bg-slate-900/80 px-2 py-0.5 rounded border border-emerald-500/50 mt-1">Cumbre: ${Math.round(maxHeight)}m</div>
+                    <svg class="w-7 h-7 mx-auto drop-shadow-md text-emerald-400 animate-bounce" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg>
+                    <div class="text-[13px] font-bold bg-slate-900/90 px-2 py-1 rounded border border-emerald-500/50 mt-1 shadow-lg backdrop-blur">🏔️ Cumbre: ${Math.round(maxHeight)}m</div>
                 `;
                 
                 cumbreMarker = new mapboxgl.Marker(el, { anchor: 'bottom' })
@@ -446,7 +427,7 @@
         }
 
         // =======================================================================
-        // 📡 MOTORES DE ESCANEO (Matemática pura, funciona igual que en Leaflet)
+        // 📡 MOTORES DE ESCANEO
         // =======================================================================
         function puntoCaeEnKML(pt) {
             if (!geojsonKMLActual) return false;
@@ -482,7 +463,6 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0);
 
-                        // Los bounds de CloudRF vienen en [N, E, S, W]
                         const n = boundsSimulacion[0], e = boundsSimulacion[1], s = boundsSimulacion[2], w = boundsSimulacion[3];
 
                         const grid = obtenerMallaDinamica();
@@ -588,7 +568,7 @@
 
             if (globalPct !== null) {
                 const centroTurf = turf.center(geojsonKMLActual);
-                const coordsCentro = [centroTurf.geometry.coordinates[0], centroTurf.geometry.coordinates[1]]; // [lng, lat]
+                const coordsCentro = [centroTurf.geometry.coordinates[0], centroTurf.geometry.coordinates[1]]; 
 
                 const el = document.createElement('div');
                 el.className = 'cobertura-badge';
@@ -717,7 +697,6 @@
                         actualizarBannerCliente(usos);
                     }
 
-                    // Creación del Pin de Antena en Mapbox
                     const pinEl = document.createElement('div');
                     pinEl.className = 'neon-orange-pin';
                     pinEl.innerHTML = `
@@ -733,9 +712,8 @@
                         .addTo(map);
 
                     let imageUrl = data.PNG_WGS84 || data.png || data.PNG_Mercator;
-                    let boundsCloudRF = data.bounds; // Usualmente [n, e, s, w]
+                    let boundsCloudRF = data.bounds; 
 
-                    // Añadir la imagen al mapa Mapbox (Raster Overlay)
                     const sourceId = `sim-source-${simCounter}`;
                     if (imageUrl && boundsCloudRF) {
                         const n = boundsCloudRF[0], e = boundsCloudRF[1], s = boundsCloudRF[2], w = boundsCloudRF[3];
@@ -744,10 +722,10 @@
                             'type': 'image',
                             'url': imageUrl,
                             'coordinates': [
-                                [w, n], // Top left
-                                [e, n], // Top right
-                                [e, s], // Bottom right
-                                [w, s]  // Bottom left
+                                [w, n], 
+                                [e, n], 
+                                [e, s], 
+                                [w, s]  
                             ]
                         });
                         
@@ -766,7 +744,6 @@
                         porcentajeLocal = await calcularPorcentajeLocal(boundsCloudRF, imageUrl);
                     }
 
-                    // Etiqueta flotante con el porcentaje local
                     const labelEl = document.createElement('div');
                     labelEl.className = 'cobertura-badge';
                     let tooltipHtml = `<div style="color:white; font-size:15px; margin-bottom:1px;">Punto ${simCounter}</div>`;
@@ -785,6 +762,7 @@
                         freq: perfilActivo === 'EU' ? 868 : 915,
                         alt: txHeight,
                         kmz: data.kmz,
+                        layerGroup: sourceId,
                         visible: true,
                         coberturaLocal: porcentajeLocal, 
                         imageUrl: imageUrl,              
@@ -797,7 +775,7 @@
                     await actualizarInterfazGlobal();
 
                 } else {
-                    alert("Error en la simulación.");
+                    alert("Error en la simulación: " + (data.error || "Revisa la consola."));
                 }
             } catch (error) {
                 console.error("Error:", error);
