@@ -51,7 +51,7 @@
         }
 
         /* ====================================================
-           NUEVOS PINES TOPOGRÁFICOS MINIMALISTAS
+           PINES TOPOGRÁFICOS MINIMALISTAS
            ==================================================== */
         .site-marker-container { 
             display: flex; 
@@ -96,7 +96,6 @@
             box-shadow: 0 0 12px currentColor; 
         }
         
-        /* Variantes de Color por Ranking */
         .site-primary .site-label { border-left-color: #39FF14; }
         .site-primary .pin-line { background: linear-gradient(to bottom, #39FF14, transparent); }
         .site-primary .pin-dot { background: #39FF14; color: #39FF14; }
@@ -129,6 +128,8 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            min-width: 120px;
+            justify-content: center;
         }
         #btn-3d:hover { background: #10b981; border-color: #34d399; }
         #btn-3d.active { background: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.5); }
@@ -231,7 +232,7 @@
 
             <div id="admin-tools" class="flex-shrink-0 pt-4 mt-2 border-t border-slate-700/50">
                 <button onclick="descargarHtmlParaCliente()" class="w-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white font-medium py-2.5 px-4 rounded-lg border border-slate-600 transition-all text-sm flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 00-5.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
                     Generar Acceso Cliente (2 Usos)
                 </button>
             </div>
@@ -240,8 +241,8 @@
 
         <section class="flex-1 bg-slate-900 rounded-xl shadow-2xl relative h-full overflow-hidden border border-slate-800">
             <button id="btn-3d" onclick="toggle3D()">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Modo 3D
+                <svg id="icon-3d" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span id="text-3d">Modo 3D</span>
             </button>
             <div id="map"></div>
         </section>
@@ -298,38 +299,23 @@
             URL.revokeObjectURL(urlDescarga);
         }
 
-        function actualizarBannerCliente(usos) {
-            const restantes = LIMITE_USOS - usos;
-            const banner = document.getElementById('demo-banner');
-            const btnSimular = document.getElementById('btnSimular');
-            banner.classList.remove('hidden');
-            if (restantes > 0) {
-                banner.innerHTML = `MODO PRUEBA CLIENTE — QUEDAN ${restantes} SIMULACIONES`;
-            } else {
-                banner.className = "bg-red-900/80 text-red-300 border-b border-red-500/50 w-full text-center py-2 text-xs font-semibold tracking-wide shadow-md z-20 relative uppercase";
-                banner.innerHTML = `LÍMITE DE PRUEBA ALCANZADO. CONTACTE A SU DISTRIBUIDOR.`;
-                btnSimular.disabled = true;
-                btnSimular.classList.replace('from-green-600', 'from-slate-700');
-                btnSimular.classList.replace('to-emerald-600', 'to-slate-800');
-                btnSimular.classList.replace('hover:from-green-500', 'cursor-not-allowed');
-                btnSimular.classList.remove('glow-hover');
-            }
-        }
-
         // =======================================================================
-        // 🗺️ INICIALIZACIÓN DE MAPBOX GL JS
+        // 🗺️ INICIALIZACIÓN DE MAPBOX GL JS (CON BLOQUEO 2D)
         // =======================================================================
         const map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/satellite-v9',
             center: [1.669, 42.025], 
             zoom: 13,
-            pitch: 0 
+            pitch: 0,
+            maxPitch: 0 // <--- ESTO BLOQUEA LA CÁMARA EN 2D HASTA PULSAR EL BOTÓN
         });
 
-        map.addControl(new mapboxgl.NavigationControl(), 'top-left');
+        // Controles de navegación nativos
+        map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-left');
 
         map.on('load', () => {
+            // El terreno se carga en secreto para el algoritmo matemático, pero no se "ve" por el bloqueo 2D
             map.addSource('mapbox-dem', {
                 'type': 'raster-dem',
                 'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
@@ -368,16 +354,34 @@
             map.flyTo({ center: [lng, lat], essential: true });
         }
 
+        // =======================================================================
+        // 🎥 LÓGICA DEL BOTÓN 3D / 2D ESTRICTO
+        // =======================================================================
         function toggle3D() {
             const btn = document.getElementById('btn-3d');
+            const icon = document.getElementById('icon-3d');
+            const text = document.getElementById('text-3d');
+            
             is3D = !is3D;
             
             if (is3D) {
+                // Pasamos a 3D: Desbloqueamos el candado (maxPitch: 85) y animamos
+                map.setMaxPitch(85); 
                 btn.classList.add('active');
+                text.innerText = "Modo 2D";
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>`;
                 map.easeTo({ pitch: 65, bearing: map.getBearing() + 45, duration: 2000 });
             } else {
+                // Volvemos a 2D: Animamos a pitch 0 y luego ponemos el candado
                 btn.classList.remove('active');
+                text.innerText = "Modo 3D";
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>`;
+                
                 map.easeTo({ pitch: 0, bearing: 0, duration: 2000 });
+                
+                map.once('moveend', () => {
+                    if (!is3D) map.setMaxPitch(0); // Bloqueo estricto al terminar la animación
+                });
             }
         }
 
@@ -471,7 +475,6 @@
             document.getElementById('kml_upload').value = ''; 
         }
 
-        // 🧠 EL CEREBRO: ALGORITMO DE DISTRIBUCIÓN ESPACIAL PONDERADA CON HUD MINIMALISTA
         function buscarCumbresInteligente() {
             if (!geojsonKMLActual) return;
             
@@ -551,7 +554,6 @@
                     if (pt3) cumbresElegidas.push(pt3);
                 }
 
-                // 3. Pintar en el mapa (HUDs Minimalistas)
                 cumbresElegidas.forEach((cumbre, index) => {
                     const el = document.createElement('div');
                     
