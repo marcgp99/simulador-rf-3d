@@ -221,7 +221,7 @@
 
             <div id="admin-tools" class="flex-shrink-0 pt-4 mt-2 border-t border-slate-700/50">
                 <button onclick="descargarHtmlParaCliente()" class="w-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white font-medium py-2.5 px-4 rounded-lg border border-slate-600 transition-all text-sm flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 00-5.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
                     Generar Acceso Cliente (2 Usos)
                 </button>
             </div>
@@ -381,7 +381,7 @@
             let featuresKML = []; let bounds = new mapboxgl.LngLatBounds();
 
             for (let i = 0; i < coordinatesList.length; i++) {
-                const tuples = coordinatesList[i].textContent.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?(?:,-?\d+(?:\.\d+)?)?/g);
+                const tuples = coordinatesList[i].textContent.match(/-?\d+(Y:\.\d+)?,-?\d+(Y:\.\d+)?(?:,-?\d+(Y:\.\d+)?)?/g);
                 if (tuples && tuples.length > 2) {
                     const turfCoords = [];
                     tuples.forEach(tuple => {
@@ -411,8 +411,6 @@
         // =======================================================================
         // 🧠 CEREBRO V2: RAY-TRACING + MULTI-KML + FALLBACK SEGURO
         // =======================================================================
-        
-        // Utilidad robusta para detectar si un punto cae en cualquier sub-parcela del KML
         function puntoCaeEnKML(pt) {
             if (!geojsonKMLActual) return false;
             if (geojsonKMLActual.type === 'FeatureCollection') {
@@ -440,7 +438,6 @@
 
             descartarPropuesta();
 
-            // 1. Crear Halo de 500m (Seguro contra MultiPolígonos complejos)
             let areaBusqueda;
             try {
                 areaBusqueda = turf.buffer(geojsonKMLActual, 0.5, {units: 'kilometers'});
@@ -449,7 +446,6 @@
                 areaBusqueda = geojsonKMLActual; 
             }
 
-            // 2. Generar Malla de Destinos INTERNOS
             let parcelas = geojsonKMLActual.type === 'FeatureCollection' ? turf.flatten(geojsonKMLActual).features : [geojsonKMLActual];
             let puntosDestino = [];
             
@@ -467,7 +463,6 @@
 
             if (puntosDestino.length === 0) return alert("Texturas 3D no cargadas. Mueve la cámara y reintenta.");
 
-            // 3. Generar Malla de Candidatos (Internos + Halo)
             let boxTotal = turf.bboxPolygon(turf.bbox(areaBusqueda));
             let areaBox = turf.area(boxTotal) / 1000000;
             let stepCand = Math.sqrt(areaBox / 400); 
@@ -484,13 +479,12 @@
                     if (elev !== null) {
                         candidatos.push({
                             coords: pt.geometry.coordinates, elev: elev,
-                            peso: esInterno ? 1.0 : 0.85 // 🔥 NUEVO CASTIGO REDUCIDO (15%)
+                            peso: esInterno ? 1.0 : 0.85 
                         });
                     }
                 }
             });
 
-            // 4. Algoritmo Greedy + Ray-Tracing LOS
             const txHeight = parseFloat(document.getElementById('tx_height').value) || 3;
             let propuestas = [];
 
@@ -507,13 +501,12 @@
                         if (dest.cubierto) continue;
                         
                         let dist = turf.distance(turf.point(cand.coords), turf.point(dest.coords), {units: 'kilometers'});
-                        if (dist > 12) continue; // Límite de propagación 12km
+                        if (dist > 12) continue; 
 
                         let candAlt = cand.elev + txHeight;
-                        let destAlt = dest.elev + 1; // Rx a 1 metro
+                        let destAlt = dest.elev + 1; 
                         if (candAlt > destAlt) {
                             
-                            // 🏔️ MINI RAY-TRACING (Comprueba al 25%, 50% y 75% del trayecto)
                             let deltaZ = destAlt - candAlt;
                             let bloqueado = false;
                             
@@ -539,14 +532,13 @@
                     }
                 }
 
-                // 🔥 FALLBACK INTELIGENTE (Soluciona el problema de pedir 5 y que solo devuelva 1)
                 if (!mejorCandidato || maxPuntuacion === 0) {
-                    candidatos.sort((a,b) => b.elev - a.elev); // Ordenar por los más altos
+                    candidatos.sort((a,b) => b.elev - a.elev); 
                     for(let c of candidatos) {
                         let muyCerca = false;
                         for(let p of propuestas) {
                             if(turf.distance(turf.point(c.coords), turf.point(p.coords), {units:'kilometers'}) < 0.4) {
-                                muyCerca = true; break; // Evitar poner antenas pegadas
+                                muyCerca = true; break; 
                             }
                         }
                         if(!muyCerca) { mejorCandidato = c; break; }
@@ -557,10 +549,9 @@
                     propuestas.push(mejorCandidato);
                     if(puntosParaMarcar.length > 0) puntosParaMarcar.forEach(p => p.cubierto = true);
                     candidatos = candidatos.filter(c => c !== mejorCandidato);
-                } else { break; } // Literalmente se ha quedado sin terreno físico
+                } else { break; } 
             }
 
-            // 5. Dibujar pines Borrador
             propuestas.forEach((prop) => {
                 const el = document.createElement('div'); el.className = 'site-marker-container site-draft';
                 if (!nodosVisibles) el.style.display = 'none';
@@ -577,7 +568,6 @@
             if (draftSites.length > 0) document.getElementById('draft-actions-panel').classList.remove('hidden');
         }
 
-        // Cumbres Estáticas (Sigue usándose al subir el KML como referencia visual de los picos)
         function buscarCumbresInteligente() {
             if (!geojsonKMLActual) return;
             let parcelas = geojsonKMLActual.type === 'FeatureCollection' ? turf.flatten(geojsonKMLActual).features : [geojsonKMLActual];
@@ -739,7 +729,7 @@
 
         async function actualizarInterfazGlobal() {
             if (!geojsonKMLActual) {
-                if (etiquetaCoberturaActual) { etiquetaCoberturaActual.remove(); etiquetaCoberturaActual = null; }
+                if (etiquetaCoverageActual) { etiquetaCoberturaActual.remove(); etiquetaCoberturaActual = null; }
                 renderizarHistorial(null); return;
             }
             const globalPct = await calcularPorcentajeGlobal();
