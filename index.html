@@ -142,6 +142,25 @@
         .map-btn:hover { background: #1e293b; border-color: #64748b; }
         .map-btn.active-3d { background: #10b981; border-color: #34d399; box-shadow: 0 0 15px rgba(16, 185, 129, 0.5); }
         .map-btn.active-nodos { color: #94a3b8; border-color: rgba(255,255,255,0.05); }
+
+        /* Estilos personalizados para el control deslizante (Slider) */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #10b981;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #475569;
+            border-radius: 2px;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -242,16 +261,7 @@
                     </div>
                 </div>
 
-                <!-- Control de Mapa Avanzado (PNOA) -->
-                <div class="mt-4 p-3 bg-slate-900/50 border border-slate-700 hover:border-slate-600 transition-colors rounded-lg">
-                    <label class="flex items-center space-x-3 cursor-pointer">
-                        <input type="checkbox" id="toggle-pnoa" class="form-checkbox h-5 w-5 text-emerald-600 rounded bg-slate-800 border-slate-600" onchange="toggleCapaPNOA()">
-                        <span class="text-sm font-semibold text-slate-200">Activar Ortofoto Oficial (Alta Resolución)</span>
-                    </label>
-                    <p class="text-[10px] text-slate-400 mt-1 ml-8 uppercase tracking-widest">Carga la capa actualizada de vegetación y terreno.</p>
-                </div>
-
-                <button id="btnSimular" onclick="realizarSimulacion()" class="mt-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold py-3 px-4 rounded-lg glow-hover transition-all duration-300 flex justify-center items-center gap-2">
+                <button id="btnSimular" onclick="realizarSimulacion()" class="mt-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold py-3 px-4 rounded-lg glow-hover transition-all duration-300 flex justify-center items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     Iniciar Simulación
                 </button>
@@ -284,6 +294,7 @@
         </aside>
 
         <section class="flex-1 bg-slate-900 rounded-xl shadow-2xl relative h-full overflow-hidden border border-slate-800">
+            <!-- Botones Superiores del Mapa -->
             <div class="map-controls-container">
                 <button id="btn-nodos" onclick="toggleNodos()" class="map-btn">
                     <svg id="icon-nodos" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -295,6 +306,16 @@
                     <span id="text-3d">Modo 3D</span>
                 </button>
             </div>
+
+            <!-- NUEVO: Panel Deslizante de Capas (Slider de Google Maps) -->
+            <div class="absolute top-[70px] right-[15px] z-10 glass-panel p-3 rounded-lg w-64 shadow-lg border border-slate-700/50 transition-opacity">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Base Mapbox</span>
+                    <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">G. Maps HD</span>
+                </div>
+                <input type="range" id="google-opacity-slider" min="0" max="1" step="0.05" value="0" class="w-full appearance-none outline-none">
+            </div>
+
             <div id="map"></div>
         </section>
         
@@ -324,7 +345,6 @@
 
         let is3D = false;
         let nodosVisibles = true; 
-        let pnoaActivo = false;
 
         if (EMBEDDED_DEMO_TOKEN !== "") {
             document.getElementById('admin-tools').style.display = 'none';
@@ -362,25 +382,30 @@
             });
             map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.2 });
             
-            // 1. Definimos la fuente externa WMS (IGN - PNOA España)
-            map.addSource('ign-pnoa', {
+            // 1. Añadimos el origen XYZ de Google Maps (Híbrido)
+            map.addSource('google-satellite', {
                 'type': 'raster',
                 'tiles': [
-                    'https://www.ign.es/wms-inspire/pnoa-ma?bbox={bbox-epsg-3857}&format=image/png&service=WMS&version=1.1.1&request=GetMap&srs=EPSG:3857&transparent=true&width=256&height=256&layers=OI.OrthoimageCoverage'
+                    'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
                 ],
                 'tileSize': 256
             });
 
-            // 2. Preparamos la capa visual, pero la inicializamos oculta (none)
+            // 2. Preparamos la capa visual (empezará totalmente transparente)
             map.addLayer({
-                'id': 'capa-pnoa-raster',
+                'id': 'capa-google-raster',
                 'type': 'raster',
-                'source': 'ign-pnoa',
-                'layout': {
-                    'visibility': 'none' // Empieza apagada
-                },
+                'source': 'google-satellite',
                 'paint': {
-                    'raster-opacity': 1.0 // Opacidad total
+                    'raster-opacity': 0 
+                }
+            });
+
+            // 3. Conectamos el control deslizante a la opacidad del satélite
+            document.getElementById('google-opacity-slider').addEventListener('input', function(e) {
+                const opacity = parseFloat(e.target.value);
+                if (map.getLayer('capa-google-raster')) {
+                    map.setPaintProperty('capa-google-raster', 'raster-opacity', opacity);
                 }
             });
         });
@@ -412,15 +437,6 @@
                 .addTo(map);
                 
             map.flyTo({ center: [lng, lat], essential: true });
-        }
-
-        function toggleCapaPNOA() {
-            pnoaActivo = !pnoaActivo;
-            if (pnoaActivo) {
-                map.setLayoutProperty('capa-pnoa-raster', 'visibility', 'visible');
-            } else {
-                map.setLayoutProperty('capa-pnoa-raster', 'visibility', 'none');
-            }
         }
 
         function toggle3D() {
