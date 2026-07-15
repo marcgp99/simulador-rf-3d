@@ -289,21 +289,24 @@
                 </button>
             </div>
 
-            <!-- NUEVA LEYENDA (Histograma de Altura) -->
-            <div id="canopy-legend" class="hidden absolute bottom-6 right-6 z-10 glass-panel p-3.5 rounded-lg w-64 shadow-xl border border-slate-700/50 transition-all">
-                <div class="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-2 flex items-center justify-between">
-                    <span>Densidad / Altura Estimada</span>
-                    <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <!-- NUEVA LEYENDA (Histograma de Altura Mejorado y Azul) -->
+            <div id="canopy-legend" class="hidden absolute bottom-6 right-6 z-10 glass-panel p-4 rounded-lg w-72 shadow-xl border border-slate-700/50 transition-all">
+                <div class="text-[11px] font-bold text-slate-200 uppercase tracking-widest mb-3 flex items-center justify-between">
+                    <span>🌳 Altura de Vegetación</span>
                 </div>
-                <!-- Barra de gradiente -->
-                <div class="h-2.5 w-full rounded bg-gradient-to-r from-emerald-500/20 via-emerald-500/60 to-emerald-900 mb-1.5 border border-slate-700"></div>
-                <!-- Indicadores métricos -->
-                <div class="flex justify-between text-[10px] font-bold text-slate-400 font-mono">
-                    <span>0m</span>
-                    <span>10m</span>
-                    <span>20m</span>
-                    <span>+30m</span>
+                <!-- Barra de gradiente AZUL (De transparente a azul oscuro) -->
+                <div class="h-3 w-full rounded bg-gradient-to-r from-transparent via-blue-600 to-blue-900 border border-slate-600 mb-2"></div>
+                <!-- Indicadores métricos explícitos -->
+                <div class="flex justify-between text-[11px] font-bold text-slate-300 font-mono">
+                    <span class="flex flex-col items-start"><span class="text-slate-400">0m</span></span>
+                    <span class="flex flex-col items-center"><span class="text-slate-400">15m</span></span>
+                    <span class="flex flex-col items-end"><span class="text-slate-400">+30m</span></span>
                 </div>
+                <!-- Explicación visual -->
+                <p class="text-[9px] text-slate-400 mt-3 leading-relaxed border-t border-slate-700 pt-2">
+                    Las zonas <span class="text-slate-300 font-bold">transparentes</span> indican terreno sin árboles.<br>
+                    El color <span class="text-blue-500 font-bold">azul intenso</span> revela masas forestales densas.
+                </p>
             </div>
 
             <div id="map"></div>
@@ -393,7 +396,7 @@
                 },
                 'paint': {
                     'raster-opacity': 0.85,
-                    'raster-hue-rotate': 120,
+                    'raster-hue-rotate': 120, /* Transforma la imagen a tonos azules */
                     'raster-contrast': 0.5
                 }
             });
@@ -441,12 +444,12 @@
                 map.setLayoutProperty('capa-canopy-raster', 'visibility', 'visible');
                 btn.classList.add('active-3d');
                 text.innerText = "Ocultar Dosel";
-                legend.classList.remove('hidden'); // Muestra el histograma
+                legend.classList.remove('hidden'); // Muestra la leyenda
             } else {
                 map.setLayoutProperty('capa-canopy-raster', 'visibility', 'none');
                 btn.classList.remove('active-3d');
                 text.innerText = "Altura Dosel";
-                legend.classList.add('hidden'); // Oculta el histograma
+                legend.classList.add('hidden'); // Oculta la leyenda
             }
         }
 
