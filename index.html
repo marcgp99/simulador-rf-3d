@@ -273,11 +273,12 @@
         </aside>
 
         <section class="flex-1 bg-slate-900 rounded-xl shadow-2xl relative h-full overflow-hidden border border-slate-800">
-            <!-- Botones Superiores del Mapa (Conmutador Directo Añadido) -->
+            <!-- Botones Superiores del Mapa (Añadido el de Altura de Dosel) -->
             <div class="map-controls-container">
-                <button id="btn-google" onclick="toggleCapaGoogle()" class="map-btn">
-                    <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7l6-2.5 5.447 2.724A1 1 0 0121 8.118v10.764a1 1 0 01-1.447.894L15 17l-6 2.5zM9 20V7m6 10.5V4.5"></path></svg>
-                    <span id="text-google">Satélite HD</span>
+                <button id="btn-canopy" onclick="toggleCanopy()" class="map-btn">
+                    <!-- Icono de bosque/árbol -->
+                    <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                    <span id="text-canopy">Altura Dosel</span>
                 </button>
                 <button id="btn-nodos" onclick="toggleNodos()" class="map-btn">
                     <svg id="icon-nodos" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -318,7 +319,7 @@
 
         let is3D = false;
         let nodosVisibles = true; 
-        let googleActivo = false;
+        let canopyActivo = false; // Variable control de Altura de Dosel
 
         if (EMBEDDED_DEMO_TOKEN !== "") {
             document.getElementById('admin-tools').style.display = 'none';
@@ -356,22 +357,30 @@
             });
             map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.2 });
             
-            // 1. Añadimos el origen XYZ de Google Maps (Híbrido)
-            map.addSource('google-satellite', {
+            // 1. Añadimos el origen de tiles globales de Altura de Dosel (Tree Cover/Height)
+            map.addSource('canopy-height', {
                 'type': 'raster',
                 'tiles': [
-                    'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
+                    // Conectamos a los tiles públicos de cobertura arbórea
+                    'https://storage.googleapis.com/earthenginepartners-hansen/tiles/gfc_v1.4/tree_alpha/{z}/{x}/{y}.png'
                 ],
-                'tileSize': 256
+                'tileSize': 256,
+                'maxzoom': 12
             });
 
-            // 2. Preparamos la capa visual (empezará totalmente transparente)
+            // 2. Preparamos la capa visual térmica (empezará apagada)
             map.addLayer({
-                'id': 'capa-google-raster',
+                'id': 'capa-canopy-raster',
                 'type': 'raster',
-                'source': 'google-satellite',
+                'source': 'canopy-height',
+                'layout': {
+                    'visibility': 'none' 
+                },
                 'paint': {
-                    'raster-opacity': 0 
+                    // Aplicamos un verde brillante transparente para que contraste con la montaña
+                    'raster-opacity': 0.85,
+                    'raster-hue-rotate': 120,
+                    'raster-contrast': 0.5
                 }
             });
         });
@@ -408,19 +417,19 @@
         // =======================================================================
         // 🔄 CONTROLES VISUALES DEL MAPA
         // =======================================================================
-        function toggleCapaGoogle() {
-            googleActivo = !googleActivo;
-            const btn = document.getElementById('btn-google');
-            const text = document.getElementById('text-google');
+        function toggleCanopy() {
+            canopyActivo = !canopyActivo;
+            const btn = document.getElementById('btn-canopy');
+            const text = document.getElementById('text-canopy');
             
-            if (googleActivo) {
-                map.setPaintProperty('capa-google-raster', 'raster-opacity', 1);
+            if (canopyActivo) {
+                map.setLayoutProperty('capa-canopy-raster', 'visibility', 'visible');
                 btn.classList.add('active-3d');
-                text.innerText = "Satélite Base";
+                text.innerText = "Ocultar Dosel";
             } else {
-                map.setPaintProperty('capa-google-raster', 'raster-opacity', 0);
+                map.setLayoutProperty('capa-canopy-raster', 'visibility', 'none');
                 btn.classList.remove('active-3d');
-                text.innerText = "Satélite HD";
+                text.innerText = "Altura Dosel";
             }
         }
 
@@ -782,7 +791,7 @@
                 if (mejorCandidato) {
                     propuestas.push(mejorCandidato);
                     puntosParaMarcar.forEach(p => p.cubierto = true); // Restamos el área para la siguiente antena
-                    candidatos = candidatos.filter(c => c !== mejorCandidato);
+                    candidatos = filter(c => c !== mejorCandidato);
                 } else {
                     break;
                 }
