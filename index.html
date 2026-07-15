@@ -273,10 +273,9 @@
         </aside>
 
         <section class="flex-1 bg-slate-900 rounded-xl shadow-2xl relative h-full overflow-hidden border border-slate-800">
-            <!-- Botones Superiores del Mapa (Añadido el de Altura de Dosel) -->
+            <!-- Botones Superiores del Mapa -->
             <div class="map-controls-container">
                 <button id="btn-canopy" onclick="toggleCanopy()" class="map-btn">
-                    <!-- Icono de bosque/árbol -->
                     <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
                     <span id="text-canopy">Altura Dosel</span>
                 </button>
@@ -288,6 +287,23 @@
                     <svg id="icon-3d" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span id="text-3d">Modo 3D</span>
                 </button>
+            </div>
+
+            <!-- NUEVA LEYENDA (Histograma de Altura) -->
+            <div id="canopy-legend" class="hidden absolute bottom-6 right-6 z-10 glass-panel p-3.5 rounded-lg w-64 shadow-xl border border-slate-700/50 transition-all">
+                <div class="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-2 flex items-center justify-between">
+                    <span>Densidad / Altura Estimada</span>
+                    <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <!-- Barra de gradiente -->
+                <div class="h-2.5 w-full rounded bg-gradient-to-r from-emerald-500/20 via-emerald-500/60 to-emerald-900 mb-1.5 border border-slate-700"></div>
+                <!-- Indicadores métricos -->
+                <div class="flex justify-between text-[10px] font-bold text-slate-400 font-mono">
+                    <span>0m</span>
+                    <span>10m</span>
+                    <span>20m</span>
+                    <span>+30m</span>
+                </div>
             </div>
 
             <div id="map"></div>
@@ -361,7 +377,6 @@
             map.addSource('canopy-height', {
                 'type': 'raster',
                 'tiles': [
-                    // Conectamos a los tiles públicos de cobertura arbórea
                     'https://storage.googleapis.com/earthenginepartners-hansen/tiles/gfc_v1.4/tree_alpha/{z}/{x}/{y}.png'
                 ],
                 'tileSize': 256,
@@ -377,7 +392,6 @@
                     'visibility': 'none' 
                 },
                 'paint': {
-                    // Aplicamos un verde brillante transparente para que contraste con la montaña
                     'raster-opacity': 0.85,
                     'raster-hue-rotate': 120,
                     'raster-contrast': 0.5
@@ -421,15 +435,18 @@
             canopyActivo = !canopyActivo;
             const btn = document.getElementById('btn-canopy');
             const text = document.getElementById('text-canopy');
+            const legend = document.getElementById('canopy-legend');
             
             if (canopyActivo) {
                 map.setLayoutProperty('capa-canopy-raster', 'visibility', 'visible');
                 btn.classList.add('active-3d');
                 text.innerText = "Ocultar Dosel";
+                legend.classList.remove('hidden'); // Muestra el histograma
             } else {
                 map.setLayoutProperty('capa-canopy-raster', 'visibility', 'none');
                 btn.classList.remove('active-3d');
                 text.innerText = "Altura Dosel";
+                legend.classList.add('hidden'); // Oculta el histograma
             }
         }
 
@@ -791,7 +808,7 @@
                 if (mejorCandidato) {
                     propuestas.push(mejorCandidato);
                     puntosParaMarcar.forEach(p => p.cubierto = true); // Restamos el área para la siguiente antena
-                    candidatos = filter(c => c !== mejorCandidato);
+                    candidatos = candidatos.filter(c => c !== mejorCandidato);
                 } else {
                     break;
                 }
