@@ -284,12 +284,12 @@
                     <span id="text-nodos">Ocultar Cumbres</span>
                 </button>
                 <button id="btn-3d" onclick="toggle3D()" class="map-btn" style="position:static;">
-                    <svg id="icon-3d" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <svg id="icon-3d" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span id="text-3d">Modo 3D</span>
                 </button>
             </div>
 
-            <!-- NUEVA LEYENDA (Histograma de Altura Mejorado y Azul) -->
+            <!-- NUEVA LEYENDA (Histograma de Altura Mejorado y Azul con Fecha) -->
             <div id="canopy-legend" class="hidden absolute bottom-6 right-6 z-10 glass-panel p-4 rounded-lg w-72 shadow-xl border border-slate-700/50 transition-all">
                 <div class="text-[11px] font-bold text-slate-200 uppercase tracking-widest mb-3 flex items-center justify-between">
                     <span>🌳 Altura de Vegetación</span>
@@ -307,6 +307,11 @@
                     Las zonas <span class="text-slate-300 font-bold">transparentes</span> indican terreno sin árboles.<br>
                     El color <span class="text-blue-500 font-bold">azul intenso</span> revela masas forestales densas.
                 </p>
+                <!-- Etiqueta de Datos Científicos -->
+                <div class="mt-2 text-[8.5px] text-slate-500 flex justify-between items-center bg-slate-800/50 p-1.5 rounded">
+                    <span>Fuente: ETH Zürich / ESA</span>
+                    <span class="font-bold text-slate-400">Modelo: 2020</span>
+                </div>
             </div>
 
             <div id="map"></div>
