@@ -108,11 +108,9 @@
         .site-tertiary .pin-line { background: linear-gradient(to bottom, #f59e0b, transparent); }
         .site-tertiary .pin-dot { background: #f59e0b; color: #f59e0b; }
 
-        /* NUEVA VARIANTE: SITES EN BORRADOR/DRAFT (LILA / FUCSIA) */
         .site-draft .site-label { border-left-color: #d946ef; }
         .site-draft .pin-line { background: linear-gradient(to bottom, #d946ef, transparent); }
         .site-draft .pin-dot { background: #d946ef; color: #d946ef; }
-        /* ==================================================== */
 
         /* Botones Flotantes del Mapa */
         .map-controls-container {
@@ -242,7 +240,7 @@
                     </div>
                 </div>
 
-                <button id="btnSimular" onclick="realizarSimulacion()" class="mt-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold py-3 px-4 rounded-lg glow-hover transition-all duration-300 flex justify-center items-center gap-2">
+                <button id="btnSimular" onclick="realizarSimulacion()" class="mt-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold py-3 px-4 rounded-lg glow-hover transition-all duration-300 flex justify-center items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     Iniciar Simulación
                 </button>
@@ -275,17 +273,42 @@
         </aside>
 
         <section class="flex-1 bg-slate-900 rounded-xl shadow-2xl relative h-full overflow-hidden border border-slate-800">
+            <!-- Botones Superiores del Mapa -->
             <div class="map-controls-container">
+                <button id="btn-canopy" onclick="toggleCanopy()" class="map-btn">
+                    <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                    <span id="text-canopy">Altura Dosel</span>
+                </button>
                 <button id="btn-nodos" onclick="toggleNodos()" class="map-btn">
                     <svg id="icon-nodos" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                     <span id="text-nodos">Ocultar Cumbres</span>
                 </button>
-                
                 <button id="btn-3d" onclick="toggle3D()" class="map-btn" style="position:static;">
                     <svg id="icon-3d" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span id="text-3d">Modo 3D</span>
                 </button>
             </div>
+
+            <!-- NUEVA LEYENDA (Histograma de Altura Mejorado y Azul) -->
+            <div id="canopy-legend" class="hidden absolute bottom-6 right-6 z-10 glass-panel p-4 rounded-lg w-72 shadow-xl border border-slate-700/50 transition-all">
+                <div class="text-[11px] font-bold text-slate-200 uppercase tracking-widest mb-3 flex items-center justify-between">
+                    <span>🌳 Altura de Vegetación</span>
+                </div>
+                <!-- Barra de gradiente AZUL (De transparente a azul oscuro) -->
+                <div class="h-3 w-full rounded bg-gradient-to-r from-transparent via-blue-600 to-blue-900 border border-slate-600 mb-2"></div>
+                <!-- Indicadores métricos explícitos -->
+                <div class="flex justify-between text-[11px] font-bold text-slate-300 font-mono">
+                    <span class="flex flex-col items-start"><span class="text-slate-400">0m</span></span>
+                    <span class="flex flex-col items-center"><span class="text-slate-400">15m</span></span>
+                    <span class="flex flex-col items-end"><span class="text-slate-400">+30m</span></span>
+                </div>
+                <!-- Explicación visual -->
+                <p class="text-[9px] text-slate-400 mt-3 leading-relaxed border-t border-slate-700 pt-2">
+                    Las zonas <span class="text-slate-300 font-bold">transparentes</span> indican terreno sin árboles.<br>
+                    El color <span class="text-blue-500 font-bold">azul intenso</span> revela masas forestales densas.
+                </p>
+            </div>
+
             <div id="map"></div>
         </section>
         
@@ -315,6 +338,7 @@
 
         let is3D = false;
         let nodosVisibles = true; 
+        let canopyActivo = false; // Variable control de Altura de Dosel
 
         if (EMBEDDED_DEMO_TOKEN !== "") {
             document.getElementById('admin-tools').style.display = 'none';
@@ -351,6 +375,31 @@
                 'maxzoom': 14
             });
             map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.2 });
+            
+            // 1. Añadimos el origen de tiles globales de Altura de Dosel (Tree Cover/Height)
+            map.addSource('canopy-height', {
+                'type': 'raster',
+                'tiles': [
+                    'https://storage.googleapis.com/earthenginepartners-hansen/tiles/gfc_v1.4/tree_alpha/{z}/{x}/{y}.png'
+                ],
+                'tileSize': 256,
+                'maxzoom': 12
+            });
+
+            // 2. Preparamos la capa visual térmica (empezará apagada)
+            map.addLayer({
+                'id': 'capa-canopy-raster',
+                'type': 'raster',
+                'source': 'canopy-height',
+                'layout': {
+                    'visibility': 'none' 
+                },
+                'paint': {
+                    'raster-opacity': 0.85,
+                    'raster-hue-rotate': 120, /* Transforma la imagen a tonos azules */
+                    'raster-contrast': 0.5
+                }
+            });
         });
 
         map.on('click', (e) => {
@@ -380,6 +429,28 @@
                 .addTo(map);
                 
             map.flyTo({ center: [lng, lat], essential: true });
+        }
+
+        // =======================================================================
+        // 🔄 CONTROLES VISUALES DEL MAPA
+        // =======================================================================
+        function toggleCanopy() {
+            canopyActivo = !canopyActivo;
+            const btn = document.getElementById('btn-canopy');
+            const text = document.getElementById('text-canopy');
+            const legend = document.getElementById('canopy-legend');
+            
+            if (canopyActivo) {
+                map.setLayoutProperty('capa-canopy-raster', 'visibility', 'visible');
+                btn.classList.add('active-3d');
+                text.innerText = "Ocultar Dosel";
+                legend.classList.remove('hidden'); // Muestra la leyenda
+            } else {
+                map.setLayoutProperty('capa-canopy-raster', 'visibility', 'none');
+                btn.classList.remove('active-3d');
+                text.innerText = "Altura Dosel";
+                legend.classList.add('hidden'); // Oculta la leyenda
+            }
         }
 
         function toggle3D() {
