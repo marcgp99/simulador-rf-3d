@@ -250,7 +250,7 @@
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <p class="text-[10px] text-green-400/80 font-bold animate-pulse uppercase tracking-widest">Inyectando polígonos a CloudRF...</p>
+                    <p id="loader-text" class="text-[10px] text-green-400/80 font-bold animate-pulse uppercase tracking-widest text-center">Inicializando motor RF...</p>
                 </div>
             </div>
 
@@ -355,6 +355,85 @@
         }
 
         // =======================================================================
+        // 🗺️ MATEMÁTICAS DE TILES PARA ESCÁNER DE PÍXELES (NUEVO)
+        // =======================================================================
+        function getTileCoords(lat, lon, zoom) {
+            let x = (lon + 180) / 360 * Math.pow(2, zoom);
+            let y = (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom);
+            return { 
+                tileX: Math.floor(x), 
+                tileY: Math.floor(y), 
+                px: Math.floor((x % 1) * 256), 
+                py: Math.floor((y % 1) * 256) 
+            };
+        }
+
+        // Algoritmo fotográfico oculto
+        async function obtenerAlturaMediaKML(geojson) {
+            return new Promise((resolve) => {
+                try {
+                    const zoom = 12; // Zoom global de la capa de ETH
+                    const centro = turf.center(geojson).geometry.coordinates;
+                    const centerTile = getTileCoords(centro[1], centro[0], zoom);
+
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous";
+                    // Cargamos el PNG puro que corresponde a la finca del cliente
+                    img.src = `https://storage.googleapis.com/earthenginepartners-hansen/tiles/gfc_v1.4/tree_alpha/${zoom}/${centerTile.tileX}/${centerTile.tileY}.png`;
+
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 256; canvas.height = 256;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+
+                        // Generamos una malla de puntos solo dentro del KML
+                        const areaKm2 = turf.area(geojson) / 1000000;
+                        let spacing = Math.sqrt(areaKm2 / 400); // 400 pinchazos láser
+                        if (spacing < 0.01) spacing = 0.01;
+
+                        const grid = turf.pointGrid(turf.bbox(geojson), spacing, {units: 'kilometers'});
+                        let alturasArbolesDetectados = [];
+
+                        turf.featureEach(grid, function (pt) {
+                            if (puntoCaeEnKML(pt)) {
+                                const lon = pt.geometry.coordinates[0];
+                                const lat = pt.geometry.coordinates[1];
+                                const coords = getTileCoords(lat, lon, zoom);
+
+                                // Si el punto cae dentro del tile que hemos descargado
+                                if (coords.tileX === centerTile.tileX && coords.tileY === centerTile.tileY) {
+                                    const pixel = ctx.getImageData(coords.px, coords.py, 1, 1).data;
+                                    // La intensidad está en el canal Alpha de Earth Engine
+                                    const intensidad = pixel[3] > 0 ? pixel[3] : pixel[0]; 
+                                    
+                                    // Mapeo: El valor 255 equivale aprox a 30 metros de altura forestal densa
+                                    let alturaMetros = (intensidad / 255) * 30;
+                                    
+                                    // Si la altura es mayor a 3m (descartamos prados y matorral bajo)
+                                    if (alturaMetros > 3) { 
+                                        alturasArbolesDetectados.push(alturaMetros);
+                                    }
+                                }
+                            }
+                        });
+
+                        // Hacemos la media ESTRICTAMENTE de las zonas que SÍ tienen bosque
+                        if (alturasArbolesDetectados.length > 0) {
+                            const mediaReal = alturasArbolesDetectados.reduce((a, b) => a + b, 0) / alturasArbolesDetectados.length;
+                            resolve(mediaReal);
+                        } else {
+                            resolve(0); // Finca totalmente limpia (prados/cultivos)
+                        }
+                    };
+                    img.onerror = () => resolve(0);
+                } catch (e) {
+                    resolve(0);
+                }
+            });
+        }
+
+        // =======================================================================
         // 🗺️ INICIALIZACIÓN DE MAPBOX GL JS
         // =======================================================================
         const map = new mapboxgl.Map({
@@ -364,7 +443,7 @@
             zoom: 13,
             pitch: 0,
             maxPitch: 0,
-            preserveDrawingBuffer: true // 🔥 VITAL: Nos permite "leer" los colores del mapa después
+            preserveDrawingBuffer: true // Permite captura de canvas
         });
 
         map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-left');
@@ -1056,33 +1135,52 @@
 
             document.getElementById('btnSimular').classList.add('hidden');
             document.getElementById('loader').classList.remove('hidden');
+            const loaderText = document.getElementById('loader-text');
 
             try {
-                // 🔥 NUEVA LÓGICA DE INYECCIÓN DE OBSTÁCULOS
+                // 🔥 LA MAGIA: EVALUACIÓN DE ENTORNO EN TIEMPO REAL
                 let environmentConf = { ele: 1, cll: landCover, clb: 0, clm: 0 };
                 let clutterConf = undefined;
 
                 if (geojsonKMLActual) {
-                    // Si hay KML, apagamos bosque global y encendemos mis obstáculos
-                    environmentConf.cll = 0;
-                    environmentConf.clm = 1;
-
-                    let featuresArray = [];
-                    if (geojsonKMLActual.type === 'FeatureCollection') {
-                        featuresArray = geojsonKMLActual.features.map((feat, index) => ({
-                            type: "Feature",
-                            geometry: feat.geometry,
-                            properties: { name: `Parcela ${index+1}`, height: 20, attenuation: 0.05 }
-                        }));
-                    } else {
-                        featuresArray = [{
-                            type: "Feature",
-                            geometry: geojsonKMLActual.geometry,
-                            properties: { name: "Parcela Principal", height: 20, attenuation: 0.05 }
-                        }];
-                    }
+                    loaderText.innerText = "Extrayendo datos forestales del satélite...";
                     
-                    clutterConf = { type: "FeatureCollection", features: featuresArray };
+                    let alturaReal = await obtenerAlturaMediaKML(geojsonKMLActual);
+                    
+                    if (alturaReal > 3) {
+                        alturaReal = Math.round(alturaReal);
+                        loaderText.innerText = `Bosque detectado (~${alturaReal}m). Ajustando RF...`;
+                        
+                        // Apagamos bosque global y encendemos el obstáculo hiper-preciso
+                        environmentConf.cll = 0;
+                        environmentConf.clm = 1;
+
+                        // Simplificamos los vértices del KML para no saturar la API (413 Payload Too Large)
+                        const simplificacion = 0.0002;
+                        let featuresArray = [];
+                        
+                        if (geojsonKMLActual.type === 'FeatureCollection') {
+                            featuresArray = geojsonKMLActual.features.map((feat, index) => ({
+                                type: "Feature",
+                                geometry: turf.simplify(feat, {tolerance: simplificacion, highQuality: false}).geometry,
+                                properties: { name: `Parcela ${index+1}`, height: alturaReal, attenuation: 0.05 }
+                            }));
+                        } else {
+                            featuresArray = [{
+                                type: "Feature",
+                                geometry: turf.simplify(geojsonKMLActual, {tolerance: simplificacion, highQuality: false}).geometry,
+                                properties: { name: "Parcela Principal", height: alturaReal, attenuation: 0.05 }
+                            }];
+                        }
+                        
+                        clutterConf = { type: "FeatureCollection", features: featuresArray };
+                    } else {
+                        loaderText.innerText = "Terreno limpio detectado. Iniciando motor...";
+                        environmentConf.cll = 0;
+                        environmentConf.clm = 0;
+                    }
+                } else {
+                    loaderText.innerText = "Inicializando motor RF...";
                 }
 
                 let payload = {
@@ -1096,10 +1194,7 @@
                     output: { res: 10, rad: perfilActivo === 'EU' ? 10 : 8, fmt: "kmz", out: 2, col: "LORA.dBm" }
                 };
 
-                // Si hemos generado obstáculos personalizados, los añadimos al payload
-                if (clutterConf) {
-                    payload.clutter = clutterConf;
-                }
+                if (clutterConf) { payload.clutter = clutterConf; }
 
                 const response = await fetch(PROXY_URL, {
                     method: 'POST',
@@ -1165,6 +1260,7 @@
             } finally {
                 document.getElementById('btnSimular').classList.remove('hidden');
                 document.getElementById('loader').classList.add('hidden');
+                loaderText.innerText = "Procesando modelo ITM...";
             }
         }
     </script>
