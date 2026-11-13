@@ -197,25 +197,22 @@
                         <div class="col-span-2">
                             <input type="number" id="num_antenas" min="1" max="10" value="2" class="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 focus:outline-none transition-all font-mono" placeholder="Nº Antenas">
                         </div>
-                        <button onclick="calcularUbicacionesOptimas()" class="col-span-1 bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center h-full">
+                        <button id="btn-fijo" onclick="optimizarRed('fijo')" class="col-span-1 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white p-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center h-full">
                             Calcular
                         </button>
                     </div>
+                    <button id="btn-objetivo" onclick="optimizarRed('objetivo')" class="w-full mt-2 bg-fuchsia-700 hover:bg-fuchsia-600 disabled:opacity-40 text-white py-2.5 rounded-lg text-xs font-semibold transition-colors">
+                        Diseño automático
+                    </button>
+                    <p id="estado-precalculo" class="text-[10px] text-slate-500 text-center min-h-[14px]"></p>
                 </div>
 
-                <div id="draft-actions-panel" class="hidden space-y-2 p-2.5 bg-purple-950/20 border border-purple-500/20 rounded-lg transition-all animate-fadeIn">
-                    <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest text-center animate-pulse">Propuesta en Borrador (Pines Lilas)</div>
-                    <div id="draft-estimacion" class="text-[11px] text-purple-200/80 text-center"></div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="descartarPropuesta()" class="bg-slate-800/80 hover:bg-red-950/40 text-red-400 border border-red-500/20 text-xs py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            Descartar
-                        </button>
-                        <button onclick="confirmarYSimularPropuesta()" class="bg-purple-600 hover:bg-purple-500 text-white text-xs py-2 px-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-1 shadow-lg shadow-purple-600/10">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                            Simular Todo
-                        </button>
-                    </div>
+                <div id="opt-panel" class="hidden space-y-2 p-3 bg-purple-950/20 border border-purple-500/20 rounded-lg">
+                    <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest text-center">Resultado del optimizador</div>
+                    <div id="opt-resumen" class="text-[11px] text-purple-100/90 leading-relaxed space-y-1"></div>
+                    <button onclick="limpiarResultadoOptimizador()" class="w-full bg-slate-800/80 hover:bg-red-950/40 text-red-400 border border-red-500/20 text-xs py-2 px-3 rounded-lg font-medium transition-colors">
+                        Limpiar resultado
+                    </button>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mt-1 pt-2 border-t border-slate-700/50">
@@ -273,6 +270,7 @@
 
             <div id="historyArea" class="flex-1 flex flex-col min-h-0 border-t border-slate-700/50 pt-4 mt-auto">
                 <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex-shrink-0">Historial de Análisis</h3>
+                <div id="resumen-exterior" class="hidden flex-shrink-0 mb-3 p-2.5 bg-slate-900/40 border border-slate-700/60 rounded-lg text-[11px] text-slate-300"></div>
                 
                 <p id="emptyHistoryMsg" class="text-slate-500 text-sm italic text-center mt-2 flex-shrink-0">Ninguna simulación activa.</p>
                 
@@ -335,7 +333,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.1.0';
+        const APP_VERSION = '1.2.0';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -344,11 +342,11 @@
             proxyUrl: "https://ixorigue.small-leaf-5935.workers.dev",
             mapboxToken: 'pk.eyJ1IjoibWFyY2dwdDk5IiwiYSI6ImNtcmVxbWZzbDByenoyenBkdWU5cXBkYzcifQ.KRu6WKoui20OAQltTw11sQ',
             limiteUsosCliente: 2,          // ⏸️ Aplazado: se moverá al servidor
-            objetivoCoberturaPct: 80,      // Objetivo de cobertura de la finca
+            objetivoCoberturaPct: 80,      // Objetivo de cobertura dentro de la finca
 
             perfiles: {
-                EU:    { frecuenciaMHz: 868, plan: 'EU868' },
-                LATAM: { frecuenciaMHz: 915, plan: 'AU915/US915' }
+                EU:    { frecuenciaMHz: 868, plan: 'EU868',       alturaMastilM: 3 },
+                LATAM: { frecuenciaMHz: 915, plan: 'AU915/US915', alturaMastilM: 10 }
             },
 
             dispositivo: {
@@ -376,18 +374,31 @@
             radioSimulacion: { minKm: 3, maxKm: 15, margenKm: 1, sinKmlKm: 10 },
 
             terreno: {
-                zoomMax: 14, zoomMin: 10, maxTiles: 100,
                 pasoMuestreoM: 30, maxMuestrasPorPerfil: 200,
                 factorK: 4 / 3, radioTierraM: 6371000,
                 exageracionVisual: 1.2,    // SOLO visual; los cálculos usan el DEM real
-                haloCargaKm: 0.8
+                haloCargaKm: 1.5           // margen de descarga de terreno alrededor de la finca
             },
 
-            malla:  { puntosObjetivo: 3000, separacionMinKm: 0.03, separacionMaxKm: 0.5 },
+            vegetacion: { radioEntornoM: 75, coefInicialDb: 8 },
+
+            malla:   { puntosObjetivo: 3000, separacionMinKm: 0.03, separacionMaxKm: 0.5 },
             cumbres: { puntosObjetivo: 1000, separacionMinKm: 0.03, pesoAltura: 0.7, pesoSeparacion: 0.3,
                        separacionMinAbsKm: 0.1, separacionMinFraccionDiagonal: 0.15 },
-            optimizador: { haloKm: 0.5, pesoExterno: 0.85, separacionFallbackKm: 0.4,
-                           puntosDestino: 300, puntosCandidatos: 400, alcanceMaxKm: 15 },
+
+            // Cobertura fuera de la finca (fugas de animales)
+            exterior: { franjaKm: 1, alcanceAnalisisKm: 5, puntosAnalisis: 2500 },
+
+            optimizador: {
+                haloKm: 0.5, pesoExterno: 0.85, maxAntenas: 10,
+                puntosDestino: 300, puntosFranja: 150, puntosCandidatos: 400, alcanceMaxKm: 15,
+                simsCalibracion: 4, resolucionCalibracionM: 30,
+                rondasCorreccion: 2, simsPorRonda: 3,
+                pesoExteriorDesempate: 0.05, pesoRedundancia: 0.01,
+                concurrencia: 4, reintentos: 3
+            },
+
+            cache: { clave: 'rfsim-cache-v1', diasValidez: 7, maxEntradas: 300 },
 
             cloudrf: { modelo: { pm: 1, pe: 3, cli: 1, rel: 80, ked: 1 }, resolucionM: 10,
                        colores: 'LORA.dBm', anchoBandaMHz: 0.125 }
@@ -448,31 +459,53 @@
         }
 
         // elev: cotas reales equiespaciadas del perfil (incluye extremos). hTx/hRx: alturas sobre el suelo.
-        // Pérdida base = máx(tierra plana con alturas efectivas, espacio libre) + difracción del obstáculo dominante
+        // Pérdida base = máx(tierra plana con alturas efectivas, espacio libre).
+        // Difracción: método Deygout con hasta 3 obstáculos (principal + uno a cada lado).
         function evaluarEnlace(elev, dM, fMHz, hTx, hRx, k = 4 / 3, R = 6371000) {
             const n = elev.length - 1;
             const zA = elev[0] + hTx, zB = elev[n] + hRx;
             const lambda = 299.792458 / fMHz;
-            let vMax = -Infinity, suma = 0, cuenta = 0;
-            for (let i = 1; i < n; i++) {
+            const H = new Float64Array(n + 1);
+            let suma = 0, cuenta = 0;
+            for (let i = 0; i <= n; i++) {
                 const e = elev[i];
-                if (e === null || !isFinite(e)) continue;
+                if (e === null || !isFinite(e)) { H[i] = NaN; continue; }
                 const d1 = dM * i / n, d2 = dM - d1;
-                const curvatura = d1 * d2 / (2 * k * R);
-                const linea = zA + (zB - zA) * i / n;
-                const h = (e + curvatura) - linea;               // > 0 → el terreno corta la línea de visión
-                const v = h * Math.sqrt(2 * dM / (lambda * d1 * d2));
-                if (v > vMax) vMax = v;
-                suma += e + curvatura; cuenta++;
+                H[i] = e + d1 * d2 / (2 * k * R);
+                if (i > 0 && i < n) { suma += H[i]; cuenta++; }
             }
-            if (!isFinite(vMax)) vMax = -10;
+            const bordeMax = (i0, z0, i1, z1, excluirCerca = -1) => {
+                const D = dM * (i1 - i0) / n;
+                let mejor = -Infinity, idx = -1;
+                for (let i = i0 + 1; i < i1; i++) {
+                    if (excluirCerca >= 0 && Math.abs(i - excluirCerca) <= separacionMin) continue;
+                    if (Number.isNaN(H[i])) continue;
+                    const d1 = dM * (i - i0) / n, d2 = D - d1;
+                    if (d1 <= 0 || d2 <= 0) continue;
+                    const h = H[i] - (z0 + (z1 - z0) * (i - i0) / (i1 - i0));
+                    const v = h * Math.sqrt(2 * D / (lambda * d1 * d2));
+                    if (v > mejor) { mejor = v; idx = i; }
+                }
+                return { i: idx, v: mejor };
+            };
+            // Obstáculos secundarios a menos de ~5 % del trayecto (mín. 150 m) del principal son la misma cresta
+            const separacionMin = Math.max(Math.ceil(n * 0.05), Math.ceil(150 / (dM / n)));
+            const p = bordeMax(0, zA, n, zB);
+            const vMax = p.i >= 0 ? p.v : -10;
+            let difraccion = 0;
+            if (p.i >= 0 && p.v > -0.78) {
+                difraccion = perdidaDifraccionDb(p.v);
+                const izq = bordeMax(0, zA, p.i, H[p.i], p.i);
+                const der = bordeMax(p.i, H[p.i], n, zB, p.i);
+                if (izq.i >= 0) difraccion += perdidaDifraccionDb(izq.v);
+                if (der.i >= 0) difraccion += perdidaDifraccionDb(der.v);
+            }
             const terrenoMedio = cuenta ? suma / cuenta : Math.min(elev[0], elev[n]);
             const hEfTx = Math.max(hTx, zA - terrenoMedio);
             const hEfRx = Math.max(hRx, zB - terrenoMedio);
             const fspl = perdidaEspacioLibreDb(dM, fMHz);
             const base = Math.max(perdidaTierraPlanaDb(dM, hEfTx, hEfRx), fspl);
-            const difraccion = perdidaDifraccionDb(vMax);
-            // Obstáculo real (terreno por encima de la línea de visión): la difracción se suma a la pérdida base.
+            // Obstáculo real (terreno por encima de la línea de visión): la difracción se suma a la base.
             // Solo invasión parcial de Fresnel: el modelo de tierra plana ya la recoge; se toma el mayor.
             const perdida = vMax > 0 ? base + difraccion : Math.max(base, fspl + difraccion);
             return { perdidaDb: perdida, vMax, difraccionDb: difraccion, fresnelDespejado: vMax <= -0.6 * Math.SQRT2 };
@@ -534,6 +567,126 @@
             }
             return { poligonos, avisoLineas };
         }
+
+        // Ajuste del modelo local a CloudRF. muestras: [{ margen (dB sin vegetación), veg (0–1), real (bool) }]
+        // Busca el desfase (dB) y el coeficiente de vegetación (dB) que mejor reproducen lo que dice CloudRF.
+        function ajustarCalibracion(muestras, coefInicial = 8) {
+            const res = { offsetDb: 0, coefVegDb: coefInicial, precision: null, n: muestras.length };
+            if (!muestras.length) return res;
+            const P = muestras.reduce((s, m) => s + (m.real ? 1 : 0), 0), N = muestras.length - P;
+            let mejor = -1, mejorPenal = Infinity;
+            for (let coef = 0; coef <= 30; coef += 2) {
+                for (let off = -20; off <= 20; off += 1) {
+                    let tp = 0, tn = 0;
+                    for (const m of muestras) {
+                        const pred = m.margen - coef * m.veg + off >= 0;
+                        if (pred && m.real) tp++; else if (!pred && !m.real) tn++;
+                    }
+                    const acierto = (P && N) ? 0.5 * (tp / P + tn / N) : (tp + tn) / muestras.length;
+                    const penal = Math.abs(off) + 0.1 * Math.abs(coef - coefInicial);
+                    if (acierto > mejor + 1e-9 || (Math.abs(acierto - mejor) <= 1e-9 && penal < mejorPenal)) {
+                        mejor = acierto; mejorPenal = penal; res.offsetDb = off; res.coefVegDb = coef;
+                    }
+                }
+            }
+            res.precision = mejor;
+            return res;
+        }
+
+        // Selección de emplazamientos (cobertura máxima / mínimo número de antenas).
+        // sets[c]: índices de puntos que cubre el candidato c. Puntos [0, nInterior) = finca; resto = franja exterior.
+        // modo 'objetivo': mínimo nº de antenas que alcanza objetivoPct dentro de la finca (máx. maxAntenas).
+        // modo 'fijo': las nFijo antenas que más cubren. La franja exterior y la redundancia sirven de desempate.
+        function resolverCobertura(op) {
+            const { sets, pesos, nInterior, nTotal, modo, objetivoPct = 80, maxAntenas = 10, nFijo = 1,
+                    pesoExterior = 0.05, pesoRedundancia = 0.01, reserva = null } = op;
+            const C = sets.length;
+            const wExt = nTotal > nInterior ? pesoExterior : 0;
+            const cuenta = new Uint16Array(nTotal);
+            let sel = [];
+            const enSel = new Uint8Array(C);
+            const add = c => { for (const j of sets[c]) cuenta[j]++; };
+            const rem = c => { for (const j of sets[c]) cuenta[j]--; };
+            const marginal = c => {
+                let g = 0;
+                for (const j of sets[c]) {
+                    if (cuenta[j] === 0) g += j < nInterior ? 1 : wExt;
+                    else if (cuenta[j] === 1 && j < nInterior) g += pesoRedundancia;
+                }
+                return g;
+            };
+            const ganancia = c => marginal(c) * (pesos ? pesos[c] : 1);
+            const pctInterior = () => { let s = 0; for (let j = 0; j < nInterior; j++) if (cuenta[j]) s++; return nInterior ? 100 * s / nInterior : 0; };
+            const pctExterior = () => { let s = 0; for (let j = nInterior; j < nTotal; j++) if (cuenta[j]) s++; return nTotal > nInterior ? 100 * s / (nTotal - nInterior) : 0; };
+            const poner = c => { sel.push(c); enSel[c] = 1; add(c); };
+            const elegir = () => {
+                let mejor = -1, mg = 1e-12;
+                for (let c = 0; c < C; c++) { if (enSel[c]) continue; const g = ganancia(c); if (g > mg) { mg = g; mejor = c; } }
+                return mejor;
+            };
+            const mejorar = () => { // Intercambios: cada antena se sustituye por la candidata con mayor aporte marginal
+                for (let pasada = 0; pasada < 3; pasada++) {
+                    let cambio = false;
+                    for (let i = 0; i < sel.length; i++) {
+                        const actual = sel[i];
+                        rem(actual); enSel[actual] = 0;
+                        let mejorC = actual, mejorV = ganancia(actual);
+                        for (let c = 0; c < C; c++) {
+                            if (enSel[c]) continue;
+                            const v = ganancia(c);
+                            if (v > mejorV + 1e-9) { mejorV = v; mejorC = c; }
+                        }
+                        sel[i] = mejorC; enSel[mejorC] = 1; add(mejorC);
+                        if (mejorC !== actual) cambio = true;
+                    }
+                    if (!cambio) break;
+                }
+            };
+
+            const limite = Math.min(modo === 'fijo' ? nFijo : maxAntenas, C);
+            while (sel.length < limite) {
+                if (modo === 'objetivo' && pctInterior() >= objetivoPct) break;
+                let c = elegir();
+                if (c < 0 && modo === 'fijo' && reserva) c = reserva(sel.slice());
+                if (c < 0 || enSel[c]) break;
+                poner(c);
+            }
+            mejorar();
+
+            if (modo === 'objetivo') { // Intentar quitar antenas manteniendo el objetivo
+                while (pctInterior() >= objetivoPct && sel.length > 1) {
+                    const copia = sel.slice();
+                    let peor = 0, menor = Infinity;
+                    for (let i = 0; i < sel.length; i++) {
+                        rem(sel[i]); const g = marginal(sel[i]); add(sel[i]);
+                        if (g < menor) { menor = g; peor = i; }
+                    }
+                    const quitado = sel[peor];
+                    rem(quitado); enSel[quitado] = 0; sel.splice(peor, 1);
+                    mejorar();
+                    if (pctInterior() < objetivoPct) {
+                        for (const c of sel) { rem(c); enSel[c] = 0; }
+                        sel = copia;
+                        for (const c of sel) { add(c); enSel[c] = 1; }
+                        break;
+                    }
+                }
+            }
+
+            const interiorPct = pctInterior(), exteriorPct = pctExterior();
+            // Orden por aporte (para la curva antenas → cobertura)
+            for (const c of sel) rem(c);
+            const pendientes = sel.slice(), orden = [], curva = [];
+            while (pendientes.length) {
+                let bi = 0, bg = -1;
+                pendientes.forEach((c, i) => { const g = marginal(c); if (g > bg) { bg = g; bi = i; } });
+                const c = pendientes.splice(bi, 1)[0];
+                add(c); orden.push(c); curva.push(pctInterior());
+            }
+            return { seleccion: orden, curva, interiorPct, exteriorPct, objetivoAlcanzado: interiorPct >= objetivoPct };
+        }
+
+        function hashTexto(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(16); }
         // @@PURE-END
 
         // =======================================================================
@@ -545,18 +698,20 @@
         let simulaciones = [];
         let simCounter = 1;
         let geojsonKMLActual = null;     // Siempre FeatureCollection de Polygons (con huecos)
+        let versionKML = 0;
         let mallaFinca = [];             // Puntos [lng,lat] dentro de la finca (cacheados)
+        let puntosExterior = [];         // [{coords, distKm, sector}] alrededor de la finca
         let etiquetaCoberturaActual = null;
         let inputMarker = null;
         let cumbreMarkers = [];
-        let draftMarkers = [];
-        let draftSites = [];
         let is3D = false;
         let nodosVisibles = true;
         let canopyActivo = false;
         let optimizadorEnCurso = false;
+        let ultimoResultado = null;      // { ids: [simulaciones creadas por el optimizador] }
 
         document.getElementById('app-version').innerText = 'v' + APP_VERSION;
+        document.getElementById('btn-objetivo').innerText = `Diseño automático: ${CONFIG.objetivoCoberturaPct}% de cobertura`;
 
         if (EMBEDDED_DEMO_TOKEN !== "") {
             document.getElementById('admin-tools').style.display = 'none';
@@ -579,6 +734,7 @@
         // =======================================================================
         function perfilActivo() { return CONFIG.perfiles[document.getElementById('sim_profile').value]; }
         function formatoActivo() { return CONFIG.dispositivo.formatos[document.getElementById('formato_dispositivo').value]; }
+        function alturaMastil() { return parseFloat(document.getElementById('tx_height').value) || perfilActivo().alturaMastilM; }
         function umbralCoberturaDbm() { return CONFIG.gateway.sensibilidadDbm[CONFIG.sfDiseno] + CONFIG.margenDesvanecimientoDb; }
         function potenciaEfectivaDispositivoDbm(formato) { return CONFIG.dispositivo.potenciaTxDbm - formato.perdidaAntenaCuerpoDb; }
         // Pérdida máxima admisible en el enlace de subida (collar → gateway)
@@ -592,27 +748,38 @@
                 `${p.frecuenciaMHz} MHz ${CONFIG.sfDiseno}<br>Umbral ${umbralCoberturaDbm()} dBm<br>Rx a ${f.alturaM} m`;
         }
 
-        function cambiarPerfil() { actualizarInfoEnlace(); }
+        function cambiarPerfil() {
+            document.getElementById('tx_height').value = perfilActivo().alturaMastilM;
+            actualizarInfoEnlace();
+            programarPrecalculo();
+        }
         actualizarInfoEnlace();
+        document.getElementById('formato_dispositivo').addEventListener('change', () => programarPrecalculo());
+        document.getElementById('tx_height').addEventListener('change', () => programarPrecalculo());
 
         function mostrarLoader(texto) {
             document.getElementById('loader-text').innerText = texto;
             document.getElementById('loader').classList.remove('hidden');
             document.getElementById('loader').classList.add('flex');
         }
+        function textoLoader(texto) { document.getElementById('loader-text').innerText = texto; }
         function ocultarLoader() {
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('loader').classList.remove('flex');
         }
+        function estadoPrecalculo(texto) { document.getElementById('estado-precalculo').innerText = texto; }
         const ceder = () => new Promise(r => setTimeout(r, 0));
+        const esperar = ms => new Promise(r => setTimeout(r, ms));
 
         // =======================================================================
-        // ⛰️ TERRENO PROPIO: tiles DEM de Mapbox decodificados (independiente de la cámara)
+        // ⛰️ CAPAS DE TESELAS PROPIAS (terreno y cubierta arbórea), independientes de la cámara
         // =======================================================================
-        const DEM = {
-            z: null,
-            tiles: new Map(),
-
+        class CapaTeselas {
+            constructor({ urls, decodificar, zoomMax, zoomMin, maxTiles }) {
+                Object.assign(this, { urls, decodificar, zoomMax, zoomMin, maxTiles });
+                this.z = null;
+                this.tiles = new Map();
+            }
             async asegurarArea(bbox) {
                 const [w, s, e, n] = bbox;
                 const rango = (z) => {
@@ -620,21 +787,20 @@
                     const y0 = Math.floor(lat2tileY(n, z)), y1 = Math.floor(lat2tileY(s, z));
                     return { x0, x1, y0, y1, total: (x1 - x0 + 1) * (y1 - y0 + 1) };
                 };
-                let z = CONFIG.terreno.zoomMax;
-                while (z > CONFIG.terreno.zoomMin && rango(z).total > CONFIG.terreno.maxTiles) z--;
+                let z = this.zoomMax;
+                while (z > this.zoomMin && rango(z).total > this.maxTiles) z--;
                 if (this.z !== z) { this.tiles.clear(); this.z = z; }
+                this._tx = this._ty = this._z = null;
                 const r = rango(z), pendientes = [];
                 for (let x = r.x0; x <= r.x1; x++)
                     for (let y = r.y0; y <= r.y1; y++)
                         if (!this.tiles.has(`${x}/${y}`)) pendientes.push(this.cargarTile(z, x, y));
                 await Promise.all(pendientes);
-            },
-
+            }
             async cargarTile(z, x, y) {
                 const clave = `${x}/${y}`;
-                for (const sufijo of ['@2x', '']) {
+                for (const url of this.urls(z, x, y)) {
                     try {
-                        const url = `https://api.mapbox.com/v4/mapbox.mapbox-terrain-dem-v1/${z}/${x}/${y}${sufijo}.pngraw?access_token=${CONFIG.mapboxToken}`;
                         const resp = await fetch(url);
                         if (!resp.ok) continue;
                         const bmp = await createImageBitmap(await resp.blob(), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
@@ -643,47 +809,67 @@
                         const ctx = canvas.getContext('2d', { willReadFrequently: true });
                         ctx.drawImage(bmp, 0, 0);
                         const px = ctx.getImageData(0, 0, bmp.width, bmp.height).data;
-                        const elev = new Float32Array(bmp.width * bmp.height);
-                        for (let i = 0; i < elev.length; i++) elev[i] = decodificarDem(px[i * 4], px[i * 4 + 1], px[i * 4 + 2]);
-                        this.tiles.set(clave, { size: bmp.width, elev });
+                        this.tiles.set(clave, { size: bmp.width, val: this.decodificar(px, bmp.width * bmp.height) });
                         return;
-                    } catch (e) { /* probamos el siguiente formato */ }
+                    } catch (e) { /* probamos la siguiente URL */ }
                 }
                 this.tiles.set(clave, null);
-            },
-
-            elev(lng, lat) {
+            }
+            valor(lng, lat) {
                 if (this.z === null) return null;
                 const fx = lon2tileX(lng, this.z), fy = lat2tileY(lat, this.z);
                 const tx = Math.floor(fx), ty = Math.floor(fy);
-                const t = this.tiles.get(`${tx}/${ty}`);
+                let t;
+                if (tx === this._tx && ty === this._ty && this._z === this.z) t = this._t;
+                else { t = this.tiles.get(`${tx}/${ty}`); if (t !== undefined) { this._tx = tx; this._ty = ty; this._z = this.z; this._t = t; } }
                 if (!t) return null;
                 const S = t.size;
                 const px = Math.min(S - 1, Math.max(0, (fx - tx) * S - 0.5));
                 const py = Math.min(S - 1, Math.max(0, (fy - ty) * S - 0.5));
                 const x0 = Math.floor(px), y0 = Math.floor(py);
                 const x1 = Math.min(S - 1, x0 + 1), y1 = Math.min(S - 1, y0 + 1);
-                const ax = px - x0, ay = py - y0;
-                const E = t.elev;
-                return (E[y0 * S + x0] * (1 - ax) + E[y0 * S + x1] * ax) * (1 - ay) +
-                       (E[y1 * S + x0] * (1 - ax) + E[y1 * S + x1] * ax) * ay;
+                const ax = px - x0, ay = py - y0, V = t.val;
+                return (V[y0 * S + x0] * (1 - ax) + V[y0 * S + x1] * ax) * (1 - ay) +
+                       (V[y1 * S + x0] * (1 - ax) + V[y1 * S + x1] * ax) * ay;
             }
-        };
+        }
+
+        const DEM = new CapaTeselas({
+            urls: (z, x, y) => ['@2x', ''].map(s => `https://api.mapbox.com/v4/mapbox.mapbox-terrain-dem-v1/${z}/${x}/${y}${s}.pngraw?access_token=${CONFIG.mapboxToken}`),
+            decodificar: (px, n) => { const v = new Float32Array(n); for (let i = 0; i < n; i++) v[i] = decodificarDem(px[i * 4], px[i * 4 + 1], px[i * 4 + 2]); return v; },
+            zoomMax: 14, zoomMin: 10, maxTiles: 100
+        });
+        // Cubierta arbórea Hansen/UMD (fracción 0–1 a partir del canal alfa). Si no carga, se asume 0
+        // y la calibración con CloudRF absorbe el efecto de la vegetación en el desfase.
+        const VEG = new CapaTeselas({
+            urls: (z, x, y) => [`https://storage.googleapis.com/earthenginepartners-hansen/tiles/gfc_v1.4/tree_alpha/${z}/${x}/${y}.png`],
+            decodificar: (px, n) => { const v = new Float32Array(n); for (let i = 0; i < n; i++) v[i] = px[i * 4 + 3] / 255; return v; },
+            zoomMax: 12, zoomMin: 8, maxTiles: 64
+        });
 
         function muestrearPerfil(a, b, dM) {
             const n = Math.min(CONFIG.terreno.maxMuestrasPorPerfil, Math.max(2, Math.ceil(dM / CONFIG.terreno.pasoMuestreoM)));
             const elev = new Array(n + 1);
             for (let i = 0; i <= n; i++) {
                 const t = i / n;
-                elev[i] = DEM.elev(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t);
+                elev[i] = DEM.valor(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t);
             }
             return elev;
+        }
+
+        function vegetacionEntorno(lng, lat) { // media de la cubierta en el punto y a ±radioEntorno
+            const r = CONFIG.vegetacion.radioEntornoM;
+            const dLat = r / 111320, dLng = r / (111320 * Math.cos(lat * GRAD));
+            const pts = [[lng, lat], [lng + dLng, lat], [lng - dLng, lat], [lng, lat + dLat], [lng, lat - dLat]];
+            let s = 0, n = 0;
+            for (const [x, y] of pts) { const v = VEG.valor(x, y); if (v !== null && isFinite(v)) { s += v; n++; } }
+            return n ? s / n : 0;
         }
 
         async function asegurarTerrenoFinca() {
             if (!geojsonKMLActual) return;
             const zona = turf.bbox(turf.buffer(turf.bboxPolygon(turf.bbox(geojsonKMLActual)), CONFIG.terreno.haloCargaKm, { units: 'kilometers' }));
-            await DEM.asegurarArea(zona);
+            await Promise.all([DEM.asegurarArea(zona), VEG.asegurarArea(zona).catch(() => null)]);
         }
 
         // =======================================================================
@@ -733,15 +919,19 @@
             if (inputMarker) inputMarker.remove();
             const el = document.createElement('div');
             el.className = 'neon-orange-pin';
-            el.innerHTML = `
+            el.innerHTML = svgPin();
+            inputMarker = new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat([lng, lat]).addTo(map);
+            map.flyTo({ center: [lng, lat], essential: true });
+        }
+
+        function svgPin() {
+            return `
                 <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <ellipse cx="16" cy="38" rx="8" ry="3" fill="black" fill-opacity="0.3"/>
                     <path d="M16 1C7.71573 1 1 7.71573 1 16C1 26 16 41 16 41C16 41 31 26 31 16C31 7.71573 24.2843 1 16 1Z" fill="white"/>
                     <path d="M16 3C8.8203 3 3 8.8203 3 16C3 24.7 16 38.3 16 38.3C16 38.3 29 24.7 29 16C29 8.8203 23.1797 3 16 3Z" fill="#ff7e00"/>
                     <circle cx="16" cy="16" r="5" fill="white"/>
                 </svg>`;
-            inputMarker = new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat([lng, lat]).addTo(map);
-            map.flyTo({ center: [lng, lat], essential: true });
         }
 
         // =======================================================================
@@ -783,9 +973,7 @@
             const btn = document.getElementById('btn-nodos');
             const icon = document.getElementById('icon-nodos');
             const text = document.getElementById('text-nodos');
-            const displayStyle = nodosVisibles ? 'flex' : 'none';
-            cumbreMarkers.forEach(m => m.getElement().style.display = displayStyle);
-            draftMarkers.forEach(m => m.getElement().style.display = displayStyle);
+            cumbreMarkers.forEach(m => m.getElement().style.display = nodosVisibles ? 'flex' : 'none');
             if (nodosVisibles) {
                 btn.classList.remove('active-nodos');
                 text.innerText = "Ocultar Cumbres";
@@ -844,11 +1032,13 @@
                 map.removeLayer('kml-line');
                 map.removeSource('kml-source');
             }
-            descartarPropuesta();
+            limpiarResultadoOptimizador();
             cumbreMarkers.forEach(m => m.remove()); cumbreMarkers = [];
 
             geojsonKMLActual = turf.featureCollection(poligonos.map(anillos => turf.polygon(anillos)));
+            versionKML++;
             construirMallaFinca();
+            construirPuntosExterior();
 
             map.addSource('kml-source', { type: 'geojson', data: geojsonKMLActual });
             map.addLayer({ 'id': 'kml-fill', 'type': 'fill', 'source': 'kml-source', 'paint': { 'fill-color': '#ec4899', 'fill-opacity': 0.1 } });
@@ -858,7 +1048,7 @@
             map.fitBounds([[w, s], [e, n]], { padding: 50, duration: 1500 });
             if (avisoLineas) console.warn('KML sin polígonos: se han usado líneas cerradas como contorno.');
 
-            for (const sim of simulaciones) sim.coberturaLocal = await calcularPorcentajeLocal(sim);
+            for (const sim of simulaciones) sim.coberturaLocal = calcularPorcentajeLocal(sim);
             await actualizarInterfazGlobal();
 
             mostrarLoader('Cargando terreno...');
@@ -866,6 +1056,7 @@
                 await asegurarTerrenoFinca();
                 buscarCumbresInteligente();
             } finally { ocultarLoader(); }
+            programarPrecalculo(0); // Trabajo por detrás: visibilidad de todos los candidatos (sin créditos)
         }
 
         function puntoCaeEnKML(pt) {
@@ -880,6 +1071,32 @@
             mallaFinca = generarMalla(turf.bbox(geojsonKMLActual), sep).puntos
                 .filter(p => puntoCaeEnKML([p.lng, p.lat]))
                 .map(p => [p.lng, p.lat]);
+        }
+
+        // Puntos alrededor de la finca para medir la cobertura exterior (franja y alcance por dirección)
+        function construirPuntosExterior() {
+            const cfg = CONFIG.exterior;
+            puntosExterior = [];
+            try {
+                const lineas = [];
+                turf.flatten(geojsonKMLActual).features.forEach(f => {
+                    const s = turf.simplify(f, { tolerance: 0.0005, highQuality: false });
+                    lineas.push(turf.lineString(s.geometry.coordinates[0]));
+                });
+                const centro = turf.center(geojsonKMLActual).geometry.coordinates;
+                const zona = turf.bbox(turf.buffer(turf.bboxPolygon(turf.bbox(geojsonKMLActual)), cfg.alcanceAnalisisKm, { units: 'kilometers' }));
+                const area = turf.area(turf.bboxPolygon(zona)) / 1e6;
+                const sep = Math.max(0.05, Math.sqrt(area / (cfg.puntosAnalisis * 1.6)));
+                generarMalla(zona, sep).puntos.forEach(p => {
+                    const c = [p.lng, p.lat];
+                    if (puntoCaeEnKML(c)) return;
+                    let dist = Infinity;
+                    for (const l of lineas) dist = Math.min(dist, turf.pointToLineDistance(c, l, { units: 'kilometers' }));
+                    if (dist > cfg.alcanceAnalisisKm) return;
+                    const rumbo = (turf.bearing(centro, c) + 360) % 360;
+                    puntosExterior.push({ coords: c, distKm: dist, sector: Math.round(rumbo / 45) % 8 });
+                });
+            } catch (e) { console.warn('No se pudo preparar el análisis exterior', e); }
         }
 
         // =======================================================================
@@ -898,7 +1115,7 @@
                 const validos = [];
                 malla.puntos.forEach(p => {
                     if (!turf.booleanPointInPolygon([p.lng, p.lat], parcela)) return;
-                    const e = DEM.elev(p.lng, p.lat);
+                    const e = DEM.valor(p.lng, p.lat);
                     if (e === null) return;
                     const pt = { ...p, elev: e, coords: [p.lng, p.lat] };
                     rejilla[p.r * malla.cols + p.c] = pt;
@@ -906,7 +1123,6 @@
                 });
                 if (validos.length === 0) return;
 
-                // Máximos locales: ningún vecino de la malla es más alto
                 let maximos = validos.filter(p => {
                     for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
                         if (!dr && !dc) continue;
@@ -953,141 +1169,319 @@
         }
 
         // =======================================================================
-        // 🧠 OPTIMIZADOR DE ANTENAS (balance de enlace con terreno real)
+        // 🧠 PRECÁLCULO POR DETRÁS: margen de enlace de cada candidato hacia cada punto (sin créditos)
         // =======================================================================
-        async function calcularUbicacionesOptimas() {
-            if (!geojsonKMLActual) return alert("Primero debes delimitar una zona cargando un archivo KML.");
-            if (optimizadorEnCurso) return;
-            const numAntenas = parseInt(document.getElementById('num_antenas').value) || 1;
-            if (numAntenas < 1) return;
+        let precalculoPromesa = null, precalculoClave = null, precalculoToken = 0, temporizadorPrecalculo = null;
 
-            optimizadorEnCurso = true;
-            descartarPropuesta();
-            mostrarLoader('Cargando terreno...');
+        function claveMatriz() {
+            return [versionKML, alturaMastil(), document.getElementById('formato_dispositivo').value, perfilActivo().frecuenciaMHz].join('|');
+        }
+
+        function programarPrecalculo(retardoMs = 600) {
+            if (!geojsonKMLActual) return;
+            clearTimeout(temporizadorPrecalculo);
+            temporizadorPrecalculo = setTimeout(() => iniciarPrecalculo(), retardoMs);
+        }
+
+        function iniciarPrecalculo() {
+            if (!geojsonKMLActual) return null;
+            const clave = claveMatriz();
+            if (precalculoClave === clave && precalculoPromesa) return precalculoPromesa;
+            precalculoClave = clave;
+            const token = ++precalculoToken;
+            precalculoPromesa = construirMatriz(clave, token).catch(e => { console.error(e); return null; });
+            return precalculoPromesa;
+        }
+
+        async function obtenerMatriz() {
+            for (let intento = 0; intento < 3; intento++) {
+                const m = await iniciarPrecalculo();
+                if (m && m.clave === claveMatriz()) return m;
+                if (!geojsonKMLActual) return null;
+            }
+            return null;
+        }
+
+        async function construirMatriz(clave, token) {
+            estadoPrecalculo('Preparando terreno…');
+            await asegurarTerrenoFinca();
+            if (token !== precalculoToken) return null;
+            const cfg = CONFIG.optimizador;
+            const formato = formatoActivo();
+            const fMHz = perfilActivo().frecuenciaMHz;
+            const hTx = alturaMastil();
+            const perdidaMax = perdidaMaximaDb(formato);
+
+            // Halo de búsqueda y franja exterior
+            const halos = [], franjas = [];
+            geojsonKMLActual.features.forEach(f => {
+                try { halos.push(turf.buffer(f, cfg.haloKm, { units: 'kilometers' })); } catch (e) { halos.push(f); }
+                try { franjas.push(turf.buffer(f, CONFIG.exterior.franjaKm, { units: 'kilometers' })); } catch (e) { /* sin franja */ }
+            });
+            const dentroDe = (pt, lista) => lista.some(p => turf.booleanPointInPolygon(pt, p));
+
+            // Puntos de control: primero los de la finca, después los de la franja exterior
+            const areaFinca = turf.area(geojsonKMLActual) / 1e6;
+            const sepDest = separacionPorDensidad(areaFinca, cfg.puntosDestino, 0.03, 2);
+            const interior = generarMalla(turf.bbox(geojsonKMLActual), sepDest).puntos.map(p => [p.lng, p.lat]).filter(c => puntoCaeEnKML(c));
+            let anillo = [];
+            if (franjas.length) {
+                const bboxFr = turf.bbox(turf.featureCollection(franjas));
+                const areaFr = Math.max(0.01, turf.area(turf.featureCollection(franjas)) / 1e6 - areaFinca);
+                const sepFr = separacionPorDensidad(areaFr, cfg.puntosFranja, 0.03, 2);
+                anillo = generarMalla(bboxFr, sepFr).puntos.map(p => [p.lng, p.lat]).filter(c => !puntoCaeEnKML(c) && dentroDe(c, franjas));
+            }
+            const destinos = [];
+            for (const c of interior) { const e = DEM.valor(c[0], c[1]); if (e !== null) destinos.push({ coords: c, elev: e }); }
+            const nInterior = destinos.length;
+            for (const c of anillo) { const e = DEM.valor(c[0], c[1]); if (e !== null) destinos.push({ coords: c, elev: e }); }
+            if (nInterior === 0) { estadoPrecalculo('No se pudo leer el terreno de la finca'); return null; }
+            const J = destinos.length;
+            const vegDest = new Float32Array(J);
+            destinos.forEach((d, j) => vegDest[j] = vegetacionEntorno(d.coords[0], d.coords[1]));
+
+            // Candidatos: finca + halo, con penalización a los externos
+            const bboxHalo = turf.bbox(turf.featureCollection(halos));
+            const areaBox = turf.area(turf.bboxPolygon(bboxHalo)) / 1e6;
+            const sepCand = separacionPorDensidad(areaBox, cfg.puntosCandidatos, 0.035, 0.5);
+            const candidatos = generarMalla(bboxHalo, sepCand).puntos
+                .map(p => [p.lng, p.lat])
+                .filter(c => dentroDe(c, halos))
+                .map(c => { const interno = puntoCaeEnKML(c); return { coords: c, elev: DEM.valor(c[0], c[1]), esInterno: interno, peso: interno ? 1.0 : cfg.pesoExterno }; })
+                .filter(c => c.elev !== null);
+
+            const C = candidatos.length;
+            const margen = new Float32Array(C * J);
+            for (let ci = 0; ci < C; ci++) {
+                const cand = candidatos[ci];
+                for (let j = 0; j < J; j++) {
+                    const dest = destinos[j];
+                    const d = distanciaM(cand.coords, dest.coords);
+                    if (d > cfg.alcanceMaxKm * 1000) { margen[ci * J + j] = -999; continue; }
+                    const perfil = muestrearPerfil(cand.coords, dest.coords, d);
+                    perfil[0] = cand.elev; perfil[perfil.length - 1] = dest.elev;
+                    margen[ci * J + j] = perdidaMax - evaluarEnlace(perfil, d, fMHz, hTx, formato.alturaM).perdidaDb;
+                }
+                if (ci % 4 === 0) {
+                    if (token !== precalculoToken) return null;
+                    estadoPrecalculo(`Analizando visibilidad por detrás… ${Math.round(100 * ci / C)}%`);
+                    await ceder();
+                }
+            }
+            if (token !== precalculoToken) return null;
+            estadoPrecalculo(`Terreno analizado: ${C} emplazamientos candidatos listos`);
+            return { clave, candidatos, destinos, nInterior, J, margen, vegDest, hTx, fMHz, formato };
+        }
+
+        function conjuntosCalibrados(M, cal) {
+            return M.candidatos.map((_, ci) => {
+                const arr = [], base = ci * M.J;
+                for (let j = 0; j < M.J; j++) if (M.margen[base + j] - cal.coefVegDb * M.vegDest[j] + cal.offsetDb >= 0) arr.push(j);
+                return Int32Array.from(arr);
+            });
+        }
+
+        function conjuntoReal(M, sim) {
+            const arr = [];
+            for (let j = 0; j < M.J; j++) if (hayCobertura(sim, M.destinos[j].coords[0], M.destinos[j].coords[1])) arr.push(j);
+            return Int32Array.from(arr);
+        }
+
+        function muestrasCalibracion(M, simsPorCand) {
+            const muestras = [];
+            for (const [ci, sim] of simsPorCand) {
+                if (!sim.pixeles) continue;
+                const [n, e, s, w] = sim.boundsCloudRF;
+                for (let j = 0; j < M.J; j++) {
+                    const [lng, lat] = M.destinos[j].coords;
+                    if (lat < s || lat > n || lng < w || lng > e) continue;
+                    muestras.push({ margen: M.margen[ci * M.J + j], veg: M.vegDest[j], real: hayCobertura(sim, lng, lat) });
+                }
+            }
+            return muestras;
+        }
+
+        // Emplazamientos variados para calibrar: buenos según el modelo local y lo más separados posible
+        function elegirCalibradores(M, sets, k) {
+            const orden = M.candidatos.map((_, ci) => ci)
+                .sort((a, b) => sets[b].filter(j => j < M.nInterior).length - sets[a].filter(j => j < M.nInterior).length);
+            const top = orden.slice(0, Math.max(k * 6, Math.ceil(orden.length * 0.25)));
+            const elegidos = [top[0]];
+            while (elegidos.length < Math.min(k, top.length)) {
+                let mejor = -1, mejorD = -1;
+                for (const ci of top) {
+                    if (elegidos.includes(ci)) continue;
+                    const dMin = Math.min(...elegidos.map(e => distanciaM(M.candidatos[ci].coords, M.candidatos[e].coords)));
+                    if (dMin > mejorD) { mejorD = dMin; mejor = ci; }
+                }
+                if (mejor < 0) break;
+                elegidos.push(mejor);
+            }
+            return elegidos;
+        }
+
+        // =======================================================================
+        // 🛰️ CLOUDRF: payload, caché local y cola con reintentos
+        // =======================================================================
+        // Enlace de subida por reciprocidad: se simula desde la gateway con la potencia EFECTIVA del
+        // dispositivo (14 dBm - pérdida antena/cuerpo), ganancia y cable de la gateway, y como umbral
+        // la sensibilidad real de la gateway + margen. Los dBm del mapa son la señal que llegaría a la gateway.
+        function radioSimulacionKm(lat, lon) {
+            const r = CONFIG.radioSimulacion;
+            if (!geojsonKMLActual) return r.sinKmlKm;
+            let maxKm = 0;
+            turf.coordEach(geojsonKMLActual, c => { maxKm = Math.max(maxKm, distanciaM([lon, lat], c) / 1000); });
+            return Math.min(r.maxKm, Math.max(r.minKm, Math.ceil((maxKm + r.margenKm) * 2) / 2));
+        }
+
+        function construirPayloadCloudRF({ lat, lon, alt, res, radioKm }) {
+            const perfil = perfilActivo(), formato = formatoActivo();
+            return {
+                site: `Punto ${simCounter}`, network: "Ixorigue",
+                transmitter: { lat: +lat.toFixed(6), lon: +lon.toFixed(6), alt, frq: perfil.frecuenciaMHz,
+                               txw: parseFloat(dbmAWatts(potenciaEfectivaDispositivoDbm(formato)).toFixed(6)),
+                               bwi: CONFIG.cloudrf.anchoBandaMHz },
+                receiver: { alt: formato.alturaM, rxg: 0, rxs: umbralCoberturaDbm() },
+                antenna: { txg: CONFIG.gateway.gananciaAntenaDbi, txl: CONFIG.gateway.perdidaCableDb, ant: 1, pol: "v" },
+                model: { ...CONFIG.cloudrf.modelo },
+                environment: { ele: 1, cll: parseInt(document.getElementById('land_cover').value), clb: 0 },
+                output: { res, rad: radioKm, fmt: "kmz", out: 2, col: CONFIG.cloudrf.colores }
+            };
+        }
+
+        const cacheSims = {
+            leer() { try { return JSON.parse(localStorage.getItem(CONFIG.cache.clave) || '{}'); } catch (e) { return {}; } },
+            guardar(obj) {
+                try {
+                    const claves = Object.keys(obj).sort((a, b) => obj[a].t - obj[b].t);
+                    while (claves.length > CONFIG.cache.maxEntradas) delete obj[claves.shift()];
+                    localStorage.setItem(CONFIG.cache.clave, JSON.stringify(obj));
+                } catch (e) { /* almacenamiento lleno o no disponible */ }
+            },
+            get(clave) {
+                const e = this.leer()[clave];
+                return e && Date.now() - e.t < CONFIG.cache.diasValidez * 864e5 ? e.data : null;
+            },
+            set(clave, data) { const o = this.leer(); o[clave] = { t: Date.now(), data }; this.guardar(o); },
+            borrar(clave) { const o = this.leer(); delete o[clave]; this.guardar(o); }
+        };
+
+        const colaCloudRF = {
+            activos: 0, espera: [],
+            async ejecutar(fn) {
+                while (this.activos >= CONFIG.optimizador.concurrencia) await new Promise(r => this.espera.push(r));
+                this.activos++;
+                try { return await fn(); }
+                finally { this.activos--; const r = this.espera.shift(); if (r) r(); }
+            }
+        };
+
+        async function peticionCloudRF(payload) {
+            let ultimoError = null;
+            for (let intento = 0; intento <= CONFIG.optimizador.reintentos; intento++) {
+                try {
+                    const resp = await fetch(CONFIG.proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const data = await resp.json().catch(() => ({}));
+                    if (resp.ok && data.kmz) return data;
+                    ultimoError = new Error(data.error || `HTTP ${resp.status}`);
+                    if (resp.status !== 429 && resp.status < 500) break; // error de petición: no se reintenta
+                } catch (e) { ultimoError = e; }
+                await esperar(2000 * Math.pow(2, intento));
+            }
+            throw ultimoError || new Error('Sin respuesta de CloudRF');
+        }
+
+        // Devuelve el resultado listo para medir cobertura (con píxeles). No toca el mapa.
+        async function simularCloudRF({ lat, lon, alt, res = CONFIG.cloudrf.resolucionM, contador = null }) {
+            const radioKm = radioSimulacionKm(lat, lon);
+            const payload = construirPayloadCloudRF({ lat, lon, alt, res, radioKm });
+            const { site, ...sinNombre } = payload;
+            const clave = hashTexto(JSON.stringify(sinNombre));
+            const preparar = async (data, desdeCache) => {
+                const imageUrl = data.PNG_WGS84 || data.png || data.PNG_Mercator;
+                const proyeccion = (!data.PNG_WGS84 && !data.png && data.PNG_Mercator) ? 'mercator' : 'wgs84';
+                const pixeles = imageUrl && data.bounds ? await cargarPixeles(imageUrl) : null;
+                return { lat, lon, alt, res, radioKm, data, kmz: data.kmz, imageUrl, boundsCloudRF: data.bounds, proyeccion, pixeles, desdeCache };
+            };
+            const enCache = cacheSims.get(clave);
+            if (enCache) {
+                const r = await preparar(enCache, true);
+                if (r.pixeles) { if (contador) contador.cache++; return r; }
+                cacheSims.borrar(clave); // la imagen ya no existe en CloudRF: se vuelve a simular
+            }
+            const data = await colaCloudRF.ejecutar(() => peticionCloudRF(payload));
+            if (contador) contador.sims++;
+            const { kmz, PNG_WGS84, png, PNG_Mercator, bounds } = data;
+            cacheSims.set(clave, { kmz, PNG_WGS84, png, PNG_Mercator, bounds });
+            return preparar(data, false);
+        }
+
+        // =======================================================================
+        // 🖼️ VISUALIZACIÓN DE SIMULACIONES
+        // =======================================================================
+        function mostrarSimulacion(r, nombre) {
+            const id = simCounter++;
+            const marker = new mapboxgl.Marker(Object.assign(document.createElement('div'), { className: 'neon-orange-pin', innerHTML: svgPin() }), { anchor: 'bottom' })
+                .setLngLat([r.lon, r.lat]).addTo(map);
+            if (r.imageUrl && r.boundsCloudRF) {
+                const [n, e, s, w] = r.boundsCloudRF;
+                map.addSource(`sim-source-${id}`, { 'type': 'image', 'url': r.imageUrl, 'coordinates': [[w, n], [e, n], [e, s], [w, s]] });
+                map.addLayer({ 'id': `sim-layer-${id}`, 'type': 'raster', 'source': `sim-source-${id}`, 'paint': { 'raster-opacity': 0.65 } });
+            }
+            const sim = {
+                id, name: nombre || `Punto ${id}`, freq: perfilActivo().frecuenciaMHz, alt: r.alt, formato: formatoActivo().nombre.split(' ')[0],
+                radioKm: r.radioKm, kmz: r.kmz, visible: true, imageUrl: r.imageUrl, boundsCloudRF: r.boundsCloudRF,
+                proyeccion: r.proyeccion, pixeles: r.pixeles, pinMarker: marker
+            };
+            sim.coberturaLocal = calcularPorcentajeLocal(sim);
+            const labelEl = document.createElement('div'); labelEl.className = 'cobertura-badge';
+            labelEl.innerHTML = `<div style="color:white; font-size:15px; margin-bottom:1px;">${sim.name}</div>` +
+                (sim.coberturaLocal !== null ? `<div style="color:#ff7e00; font-size:14px;">Local: ${sim.coberturaLocal}%</div>` : '');
+            sim.labelMarker = new mapboxgl.Marker(labelEl, { anchor: 'bottom', offset: [0, -45] }).setLngLat([r.lon, r.lat]).addTo(map);
+            simulaciones.push(sim);
+            return sim;
+        }
+
+        function eliminarSimulacion(id) {
+            const sim = simulaciones.find(s => s.id === id);
+            if (!sim) return;
+            if (map.getLayer(`sim-layer-${id}`)) map.removeLayer(`sim-layer-${id}`);
+            if (map.getSource(`sim-source-${id}`)) map.removeSource(`sim-source-${id}`);
+            sim.pinMarker?.remove(); sim.labelMarker?.remove();
+            simulaciones = simulaciones.filter(s => s.id !== id);
+        }
+
+        async function realizarSimulacion(customLat = null, customLon = null) {
+            if (EMBEDDED_DEMO_TOKEN !== "") {
+                const usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0');
+                if (usos >= CONFIG.limiteUsosCliente) return;
+            }
+            const lat = parseFloat(customLat !== null ? customLat : document.getElementById('lat').value);
+            const lon = parseFloat(customLon !== null ? customLon : document.getElementById('lon').value);
+            if (!coordenadasValidas(lat, lon)) return alert("Faltan coordenadas.");
+
+            document.getElementById('btnSimular').classList.add('hidden');
+            mostrarLoader('Procesando modelo ITM...');
             try {
-                await asegurarTerrenoFinca();
-                const cfg = CONFIG.optimizador;
-                const formato = formatoActivo();
-                const fMHz = perfilActivo().frecuenciaMHz;
-                const hTx = parseFloat(document.getElementById('tx_height').value) || 3;
-                const perdidaMax = perdidaMaximaDb(formato);
-
-                // 1. Halo de búsqueda alrededor de cada parcela
-                const halos = [];
-                geojsonKMLActual.features.forEach(f => {
-                    try { halos.push(turf.buffer(f, cfg.haloKm, { units: 'kilometers' })); } catch (e) { halos.push(f); }
-                });
-                const enHalo = (pt) => halos.some(h => turf.booleanPointInPolygon(pt, h));
-
-                // 2. Puntos de control dentro de la finca
-                const areaFinca = turf.area(geojsonKMLActual) / 1e6;
-                const sepDest = separacionPorDensidad(areaFinca, cfg.puntosDestino, 0.03, 2);
-                const destinos = generarMalla(turf.bbox(geojsonKMLActual), sepDest).puntos
-                    .map(p => [p.lng, p.lat])
-                    .filter(c => puntoCaeEnKML(c))
-                    .map(c => ({ coords: c, elev: DEM.elev(c[0], c[1]) }))
-                    .filter(d => d.elev !== null);
-                if (destinos.length === 0) return alert("No se pudo leer el terreno de la finca. Revisa la conexión y vuelve a intentarlo.");
-
-                // 3. Candidatos: finca + halo, con penalización a los externos
-                const bboxHalo = turf.bbox(turf.featureCollection(halos));
-                const areaBox = turf.area(turf.bboxPolygon(bboxHalo)) / 1e6;
-                const sepCand = separacionPorDensidad(areaBox, cfg.puntosCandidatos, 0.035, 0.5);
-                let candidatos = generarMalla(bboxHalo, sepCand).puntos
-                    .map(p => [p.lng, p.lat])
-                    .filter(c => enHalo(c))
-                    .map(c => {
-                        const interno = puntoCaeEnKML(c);
-                        return { coords: c, elev: DEM.elev(c[0], c[1]), esInterno: interno, peso: interno ? 1.0 : cfg.pesoExterno };
-                    })
-                    .filter(c => c.elev !== null);
-
-                // 4. Matriz de cobertura candidato → destinos (perfil cada 30 m, curvatura, Fresnel, difracción)
-                for (let i = 0; i < candidatos.length; i++) {
-                    const cand = candidatos[i];
-                    const cubre = [];
-                    destinos.forEach((dest, j) => {
-                        const d = distanciaM(cand.coords, dest.coords);
-                        if (d > cfg.alcanceMaxKm * 1000) return;
-                        const perfil = muestrearPerfil(cand.coords, dest.coords, d);
-                        perfil[0] = cand.elev; perfil[perfil.length - 1] = dest.elev;
-                        if (evaluarEnlace(perfil, d, fMHz, hTx, formato.alturaM).perdidaDb <= perdidaMax) cubre.push(j);
-                    });
-                    cand.cubre = cubre;
-                    if (i % 10 === 0) { document.getElementById('loader-text').innerText = `Analizando terreno ${Math.round(100 * i / candidatos.length)}%`; await ceder(); }
+                const r = await simularCloudRF({ lat, lon, alt: alturaMastil() });
+                if (EMBEDDED_DEMO_TOKEN !== "") {
+                    let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0') + 1;
+                    localStorage.setItem('uso_demo_' + EMBEDDED_DEMO_TOKEN, usos); actualizarBannerCliente(usos);
                 }
-
-                // 5. Greedy: cada antena se coloca donde más zona nueva cubre (ponderada)
-                const cubierto = new Uint8Array(destinos.length);
-                const propuestas = [];
-                for (let a = 0; a < numAntenas; a++) {
-                    let mejor = null, mejorScore = 0, mejorNuevos = 0;
-                    for (const c of candidatos) {
-                        let nuevos = 0;
-                        for (const j of c.cubre) if (!cubierto[j]) nuevos++;
-                        const score = nuevos * c.peso;
-                        if (score > mejorScore) { mejorScore = score; mejor = c; mejorNuevos = nuevos; }
-                    }
-                    if (!mejor) { // Fallback: puntos altos y separados entre sí
-                        const ordenados = [...candidatos].sort((x, y) => y.elev - x.elev);
-                        mejor = ordenados.find(c => propuestas.every(p => distanciaM(c.coords, p.coords) >= cfg.separacionFallbackKm * 1000)) || null;
-                        mejorNuevos = 0;
-                    }
-                    if (!mejor) break;
-                    mejor.cobAportada = mejorNuevos / destinos.length * 100;
-                    mejor.cubre.forEach(j => cubierto[j] = 1);
-                    propuestas.push(mejor);
-                    candidatos = candidatos.filter(c => c !== mejor);
-                }
-
-                const estimacionPct = cubierto.reduce((s, v) => s + v, 0) / destinos.length * 100;
-
-                // 6. Pines lilas (borrador)
-                propuestas.forEach(prop => {
-                    const el = document.createElement('div');
-                    el.className = 'site-marker-container site-draft';
-                    if (!nodosVisibles) el.style.display = 'none';
-                    el.innerHTML = `
-                        <div class="site-label">
-                            <div class="site-elev">${Math.round(prop.elev)} <span class="text-[9px] text-purple-300 font-normal ml-0.5">AMSL</span></div>
-                            <div class="text-[10px] text-purple-200">+${prop.cobAportada.toFixed(0)}% est.</div>
-                        </div>
-                        <div class="site-pin"><div class="pin-line"></div><div class="pin-dot"></div></div>`;
-                    draftMarkers.push(new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat(prop.coords).addTo(map));
-                    draftSites.push({ lat: prop.coords[1], lon: prop.coords[0] });
-                });
-
-                if (draftSites.length > 0) {
-                    const ok = estimacionPct >= CONFIG.objetivoCoberturaPct;
-                    document.getElementById('draft-estimacion').innerText =
-                        `Estimación local: ${estimacionPct.toFixed(0)}% de la finca (objetivo ${CONFIG.objetivoCoberturaPct}% ${ok ? 'alcanzado' : 'no alcanzado'}). La cifra final la da CloudRF.`;
-                    document.getElementById('draft-actions-panel').classList.remove('hidden');
-                } else {
-                    alert("No se encontraron puntos viables que aporten cobertura útil.");
-                }
+                if (inputMarker) { inputMarker.remove(); inputMarker = null; }
+                mostrarSimulacion(r);
+                await actualizarInterfazGlobal();
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error en la simulación: " + error.message);
             } finally {
-                optimizadorEnCurso = false;
+                document.getElementById('btnSimular').classList.remove('hidden');
                 ocultarLoader();
             }
         }
 
-        function descartarPropuesta() {
-            draftMarkers.forEach(m => m.remove());
-            draftMarkers = [];
-            draftSites = [];
-            document.getElementById('draft-actions-panel').classList.add('hidden');
-            document.getElementById('draft-estimacion').innerText = '';
-        }
-
-        async function confirmarYSimularPropuesta() {
-            if (draftSites.length === 0) return;
-            const copias = [...draftSites];
-            descartarPropuesta();
-            for (const s of copias) await realizarSimulacion(s.lat, s.lon);
-        }
-
         // =======================================================================
-        // 📊 COBERTURA (% local y global sobre la malla cacheada)
+        // 📊 COBERTURA: dentro de la finca, franja exterior y alcance por dirección
         // =======================================================================
         function cargarPixeles(url) {
             return new Promise(resolve => {
@@ -1110,6 +1504,7 @@
         const mercY = lat => Math.log(Math.tan(Math.PI / 4 + lat * GRAD / 2));
         function hayCobertura(sim, lng, lat) {
             const px = sim.pixeles;
+            if (!px || !sim.boundsCloudRF) return false;
             const [n, e, s, w] = sim.boundsCloudRF;
             if (lat < s || lat > n || lng < w || lng > e) return false;
             const fx = (lng - w) / (e - w);
@@ -1118,26 +1513,52 @@
             return px.data[(y * px.w + x) * 4 + 3] > 10;
         }
 
-        async function calcularPorcentajeLocal(sim) {
-            if (!geojsonKMLActual || !sim.pixeles || mallaFinca.length === 0) return null;
+        function pctUnion(sims, puntos) {
+            if (!puntos.length) return null;
             let c = 0;
-            for (const [lng, lat] of mallaFinca) if (hayCobertura(sim, lng, lat)) c++;
-            return parseFloat((c / mallaFinca.length * 100).toFixed(1));
+            for (const [lng, lat] of puntos) if (sims.some(s => hayCobertura(s, lng, lat))) c++;
+            return parseFloat((c / puntos.length * 100).toFixed(1));
         }
 
-        async function calcularPorcentajeGlobal() {
-            if (!geojsonKMLActual || mallaFinca.length === 0) return null;
-            const activas = simulaciones.filter(s => s.visible && s.pixeles);
-            if (activas.length === 0) return simulaciones.length ? 0 : null;
-            let c = 0;
-            for (const [lng, lat] of mallaFinca) if (activas.some(s => hayCobertura(s, lng, lat))) c++;
-            return parseFloat((c / mallaFinca.length * 100).toFixed(1));
+        function calcularPorcentajeLocal(sim) {
+            if (!geojsonKMLActual || !sim.pixeles || mallaFinca.length === 0) return null;
+            return pctUnion([sim], mallaFinca);
+        }
+
+        function analisisExterior(sims) {
+            if (!puntosExterior.length || !sims.length) return null;
+            const franja = puntosExterior.filter(p => p.distKm <= CONFIG.exterior.franjaKm);
+            let cubiertosFranja = 0;
+            const alcance = new Array(8).fill(0);
+            for (const p of puntosExterior) {
+                if (!sims.some(s => hayCobertura(s, p.coords[0], p.coords[1]))) continue;
+                if (p.distKm <= CONFIG.exterior.franjaKm) cubiertosFranja++;
+                if (p.distKm > alcance[p.sector]) alcance[p.sector] = p.distKm;
+            }
+            return { franjaPct: franja.length ? cubiertosFranja / franja.length * 100 : null, alcance };
+        }
+
+        function pintarResumenExterior(sims) {
+            const caja = document.getElementById('resumen-exterior');
+            const a = geojsonKMLActual ? analisisExterior(sims) : null;
+            if (!a) { caja.classList.add('hidden'); return; }
+            const nombres = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+            const lim = CONFIG.exterior.alcanceAnalisisKm;
+            const celdas = a.alcance.map((km, i) =>
+                `<div class="text-center"><div class="text-slate-500 text-[9px]">${nombres[i]}</div><div class="font-semibold">${km >= lim - 0.05 ? '>' + lim : km.toFixed(1)}</div></div>`).join('');
+            caja.innerHTML = `
+                <div class="font-semibold text-slate-200 mb-1">Cobertura fuera de la finca</div>
+                <div class="mb-2">Franja de ${CONFIG.exterior.franjaKm} km: <span class="font-bold text-sky-300">${a.franjaPct === null ? '–' : a.franjaPct.toFixed(0) + '%'}</span> cubierta</div>
+                <div class="text-slate-400 text-[10px] mb-1">Alcance máximo desde el límite (km)</div>
+                <div class="grid grid-cols-8 gap-1 font-mono text-[10px]">${celdas}</div>`;
+            caja.classList.remove('hidden');
         }
 
         async function actualizarInterfazGlobal() {
             if (etiquetaCoberturaActual) { etiquetaCoberturaActual.remove(); etiquetaCoberturaActual = null; }
-            if (!geojsonKMLActual) { renderizarHistorial(null); return; }
-            const globalPct = await calcularPorcentajeGlobal();
+            const activas = simulaciones.filter(s => s.visible && s.pixeles);
+            if (!geojsonKMLActual) { renderizarHistorial(null); pintarResumenExterior([]); return; }
+            const globalPct = simulaciones.length ? (activas.length ? pctUnion(activas, mallaFinca) : 0) : null;
             if (globalPct !== null) {
                 const ok = globalPct >= CONFIG.objetivoCoberturaPct;
                 const el = document.createElement('div');
@@ -1148,6 +1569,7 @@
                     .setLngLat(turf.center(geojsonKMLActual).geometry.coordinates).addTo(map);
             }
             renderizarHistorial(globalPct);
+            pintarResumenExterior(activas);
         }
 
         function renderizarHistorial(globalPct = null) {
@@ -1193,110 +1615,179 @@
         }
 
         // =======================================================================
-        // 🛰️ SIMULACIÓN CLOUDRF (enlace de subida por reciprocidad)
+        // 🧠 OPTIMIZADOR DE RED: "Antenas contratadas" (fijo) y "Diseño automático" (objetivo %)
         // =======================================================================
-        // La pérdida de propagación es igual en ambos sentidos. Se simula desde la gateway con la
-        // potencia EFECTIVA del dispositivo (14 dBm - pérdida antena/cuerpo), la ganancia y el cable de
-        // la gateway, y como umbral la sensibilidad real de la gateway + margen. Así los dBm del mapa
-        // son la señal que llegaría a la gateway desde un collar en cada punto.
-        function radioSimulacionKm(lat, lon) {
-            const r = CONFIG.radioSimulacion;
-            if (!geojsonKMLActual) return r.sinKmlKm;
-            let maxKm = 0;
-            turf.coordEach(geojsonKMLActual, c => { maxKm = Math.max(maxKm, distanciaM([lon, lat], c) / 1000); });
-            return Math.min(r.maxKm, Math.max(r.minKm, Math.ceil((maxKm + r.margenKm) * 2) / 2));
-        }
+        // 1. Precálculo local (por detrás).  2. Calibración con 4 simulaciones a 30 m.
+        // 3. Búsqueda local calibrada.  4. Validación CloudRF a 10 m.  5. Corrección dirigida a huecos.
+        async function optimizarRed(modo) {
+            if (!geojsonKMLActual) return alert("Primero debes delimitar una zona cargando un archivo KML.");
+            if (optimizadorEnCurso) return;
+            const cfg = CONFIG.optimizador;
+            const objetivo = CONFIG.objetivoCoberturaPct;
+            const nFijo = Math.min(cfg.maxAntenas, Math.max(1, parseInt(document.getElementById('num_antenas').value) || 1));
 
-        function construirPayloadCloudRF(lat, lon, altura, perfil, landCover, formato, radioKm) {
-            return {
-                site: `Punto ${simCounter}`, network: "Ixorigue",
-                transmitter: { lat, lon, alt: altura, frq: perfil.frecuenciaMHz,
-                               txw: parseFloat(dbmAWatts(potenciaEfectivaDispositivoDbm(formato)).toFixed(6)),
-                               bwi: CONFIG.cloudrf.anchoBandaMHz },
-                receiver: { alt: formato.alturaM, rxg: 0, rxs: umbralCoberturaDbm() },
-                antenna: { txg: CONFIG.gateway.gananciaAntenaDbi, txl: CONFIG.gateway.perdidaCableDb, ant: 1, pol: "v" },
-                model: { ...CONFIG.cloudrf.modelo },
-                environment: { ele: 1, cll: landCover, clb: 0 },
-                output: { res: CONFIG.cloudrf.resolucionM, rad: radioKm, fmt: "kmz", out: 2, col: CONFIG.cloudrf.colores }
-            };
-        }
-
-        async function realizarSimulacion(customLat = null, customLon = null) {
-            if (EMBEDDED_DEMO_TOKEN !== "") {
-                const usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0');
-                if (usos >= CONFIG.limiteUsosCliente) return;
-            }
-            const lat = parseFloat(customLat !== null ? customLat : document.getElementById('lat').value);
-            const lon = parseFloat(customLon !== null ? customLon : document.getElementById('lon').value);
-            const txHeight = parseFloat(document.getElementById('tx_height').value) || 3;
-            const perfil = perfilActivo();
-            const formato = formatoActivo();
-            const landCover = parseInt(document.getElementById('land_cover').value);
-            if (!coordenadasValidas(lat, lon)) return alert("Faltan coordenadas.");
-
-            const radioKm = radioSimulacionKm(lat, lon);
-            document.getElementById('btnSimular').classList.add('hidden');
-            mostrarLoader('Procesando modelo ITM...');
+            optimizadorEnCurso = true;
+            ['btn-fijo', 'btn-objetivo'].forEach(id => document.getElementById(id).disabled = true);
+            limpiarResultadoOptimizador();
+            const contador = { sims: 0, cache: 0 };
+            const t0 = Date.now();
+            mostrarLoader('Preparando análisis del terreno...');
 
             try {
-                const payload = construirPayloadCloudRF(lat, lon, txHeight, perfil, landCover, formato, radioKm);
-                const response = await fetch(CONFIG.proxyUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await response.json();
-                if (!(response.ok && data.kmz)) return alert("Error en la simulación: " + (data.error || "Revisa la consola."));
-
-                if (EMBEDDED_DEMO_TOKEN !== "") {
-                    let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0') + 1;
-                    localStorage.setItem('uso_demo_' + EMBEDDED_DEMO_TOKEN, usos); actualizarBannerCliente(usos);
-                }
-
-                const pinEl = document.createElement('div'); pinEl.className = 'neon-orange-pin';
-                pinEl.innerHTML = `
-                    <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <ellipse cx="16" cy="38" rx="8" ry="3" fill="black" fill-opacity="0.3"/>
-                        <path d="M16 1C7.71573 1 1 7.71573 1 16C1 26 16 41 16 41C16 41 31 26 31 16C31 7.71573 24.2843 1 16 1Z" fill="white"/>
-                        <path d="M16 3C8.8203 3 3 8.8203 3 16C3 24.7 16 38.3 16 38.3C16 38.3 29 24.7 29 16C29 8.8203 23.1797 3 16 3Z" fill="#ff7e00"/>
-                        <circle cx="16" cy="16" r="5" fill="white"/>
-                    </svg>`;
-                const marker = new mapboxgl.Marker(pinEl, { anchor: 'bottom' }).setLngLat([lon, lat]).addTo(map);
-
-                const imageUrl = data.PNG_WGS84 || data.png || data.PNG_Mercator;
-                const proyeccion = (!data.PNG_WGS84 && !data.png && data.PNG_Mercator) ? 'mercator' : 'wgs84';
-                const boundsCloudRF = data.bounds;
-                const id = simCounter;
-                if (imageUrl && boundsCloudRF) {
-                    const [n, e, s, w] = boundsCloudRF;
-                    map.addSource(`sim-source-${id}`, { 'type': 'image', 'url': imageUrl, 'coordinates': [[w, n], [e, n], [e, s], [w, s]] });
-                    map.addLayer({ 'id': `sim-layer-${id}`, 'type': 'raster', 'source': `sim-source-${id}`, 'paint': { 'raster-opacity': 0.65 } });
-                }
-                if (inputMarker) { inputMarker.remove(); inputMarker = null; }
-
-                const sim = {
-                    id, name: `Punto ${id}`, freq: perfil.frecuenciaMHz, alt: txHeight, formato: formato.nombre.split(' ')[0],
-                    radioKm, kmz: data.kmz, visible: true, imageUrl, boundsCloudRF, proyeccion,
-                    pixeles: imageUrl && boundsCloudRF ? await cargarPixeles(imageUrl) : null,
-                    pinMarker: marker
+                const M = await obtenerMatriz();
+                if (!M) throw new Error('No se pudo preparar el análisis del terreno.');
+                const hTx = M.hTx;
+                const pesos = M.candidatos.map(c => c.peso);
+                const sims30 = new Map(), sims10 = new Map();
+                const simular = async (ci, res, mapa) => {
+                    if (mapa.has(ci)) return mapa.get(ci);
+                    const c = M.candidatos[ci];
+                    const r = await simularCloudRF({ lat: c.coords[1], lon: c.coords[0], alt: hTx, res, contador });
+                    mapa.set(ci, r);
+                    textoLoader(`Simulando con CloudRF… ${contador.sims + contador.cache} simulaciones`);
+                    return r;
                 };
-                sim.coberturaLocal = await calcularPorcentajeLocal(sim);
+                const opcionesResolver = (sets, pesosLista) => ({
+                    sets, pesos: pesosLista, nInterior: M.nInterior, nTotal: M.J, modo, objetivoPct: objetivo,
+                    maxAntenas: cfg.maxAntenas, nFijo, pesoExterior: cfg.pesoExteriorDesempate, pesoRedundancia: cfg.pesoRedundancia
+                });
 
-                const labelEl = document.createElement('div'); labelEl.className = 'cobertura-badge';
-                labelEl.innerHTML = `<div style="color:white; font-size:15px; margin-bottom:1px;">Punto ${id}</div>` +
-                    (sim.coberturaLocal !== null ? `<div style="color:#ff7e00; font-size:14px;">Local: ${sim.coberturaLocal}%</div>` : '');
-                sim.labelMarker = new mapboxgl.Marker(labelEl, { anchor: 'bottom', offset: [0, -45] }).setLngLat([lon, lat]).addTo(map);
+                // 2. Calibración
+                let cal = { offsetDb: 0, coefVegDb: CONFIG.vegetacion.coefInicialDb, precision: null, n: 0 };
+                let sets = conjuntosCalibrados(M, cal);
+                textoLoader('Calibrando con CloudRF…');
+                const calibradores = elegirCalibradores(M, sets, cfg.simsCalibracion);
+                await Promise.allSettled(calibradores.map(ci => simular(ci, cfg.resolucionCalibracionM, sims30)));
+                if (!sims30.size) throw new Error('CloudRF no respondió a las simulaciones de calibración.');
+                cal = ajustarCalibracion(muestrasCalibracion(M, sims30), CONFIG.vegetacion.coefInicialDb);
+                sets = conjuntosCalibrados(M, cal);
 
-                simulaciones.push(sim);
-                simCounter++;
+                // 3. Búsqueda local calibrada (sin créditos)
+                textoLoader('Buscando la mejor combinación…');
+                await ceder();
+                let sol = resolverCobertura({ ...opcionesResolver(sets, pesos), reserva: reservaRedundancia(M, sets) });
+                let seleccion = sol.seleccion.slice();
+
+                // 4. Validación real a 10 m
+                await Promise.allSettled(seleccion.map(ci => simular(ci, CONFIG.cloudrf.resolucionM, sims10)));
+                seleccion = seleccion.filter(ci => sims10.has(ci));
+                if (!seleccion.length) throw new Error('CloudRF no respondió a las simulaciones de validación.');
+                const evaluarReal = () => {
+                    const pool = [...sims10.keys()];
+                    const r = resolverCobertura(opcionesResolver(pool.map(ci => conjuntoReal(M, sims10.get(ci))), pool.map(ci => pesos[ci])));
+                    return { seleccion: r.seleccion.map(i => pool[i]), interiorPct: r.interiorPct };
+                };
+                let real = modo === 'fijo' ? { seleccion, interiorPct: pctUnion(seleccion.map(ci => sims10.get(ci)), M.destinos.slice(0, M.nInterior).map(d => d.coords)) } : evaluarReal();
+
+                // 5. Corrección dirigida a las zonas sin cobertura real
+                for (let ronda = 0; ronda < cfg.rondasCorreccion; ronda++) {
+                    if (modo === 'objetivo' && real.interiorPct >= objetivo) break;
+                    if (modo === 'fijo' && ronda >= 1) break;
+                    const todas = new Map([...sims30, ...sims10]);
+                    cal = ajustarCalibracion(muestrasCalibracion(M, todas), CONFIG.vegetacion.coefInicialDb);
+                    sets = conjuntosCalibrados(M, cal);
+                    const simsSel = real.seleccion.map(ci => sims10.get(ci));
+                    const huecos = new Set();
+                    for (let j = 0; j < M.nInterior; j++) if (!simsSel.some(s => hayCobertura(s, ...M.destinos[j].coords))) huecos.add(j);
+                    if (!huecos.size) break;
+                    const nuevos = elegirParaHuecos(M, sets, huecos, sims10, cfg.simsPorRonda);
+                    if (!nuevos.length) break;
+                    textoLoader(`Corrigiendo zonas sin cobertura (ronda ${ronda + 1})…`);
+                    await Promise.allSettled(nuevos.map(ci => simular(ci, CONFIG.cloudrf.resolucionM, sims10)));
+                    const propuesta = evaluarReal();
+                    if (modo === 'objetivo' || propuesta.interiorPct > real.interiorPct) real = propuesta;
+                }
+
+                // 6. Resultado final con la cobertura real (malla fina de la finca)
+                const finales = real.seleccion.map(ci => sims10.get(ci));
+                const curva = finales.map((_, i) => pctUnion(finales.slice(0, i + 1), mallaFinca));
+                const pctFinal = curva[curva.length - 1] ?? 0;
+                const exterior = analisisExterior(finales);
+
+                // Estimación de una antena más (modelo local calibrado)
+                let masUna = null;
+                if (modo === 'objetivo' && real.seleccion.length < cfg.maxAntenas) {
+                    const cubiertos = new Uint8Array(M.nInterior);
+                    for (let j = 0; j < M.nInterior; j++) if (finales.some(s => hayCobertura(s, ...M.destinos[j].coords))) cubiertos[j] = 1;
+                    let mejor = 0;
+                    sets.forEach((s, ci) => { if (real.seleccion.includes(ci)) return; let g = 0; for (const j of s) if (j < M.nInterior && !cubiertos[j]) g++; if (g > mejor) mejor = g; });
+                    masUna = Math.min(100, pctFinal + 100 * mejor / M.nInterior);
+                }
+
+                const ids = finales.map((r, i) => mostrarSimulacion(r, `Antena ${i + 1} (auto)`).id);
+                pintarHuecos(finales);
+                ultimoResultado = { ids };
                 await actualizarInterfazGlobal();
-            } catch (error) {
-                console.error("Error:", error);
-                alert("Error de conexión con el servicio de simulación.");
+                pintarResumenOptimizador({ modo, nFijo, pctFinal, curva, exterior, masUna, cal, contador, segundos: (Date.now() - t0) / 1000, n: finales.length });
+            } catch (e) {
+                console.error(e);
+                alert('El optimizador no pudo terminar: ' + e.message);
             } finally {
-                document.getElementById('btnSimular').classList.remove('hidden');
+                optimizadorEnCurso = false;
+                ['btn-fijo', 'btn-objetivo'].forEach(id => document.getElementById(id).disabled = false);
                 ocultarLoader();
             }
+        }
+
+        // Candidatos (aún no simulados) que más zonas sin cobertura real recuperarían según el modelo calibrado
+        function elegirParaHuecos(M, sets, huecos, yaSimulados, k) {
+            const pendientes = new Set(huecos), elegidos = [];
+            while (elegidos.length < k && pendientes.size) {
+                let mejor = -1, mg = 0;
+                sets.forEach((s, ci) => {
+                    if (yaSimulados.has(ci) || elegidos.includes(ci)) return;
+                    let g = 0; for (const j of s) if (pendientes.has(j)) g++;
+                    g *= M.candidatos[ci].peso;
+                    if (g > mg) { mg = g; mejor = ci; }
+                });
+                if (mejor < 0) break;
+                elegidos.push(mejor);
+                for (const j of sets[mejor]) pendientes.delete(j);
+            }
+            return elegidos;
+        }
+
+        // Si en modo fijo ya no hay cobertura nueva ni redundancia posible: punto alto y separado de los elegidos
+        function reservaRedundancia(M, sets) {
+            const orden = M.candidatos.map((c, ci) => ci).sort((a, b) => M.candidatos[b].elev - M.candidatos[a].elev);
+            return (sel) => orden.find(ci => !sel.includes(ci) && sel.every(s => distanciaM(M.candidatos[ci].coords, M.candidatos[s].coords) >= 400)) ?? -1;
+        }
+
+        function pintarHuecos(finales) {
+            const sinCobertura = mallaFinca.filter(([lng, lat]) => !finales.some(s => hayCobertura(s, lng, lat)));
+            const data = turf.featureCollection(sinCobertura.map(c => turf.point(c)));
+            if (map.getSource('huecos-source')) map.getSource('huecos-source').setData(data);
+            else {
+                map.addSource('huecos-source', { type: 'geojson', data });
+                map.addLayer({ id: 'huecos-layer', type: 'circle', source: 'huecos-source',
+                    paint: { 'circle-radius': 3, 'circle-color': '#ef4444', 'circle-opacity': 0.75, 'circle-stroke-width': 0.5, 'circle-stroke-color': '#0B1120' } });
+            }
+        }
+
+        function pintarResumenOptimizador(r) {
+            const ok = r.pctFinal >= CONFIG.objetivoCoberturaPct;
+            const titulo = r.modo === 'fijo' ? `Antenas contratadas: ${r.nFijo}` : `Diseño automático (objetivo ${CONFIG.objetivoCoberturaPct}%)`;
+            const curva = r.curva.map((p, i) => `${i + 1} → ${p.toFixed(0)}%`).join(', ');
+            const lineas = [
+                `<div class="font-semibold text-purple-200">${titulo}</div>`,
+                `<div><b>${r.n} antena${r.n === 1 ? '' : 's'}</b> cubren el <b class="${ok ? 'text-green-400' : 'text-red-400'}">${r.pctFinal.toFixed(1)}%</b> de la finca (CloudRF). ${ok ? 'Objetivo alcanzado.' : 'Objetivo no alcanzado.'}</div>`,
+                `<div>Cobertura por número de antenas: ${curva}</div>`
+            ];
+            if (r.exterior && r.exterior.franjaPct !== null) lineas.push(`<div>Franja exterior de ${CONFIG.exterior.franjaKm} km: ${r.exterior.franjaPct.toFixed(0)}% cubierta.</div>`);
+            if (r.masUna !== null && r.masUna > r.pctFinal + 0.5) lineas.push(`<div>Con una antena más (estimación): ~${r.masUna.toFixed(0)}%.</div>`);
+            if (r.modo === 'objetivo' && !ok) lineas.push(`<div class="text-amber-300">No se alcanza el ${CONFIG.objetivoCoberturaPct}% con un máximo de ${CONFIG.optimizador.maxAntenas} antenas desde la finca y su halo de ${CONFIG.optimizador.haloKm * 1000} m. Las zonas en rojo quedan sin cobertura. Opciones: subir la altura del mástil o ampliar el halo.</div>`);
+            lineas.push(`<div class="text-purple-300/70 text-[10px]">Calibración del modelo local: desfase ${r.cal.offsetDb >= 0 ? '+' : ''}${r.cal.offsetDb} dB, vegetación ${r.cal.coefVegDb} dB, acierto ${r.cal.precision === null ? '–' : (r.cal.precision * 100).toFixed(0) + '%'}. Simulaciones CloudRF: ${r.contador.sims} nuevas, ${r.contador.cache} desde caché. Tiempo: ${Math.round(r.segundos)} s.</div>`);
+            document.getElementById('opt-resumen').innerHTML = lineas.join('');
+            document.getElementById('opt-panel').classList.remove('hidden');
+        }
+
+        function limpiarResultadoOptimizador() {
+            if (ultimoResultado) { ultimoResultado.ids.forEach(eliminarSimulacion); ultimoResultado = null; }
+            if (map.getLayer('huecos-layer')) map.removeLayer('huecos-layer');
+            if (map.getSource('huecos-source')) map.removeSource('huecos-source');
+            document.getElementById('opt-panel').classList.add('hidden');
+            document.getElementById('opt-resumen').innerHTML = '';
+            if (map.loaded()) actualizarInterfazGlobal();
         }
     </script>
 </body>
