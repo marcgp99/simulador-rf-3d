@@ -160,10 +160,10 @@
 
     <main class="flex-1 flex flex-col md:flex-row p-4 gap-4 h-full relative overflow-hidden">
         
-        <aside class="glass-panel w-full md:w-[400px] rounded-xl p-5 flex flex-col z-10 relative overflow-hidden h-full">
-            
-            <div class="flex-shrink-0 flex flex-col gap-4 overflow-y-auto pr-1 pb-2" style="max-height: 60vh;">
-                
+        <aside class="glass-panel w-full md:w-[400px] rounded-xl p-5 flex flex-col z-10 relative overflow-y-auto h-full">
+
+            <div class="flex flex-col gap-4 pb-2">
+
                 <div class="space-y-1.5 pb-3 border-b border-slate-700/50">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Perfil de Simulación</label>
                     <select id="sim_profile" onchange="cambiarPerfil()" class="w-full px-4 py-2.5 bg-slate-900/80 border border-slate-600 hover:border-slate-500 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all cursor-pointer font-semibold">
@@ -191,52 +191,7 @@
                     </label>
                 </div>
 
-                <div class="space-y-1.5 pt-3 border-t border-slate-700/50">
-                    <label class="block text-[10px] font-bold text-purple-400 uppercase tracking-widest">Antenas Contratadas</label>
-                    <div class="grid grid-cols-3 gap-2 items-center">
-                        <div class="col-span-2">
-                            <input type="number" id="num_antenas" min="1" max="10" value="2" class="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 focus:outline-none transition-all font-mono" placeholder="Nº Antenas">
-                        </div>
-                        <button id="btn-fijo" onclick="optimizarRed('fijo')" class="col-span-1 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white p-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center h-full">
-                            Calcular
-                        </button>
-                    </div>
-                    <button id="btn-objetivo" onclick="optimizarRed('objetivo')" class="w-full mt-2 bg-fuchsia-700 hover:bg-fuchsia-600 disabled:opacity-40 text-white py-2.5 rounded-lg text-xs font-semibold transition-colors">
-                        Diseño automático
-                    </button>
-                    <div class="flex items-center justify-between gap-2 pt-1">
-                        <label for="permitir_fuera" class="flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer select-none">
-                            <input type="checkbox" id="permitir_fuera" checked class="w-3.5 h-3.5 accent-fuchsia-600 cursor-pointer">
-                            Permitir antenas fuera de la finca
-                        </label>
-                        <select id="dist_fuera" title="Distancia máxima fuera del límite" class="px-2 py-1 bg-slate-900/50 border border-slate-700 rounded text-[11px] text-slate-200 disabled:opacity-40 cursor-pointer">
-                            <option value="0.25">250 m</option>
-                            <option value="0.5" selected>500 m</option>
-                            <option value="1">1000 m</option>
-                        </select>
-                    </div>
-                    <p id="estado-precalculo" class="text-[10px] text-slate-500 text-center min-h-[14px]"></p>
-                </div>
-
-                <div id="opt-panel" class="hidden space-y-2 p-3 bg-purple-950/20 border border-purple-500/20 rounded-lg">
-                    <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest text-center">Resultado del optimizador</div>
-                    <div id="opt-resumen" class="text-[11px] text-purple-100/90 leading-relaxed space-y-1"></div>
-                    <button onclick="limpiarResultadoOptimizador()" class="w-full bg-slate-800/80 hover:bg-red-950/40 text-red-400 border border-red-500/20 text-xs py-2 px-3 rounded-lg font-medium transition-colors">
-                        Limpiar resultado
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mt-1 pt-2 border-t border-slate-700/50">
-                    <div class="space-y-1.5">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Latitud</label>
-                        <input type="number" id="lat" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Longitud</label>
-                        <input type="number" id="lon" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
-                    </div>
-                </div>
-                
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-3 border-t border-slate-700/50">Configuración del enlace</h3>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1.5">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Land Cover (Bosques)</label>
@@ -265,35 +220,69 @@
                     </div>
                 </div>
 
-                <button id="btnSimular" onclick="realizarSimulacion()" class="mt-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold py-3 px-4 rounded-lg glow-hover transition-all duration-300 flex justify-center items-center gap-2">
+                <h3 class="text-[10px] font-bold text-purple-400 uppercase tracking-widest pt-3 border-t border-slate-700/50">Diseño de red</h3>
+                <div class="space-y-1.5">
+                    <label class="block text-[10px] font-bold text-purple-400 uppercase tracking-widest">Antenas Contratadas</label>
+                    <div class="grid grid-cols-3 gap-2 items-center">
+                        <div class="col-span-2">
+                            <input type="number" id="num_antenas" min="1" max="10" value="2" class="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 focus:outline-none transition-all font-mono" placeholder="Nº Antenas">
+                        </div>
+                        <button id="btn-fijo" onclick="optimizarRed('fijo')" class="col-span-1 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white p-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center h-full">
+                            Calcular
+                        </button>
+                    </div>
+                    <button id="btn-objetivo" onclick="optimizarRed('objetivo')" class="w-full mt-2 bg-fuchsia-700 hover:bg-fuchsia-600 disabled:opacity-40 text-white py-2.5 rounded-lg text-xs font-semibold transition-colors">
+                        Diseño automático
+                    </button>
+                    <div class="flex items-center justify-between gap-2 pt-1">
+                        <label for="permitir_fuera" class="flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer select-none">
+                            <input type="checkbox" id="permitir_fuera" checked class="w-3.5 h-3.5 accent-fuchsia-600 cursor-pointer">
+                            Permitir antenas fuera de la finca
+                        </label>
+                        <select id="dist_fuera" title="Distancia máxima fuera del límite" class="px-2 py-1 bg-slate-900/50 border border-slate-700 rounded text-[11px] text-slate-200 disabled:opacity-40 cursor-pointer">
+                            <option value="0.25">250 m</option>
+                            <option value="0.5" selected>500 m</option>
+                            <option value="1">1000 m</option>
+                        </select>
+                    </div>
+                    <p id="estado-precalculo" class="text-[10px] text-slate-500 text-center min-h-[14px]"></p>
+                </div>
+
+
+                <div id="opt-panel" class="hidden space-y-2 p-3 bg-purple-950/20 border border-purple-500/20 rounded-lg">
+                    <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest text-center">Resultado del optimizador</div>
+                    <div id="opt-resumen" class="text-[11px] text-purple-100/90 leading-relaxed space-y-1"></div>
+                    <button onclick="limpiarResultadoOptimizador()" class="w-full bg-slate-800/80 hover:bg-red-950/40 text-red-400 border border-red-500/20 text-xs py-2 px-3 rounded-lg font-medium transition-colors">
+                        Limpiar resultado
+                    </button>
+                </div>
+
+
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-3 border-t border-slate-700/50">Simulación manual</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Latitud</label>
+                        <input type="number" id="lat" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Longitud</label>
+                        <input type="number" id="lon" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
+                    </div>
+                </div>
+
+                <button id="btnSimular" onclick="realizarSimulacion()" class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold py-3 px-4 rounded-lg glow-hover transition-all duration-300 flex justify-center items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     Iniciar Simulación
                 </button>
-
-                <div id="loader" class="hidden flex-col items-center justify-center py-2">
-                    <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-green-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <p id="loader-text" class="text-[10px] text-green-400/80 font-bold animate-pulse uppercase tracking-widest">Procesando modelo ITM...</p>
-                </div>
+            </div>
             </div>
 
-            <div id="historyArea" class="flex-1 flex flex-col min-h-0 border-t border-slate-700/50 pt-4 mt-auto">
-                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex-shrink-0">Historial de Análisis</h3>
-                <div id="resumen-exterior" class="hidden flex-shrink-0 mb-3 p-2.5 bg-slate-900/40 border border-slate-700/60 rounded-lg text-[11px] text-slate-300"></div>
-                
-                <p id="emptyHistoryMsg" class="text-slate-500 text-sm italic text-center mt-2 flex-shrink-0">Ninguna simulación activa.</p>
-                
-                <div id="simulationList" class="flex-1 overflow-y-auto pr-2 flex flex-col gap-2.5">
-                </div>
-            </div>
-
-            <div id="admin-tools" class="flex-shrink-0 pt-4 mt-2 border-t border-slate-700/50">
-                <button onclick="descargarHtmlParaCliente()" class="w-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white font-medium py-2.5 px-4 rounded-lg border border-slate-600 transition-all text-sm flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                    Generar Acceso Cliente (2 Usos)
-                </button>
+            <div id="historyArea" class="flex flex-col border-t border-slate-700/50 pt-4 mt-2">
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Simulaciones <span id="contador-sims" class="text-slate-500"></span></h3>
+                <p class="text-[10px] text-slate-500 mb-3">Activa o desactiva cada cobertura en el mapa y descárgala en KMZ.</p>
+                <p id="emptyHistoryMsg" class="text-slate-500 text-sm italic text-center mt-1">Aún no hay simulaciones.</p>
+                <div id="simulationList" class="flex flex-col gap-2.5"></div>
+                <div id="resumen-exterior" class="hidden mt-3 p-2.5 bg-slate-900/40 border border-slate-700/60 rounded-lg text-[11px] text-slate-300"></div>
             </div>
 
         </aside>
@@ -339,6 +328,14 @@
                 </p>
             </div>
 
+            <div id="loader" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-20 glass-panel px-4 py-2.5 rounded-lg items-center gap-3 shadow-xl">
+                <svg class="animate-spin h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p id="loader-text" class="text-[11px] text-green-300 font-semibold tracking-wide">Procesando modelo ITM...</p>
+            </div>
+
             <div id="map"></div>
         </section>
         
@@ -348,7 +345,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.3.0';
+        const APP_VERSION = '1.3.1';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -356,7 +353,6 @@
         const CONFIG = {
             proxyUrl: "https://ixorigue.small-leaf-5935.workers.dev",
             mapboxToken: 'pk.eyJ1IjoibWFyY2dwdDk5IiwiYSI6ImNtcmVxbWZzbDByenoyenBkdWU5cXBkYzcifQ.KRu6WKoui20OAQltTw11sQ',
-            limiteUsosCliente: 2,          // ⏸️ Aplazado: se moverá al servidor
             objetivoCoberturaPct: 80,      // Objetivo de cobertura dentro de la finca
 
             perfiles: {
@@ -723,7 +719,6 @@
         // 🗺️ ESTADO GLOBAL
         // =======================================================================
         mapboxgl.accessToken = CONFIG.mapboxToken;
-        const EMBEDDED_DEMO_TOKEN = "";
 
         let simulaciones = [];
         let simCounter = 1;
@@ -745,22 +740,6 @@
 
         document.getElementById('app-version').innerText = 'v' + APP_VERSION;
         document.getElementById('btn-objetivo').innerText = `Diseño automático: ${CONFIG.objetivoCoberturaPct}% de cobertura`;
-
-        if (EMBEDDED_DEMO_TOKEN !== "") {
-            document.getElementById('admin-tools').style.display = 'none';
-            let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0');
-            actualizarBannerCliente(usos);
-        }
-
-        // ⏸️ Acceso cliente aplazado (se rehará con control en servidor). Evita errores mientras tanto.
-        function descargarHtmlParaCliente() {
-            alert("El acceso de cliente está pendiente de rehacerse con control de usos en el servidor.");
-        }
-        function actualizarBannerCliente(usos) {
-            const b = document.getElementById('demo-banner');
-            b.classList.remove('hidden');
-            b.innerText = `Acceso de demostración: ${Math.max(0, CONFIG.limiteUsosCliente - usos)} simulaciones disponibles`;
-        }
 
         // =======================================================================
         // 📡 PARÁMETROS DEL ENLACE
@@ -1560,10 +1539,6 @@
         }
 
         async function realizarSimulacion(customLat = null, customLon = null) {
-            if (EMBEDDED_DEMO_TOKEN !== "") {
-                const usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0');
-                if (usos >= CONFIG.limiteUsosCliente) return;
-            }
             const lat = parseFloat(customLat !== null ? customLat : document.getElementById('lat').value);
             const lon = parseFloat(customLon !== null ? customLon : document.getElementById('lon').value);
             if (!coordenadasValidas(lat, lon)) return alert("Faltan coordenadas.");
@@ -1572,10 +1547,6 @@
             mostrarLoader('Procesando modelo ITM...');
             try {
                 const r = await simularCloudRF({ lat, lon, alt: alturaMastil() });
-                if (EMBEDDED_DEMO_TOKEN !== "") {
-                    let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0') + 1;
-                    localStorage.setItem('uso_demo_' + EMBEDDED_DEMO_TOKEN, usos); actualizarBannerCliente(usos);
-                }
                 if (inputMarker) { inputMarker.remove(); inputMarker = null; }
                 await mostrarSimulacion(r);
                 await actualizarInterfazGlobal();
@@ -1685,6 +1656,8 @@
             const lista = document.getElementById('simulationList');
             const msg = document.getElementById('emptyHistoryMsg');
             if (msg) msg.style.display = simulaciones.length > 0 ? 'none' : 'block';
+            const activasN = simulaciones.filter(x => x.visible).length;
+            document.getElementById('contador-sims').innerText = simulaciones.length ? `(${activasN} de ${simulaciones.length} activas)` : '';
             lista.innerHTML = '';
             [...simulaciones].reverse().forEach(sim => {
                 let stats = '';
@@ -2108,7 +2081,9 @@
             if (pilaDeshacer.length) lineas.push(`<button onclick="deshacerCambio()" class="btn-recomendacion w-full mt-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 text-xs py-1.5 rounded border border-slate-600 transition-colors">Deshacer último cambio</button>`);
             lineas.push(`<div class="text-purple-300/70 text-[10px] mt-1">Calibración del modelo local: desfase ${ctx.cal.offsetDb >= 0 ? '+' : ''}${ctx.cal.offsetDb} dB, vegetación ${ctx.cal.coefVegDb} dB, acierto ${ctx.cal.precision === null ? '–' : (ctx.cal.precision * 100).toFixed(0) + '%'}. Simulaciones CloudRF: ${ctx.contador.sims} nuevas, ${ctx.contador.cache} desde caché. Tiempo de diseño: ${Math.round(ctx.segundos)} s.</div>`);
             document.getElementById('opt-resumen').innerHTML = lineas.join('');
-            document.getElementById('opt-panel').classList.remove('hidden');
+            const panel = document.getElementById('opt-panel');
+            panel.classList.remove('hidden');
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function limpiarResultadoOptimizador() {
