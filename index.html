@@ -204,6 +204,17 @@
                     <button id="btn-objetivo" onclick="optimizarRed('objetivo')" class="w-full mt-2 bg-fuchsia-700 hover:bg-fuchsia-600 disabled:opacity-40 text-white py-2.5 rounded-lg text-xs font-semibold transition-colors">
                         Diseño automático
                     </button>
+                    <div class="flex items-center justify-between gap-2 pt-1">
+                        <label for="permitir_fuera" class="flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer select-none">
+                            <input type="checkbox" id="permitir_fuera" checked class="w-3.5 h-3.5 accent-fuchsia-600 cursor-pointer">
+                            Permitir antenas fuera de la finca
+                        </label>
+                        <select id="dist_fuera" title="Distancia máxima fuera del límite" class="px-2 py-1 bg-slate-900/50 border border-slate-700 rounded text-[11px] text-slate-200 disabled:opacity-40 cursor-pointer">
+                            <option value="0.25">250 m</option>
+                            <option value="0.5" selected>500 m</option>
+                            <option value="1">1000 m</option>
+                        </select>
+                    </div>
                     <p id="estado-precalculo" class="text-[10px] text-slate-500 text-center min-h-[14px]"></p>
                 </div>
 
@@ -290,6 +301,10 @@
         <section class="flex-1 bg-slate-900 rounded-xl shadow-2xl relative h-full overflow-hidden border border-slate-800">
             <!-- Botones Superiores del Mapa -->
             <div class="map-controls-container">
+                <button id="btn-huecos" onclick="toggleHuecos()" class="map-btn hidden">
+                    <span class="inline-block w-3 h-3 rounded-sm" style="background:#ef4444; opacity:0.8"></span>
+                    <span id="text-huecos">Ocultar zonas sin cobertura</span>
+                </button>
                 <button id="btn-canopy" onclick="toggleCanopy()" class="map-btn">
                     <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
                     <span id="text-canopy">Cubierta Arbórea</span>
@@ -333,7 +348,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.2.0';
+        const APP_VERSION = '1.3.0';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -390,15 +405,30 @@
             exterior: { franjaKm: 1, alcanceAnalisisKm: 5, puntosAnalisis: 2500 },
 
             optimizador: {
-                haloKm: 0.5, pesoExterno: 0.85, maxAntenas: 10,
-                puntosDestino: 300, puntosFranja: 150, puntosCandidatos: 400, alcanceMaxKm: 15,
+                haloKm: 0.5, haloMaxKm: 1.0, pesoExterno: 0.85, maxAntenas: 10,
+                puntosDestino: 300, puntosFranja: 150, puntosCandidatos: 500, alcanceMaxKm: 15,
                 simsCalibracion: 4, resolucionCalibracionM: 30,
                 rondasCorreccion: 2, simsPorRonda: 3,
                 pesoExteriorDesempate: 0.05, pesoRedundancia: 0.01,
                 concurrencia: 4, reintentos: 3
             },
 
-            cache: { clave: 'rfsim-cache-v1', diasValidez: 7, maxEntradas: 300 },
+            // Recomendaciones: solo se muestran si superan estos umbrales (estimación local, sin créditos)
+            recomendaciones: {
+                minGananciaAnadirPts: 5,        // "Añadir antena" si sube al menos 5 puntos (o si no se llega al objetivo)
+                margenUnaMenosPts: 1,           // "Probar con una menos" si con N-1 se estima objetivo + 1 punto
+                exteriorBajoPct: 50,            // "Mejorar exterior" si la franja exterior está por debajo del 50 %
+                minMejoraExteriorPts: 10,       //   …y se estima al menos +10 puntos fuera
+                minMejoraRealPts: 1,            // Al comprobar con CloudRF: mejora mínima real para aplicar
+                minMejoraExteriorRealPts: 5,
+                simsAnadir: 3,                  // Candidatas que se comprueban al añadir antena
+                alturasMastil: { EU: [6, 10], LATAM: [15, 20] },
+                maxDeshacer: 5
+            },
+
+            mascaraHuecos: { puntosObjetivo: 25000, separacionMinKm: 0.01 },
+
+            cache: { clave: 'rfsim-cache-v2', diasValidez: 7, maxEntradas: 300 },
 
             cloudrf: { modelo: { pm: 1, pe: 3, cli: 1, rel: 80, ked: 1 }, resolucionM: 10,
                        colores: 'LORA.dBm', anchoBandaMHz: 0.125 }
@@ -524,7 +554,7 @@
             for (let r = 0; r < rows; r++)
                 for (let c = 0; c < cols; c++)
                     puntos.push({ r, c, lng: w + offX + c * dLng, lat: s + offY + r * dLat });
-            return { rows, cols, puntos };
+            return { rows, cols, puntos, w0: w + offX, s0: s + offY, dLng, dLat };
         }
 
         function separacionPorDensidad(areaKm2, puntosObjetivo, minKm, maxKm) {
@@ -708,7 +738,10 @@
         let nodosVisibles = true;
         let canopyActivo = false;
         let optimizadorEnCurso = false;
-        let ultimoResultado = null;      // { ids: [simulaciones creadas por el optimizador] }
+        let ultimoResultado = null;      // Resultado vigente del optimizador (contexto, selección, simulaciones mostradas)
+        let mallaMascara = null;         // Malla fina de la finca para pintar las zonas sin cobertura
+        let urlMascara = null;
+        let huecosVisibles = true;
 
         document.getElementById('app-version').innerText = 'v' + APP_VERSION;
         document.getElementById('btn-objetivo').innerText = `Diseño automático: ${CONFIG.objetivoCoberturaPct}% de cobertura`;
@@ -1038,6 +1071,7 @@
             geojsonKMLActual = turf.featureCollection(poligonos.map(anillos => turf.polygon(anillos)));
             versionKML++;
             construirMallaFinca();
+            construirMallaMascara();
             construirPuntosExterior();
 
             map.addSource('kml-source', { type: 'geojson', data: geojsonKMLActual });
@@ -1071,6 +1105,61 @@
             mallaFinca = generarMalla(turf.bbox(geojsonKMLActual), sep).puntos
                 .filter(p => puntoCaeEnKML([p.lng, p.lat]))
                 .map(p => [p.lng, p.lat]);
+        }
+
+        function construirMallaMascara() {
+            const cfg = CONFIG.mascaraHuecos;
+            const area = turf.area(geojsonKMLActual) / 1e6;
+            const sep = Math.max(cfg.separacionMinKm, Math.sqrt(area / cfg.puntosObjetivo));
+            const m = generarMalla(turf.bbox(geojsonKMLActual), sep);
+            const dentro = new Uint8Array(m.rows * m.cols);
+            m.puntos.forEach(p => { if (puntoCaeEnKML([p.lng, p.lat])) dentro[p.r * m.cols + p.c] = 1; });
+            mallaMascara = { ...m, dentro };
+        }
+
+        // Zonas de la finca sin cobertura con las simulaciones activas (misma lectura que los porcentajes)
+        async function actualizarMascaraHuecos(activas) {
+            const btn = document.getElementById('btn-huecos');
+            const quitar = () => {
+                if (map.getLayer('huecos-layer')) map.removeLayer('huecos-layer');
+                if (map.getSource('huecos-source')) map.removeSource('huecos-source');
+                if (urlMascara) { URL.revokeObjectURL(urlMascara); urlMascara = null; }
+                btn.classList.add('hidden');
+            };
+            if (!mallaMascara || !activas.length || !map.isStyleLoaded()) return quitar();
+            const { rows, cols, puntos, dentro, w0, s0, dLng, dLat } = mallaMascara;
+            const canvas = document.createElement('canvas');
+            canvas.width = cols; canvas.height = rows;
+            const ctx = canvas.getContext('2d');
+            const img = ctx.createImageData(cols, rows);
+            for (const p of puntos) {
+                const k = p.r * cols + p.c;
+                if (!dentro[k] || activas.some(s => hayCobertura(s, p.lng, p.lat))) continue;
+                const o = ((rows - 1 - p.r) * cols + p.c) * 4; // fila 0 del canvas = norte
+                img.data[o] = 239; img.data[o + 1] = 68; img.data[o + 2] = 68; img.data[o + 3] = 170;
+            }
+            ctx.putImageData(img, 0, 0);
+            const url = await new Promise(r => canvas.toBlob(b => r(b ? URL.createObjectURL(b) : null), 'image/png'));
+            if (!url) return quitar();
+            const coords = [[w0 - dLng / 2, s0 + (rows - 1) * dLat + dLat / 2], [w0 + (cols - 1) * dLng + dLng / 2, s0 + (rows - 1) * dLat + dLat / 2],
+                            [w0 + (cols - 1) * dLng + dLng / 2, s0 - dLat / 2], [w0 - dLng / 2, s0 - dLat / 2]];
+            if (map.getSource('huecos-source')) map.getSource('huecos-source').updateImage({ url, coordinates: coords });
+            else {
+                map.addSource('huecos-source', { type: 'image', url, coordinates: coords });
+                map.addLayer({ id: 'huecos-layer', type: 'raster', source: 'huecos-source',
+                    layout: { visibility: huecosVisibles ? 'visible' : 'none' },
+                    paint: { 'raster-opacity': 0.8, 'raster-resampling': 'nearest' } });
+            }
+            if (urlMascara) URL.revokeObjectURL(urlMascara);
+            urlMascara = url;
+            btn.classList.remove('hidden');
+        }
+
+        function toggleHuecos() {
+            huecosVisibles = !huecosVisibles;
+            if (map.getLayer('huecos-layer')) map.setLayoutProperty('huecos-layer', 'visibility', huecosVisibles ? 'visible' : 'none');
+            document.getElementById('btn-huecos').classList.toggle('active-nodos', !huecosVisibles);
+            document.getElementById('text-huecos').innerText = huecosVisibles ? 'Ocultar zonas sin cobertura' : 'Ver zonas sin cobertura';
         }
 
         // Puntos alrededor de la finca para medir la cobertura exterior (franja y alcance por dirección)
@@ -1215,7 +1304,7 @@
             // Halo de búsqueda y franja exterior
             const halos = [], franjas = [];
             geojsonKMLActual.features.forEach(f => {
-                try { halos.push(turf.buffer(f, cfg.haloKm, { units: 'kilometers' })); } catch (e) { halos.push(f); }
+                try { halos.push(turf.buffer(f, cfg.haloMaxKm, { units: 'kilometers' })); } catch (e) { halos.push(f); }
                 try { franjas.push(turf.buffer(f, CONFIG.exterior.franjaKm, { units: 'kilometers' })); } catch (e) { /* sin franja */ }
             });
             const dentroDe = (pt, lista) => lista.some(p => turf.booleanPointInPolygon(pt, p));
@@ -1244,10 +1333,15 @@
             const bboxHalo = turf.bbox(turf.featureCollection(halos));
             const areaBox = turf.area(turf.bboxPolygon(bboxHalo)) / 1e6;
             const sepCand = separacionPorDensidad(areaBox, cfg.puntosCandidatos, 0.035, 0.5);
+            const contornos = turf.flatten(geojsonKMLActual).features.map(f => turf.lineString(turf.simplify(f, { tolerance: 0.0002 }).geometry.coordinates[0]));
             const candidatos = generarMalla(bboxHalo, sepCand).puntos
                 .map(p => [p.lng, p.lat])
                 .filter(c => dentroDe(c, halos))
-                .map(c => { const interno = puntoCaeEnKML(c); return { coords: c, elev: DEM.valor(c[0], c[1]), esInterno: interno, peso: interno ? 1.0 : cfg.pesoExterno }; })
+                .map(c => {
+                    const interno = puntoCaeEnKML(c);
+                    const distFueraKm = interno ? 0 : Math.min(...contornos.map(l => turf.pointToLineDistance(c, l, { units: 'kilometers' })));
+                    return { coords: c, elev: DEM.valor(c[0], c[1]), esInterno: interno, distFueraKm, peso: interno ? 1.0 : cfg.pesoExterno };
+                })
                 .filter(c => c.elev !== null);
 
             const C = candidatos.length;
@@ -1302,8 +1396,8 @@
         }
 
         // Emplazamientos variados para calibrar: buenos según el modelo local y lo más separados posible
-        function elegirCalibradores(M, sets, k) {
-            const orden = M.candidatos.map((_, ci) => ci)
+        function elegirCalibradores(M, sets, k, pesos) {
+            const orden = M.candidatos.map((_, ci) => ci).filter(ci => pesos[ci] > 0)
                 .sort((a, b) => sets[b].filter(j => j < M.nInterior).length - sets[a].filter(j => j < M.nInterior).length);
             const top = orden.slice(0, Math.max(k * 6, Math.ceil(orden.length * 0.25)));
             const elegidos = [top[0]];
@@ -1337,7 +1431,7 @@
         function construirPayloadCloudRF({ lat, lon, alt, res, radioKm }) {
             const perfil = perfilActivo(), formato = formatoActivo();
             return {
-                site: `Punto ${simCounter}`, network: "Ixorigue",
+                site: `IXO-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, network: "Ixorigue",
                 transmitter: { lat: +lat.toFixed(6), lon: +lon.toFixed(6), alt, frq: perfil.frecuenciaMHz,
                                txw: parseFloat(dbmAWatts(potenciaEfectivaDispositivoDbm(formato)).toFixed(6)),
                                bwi: CONFIG.cloudrf.anchoBandaMHz },
@@ -1349,6 +1443,7 @@
             };
         }
 
+        try { localStorage.removeItem('rfsim-cache-v1'); } catch (e) { /* sin almacenamiento */ }
         const cacheSims = {
             leer() { try { return JSON.parse(localStorage.getItem(CONFIG.cache.clave) || '{}'); } catch (e) { return {}; } },
             guardar(obj) {
@@ -1419,19 +1514,31 @@
         // =======================================================================
         // 🖼️ VISUALIZACIÓN DE SIMULACIONES
         // =======================================================================
-        function mostrarSimulacion(r, nombre) {
+        // La imagen del mapa se genera a partir de los mismos píxeles que se han analizado:
+        // lo que se ve y los porcentajes salen siempre de la misma fuente.
+        function urlDesdePixeles(px) {
+            return new Promise(resolve => {
+                const canvas = document.createElement('canvas');
+                canvas.width = px.w; canvas.height = px.h;
+                canvas.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(px.data), px.w, px.h), 0, 0);
+                canvas.toBlob(b => resolve(b ? URL.createObjectURL(b) : null), 'image/png');
+            });
+        }
+
+        async function mostrarSimulacion(r, nombre) {
             const id = simCounter++;
             const marker = new mapboxgl.Marker(Object.assign(document.createElement('div'), { className: 'neon-orange-pin', innerHTML: svgPin() }), { anchor: 'bottom' })
                 .setLngLat([r.lon, r.lat]).addTo(map);
-            if (r.imageUrl && r.boundsCloudRF) {
+            const urlLocal = r.pixeles ? await urlDesdePixeles(r.pixeles) : null;
+            if (urlLocal && r.boundsCloudRF) {
                 const [n, e, s, w] = r.boundsCloudRF;
-                map.addSource(`sim-source-${id}`, { 'type': 'image', 'url': r.imageUrl, 'coordinates': [[w, n], [e, n], [e, s], [w, s]] });
+                map.addSource(`sim-source-${id}`, { 'type': 'image', 'url': urlLocal, 'coordinates': [[w, n], [e, n], [e, s], [w, s]] });
                 map.addLayer({ 'id': `sim-layer-${id}`, 'type': 'raster', 'source': `sim-source-${id}`, 'paint': { 'raster-opacity': 0.65 } });
             }
             const sim = {
                 id, name: nombre || `Punto ${id}`, freq: perfilActivo().frecuenciaMHz, alt: r.alt, formato: formatoActivo().nombre.split(' ')[0],
                 radioKm: r.radioKm, kmz: r.kmz, visible: true, imageUrl: r.imageUrl, boundsCloudRF: r.boundsCloudRF,
-                proyeccion: r.proyeccion, pixeles: r.pixeles, pinMarker: marker
+                proyeccion: r.proyeccion, pixeles: r.pixeles, pinMarker: marker, urlLocal
             };
             sim.coberturaLocal = calcularPorcentajeLocal(sim);
             const labelEl = document.createElement('div'); labelEl.className = 'cobertura-badge';
@@ -1448,6 +1555,7 @@
             if (map.getLayer(`sim-layer-${id}`)) map.removeLayer(`sim-layer-${id}`);
             if (map.getSource(`sim-source-${id}`)) map.removeSource(`sim-source-${id}`);
             sim.pinMarker?.remove(); sim.labelMarker?.remove();
+            if (sim.urlLocal) URL.revokeObjectURL(sim.urlLocal);
             simulaciones = simulaciones.filter(s => s.id !== id);
         }
 
@@ -1469,7 +1577,7 @@
                     localStorage.setItem('uso_demo_' + EMBEDDED_DEMO_TOKEN, usos); actualizarBannerCliente(usos);
                 }
                 if (inputMarker) { inputMarker.remove(); inputMarker = null; }
-                mostrarSimulacion(r);
+                await mostrarSimulacion(r);
                 await actualizarInterfazGlobal();
             } catch (error) {
                 console.error("Error:", error);
@@ -1557,7 +1665,7 @@
         async function actualizarInterfazGlobal() {
             if (etiquetaCoberturaActual) { etiquetaCoberturaActual.remove(); etiquetaCoberturaActual = null; }
             const activas = simulaciones.filter(s => s.visible && s.pixeles);
-            if (!geojsonKMLActual) { renderizarHistorial(null); pintarResumenExterior([]); return; }
+            if (!geojsonKMLActual) { renderizarHistorial(null); pintarResumenExterior([]); await actualizarMascaraHuecos([]); return; }
             const globalPct = simulaciones.length ? (activas.length ? pctUnion(activas, mallaFinca) : 0) : null;
             if (globalPct !== null) {
                 const ok = globalPct >= CONFIG.objetivoCoberturaPct;
@@ -1570,6 +1678,7 @@
             }
             renderizarHistorial(globalPct);
             pintarResumenExterior(activas);
+            await actualizarMascaraHuecos(activas);
         }
 
         function renderizarHistorial(globalPct = null) {
@@ -1619,125 +1728,152 @@
         // =======================================================================
         // 1. Precálculo local (por detrás).  2. Calibración con 4 simulaciones a 30 m.
         // 3. Búsqueda local calibrada.  4. Validación CloudRF a 10 m.  5. Corrección dirigida a huecos.
-        async function optimizarRed(modo) {
+        // 6. Resultado + recomendaciones (solo si merecen la pena) que se comprueban con CloudRF antes de aplicarse.
+        let pilaDeshacer = [];
+
+        function permisosActuales() {
+            return { permitirFuera: document.getElementById('permitir_fuera').checked,
+                     distFueraKm: parseFloat(document.getElementById('dist_fuera').value) || CONFIG.optimizador.haloKm };
+        }
+        function sincronizarPermisos() {
+            document.getElementById('dist_fuera').disabled = !document.getElementById('permitir_fuera').checked;
+        }
+        document.getElementById('permitir_fuera').addEventListener('change', sincronizarPermisos);
+        sincronizarPermisos();
+
+        function pesosEfectivos(M, permisos) {
+            return M.candidatos.map(c => (c.esInterno || (permisos.permitirFuera && c.distFueraKm <= permisos.distFueraKm + 1e-9)) ? c.peso : 0);
+        }
+
+        function baseResolver(ctx) {
+            const cfg = CONFIG.optimizador;
+            return { nInterior: ctx.M.nInterior, nTotal: ctx.M.J, modo: ctx.modo, objetivoPct: CONFIG.objetivoCoberturaPct,
+                     maxAntenas: cfg.maxAntenas, nFijo: ctx.nFijo, pesoExterior: cfg.pesoExteriorDesempate, pesoRedundancia: cfg.pesoRedundancia };
+        }
+
+        async function simularCandidato(ctx, ci, res) {
+            const mapa = res === CONFIG.cloudrf.resolucionM ? ctx.sims10 : ctx.sims30;
+            if (mapa.has(ci)) return mapa.get(ci);
+            const c = ctx.M.candidatos[ci];
+            const r = await simularCloudRF({ lat: c.coords[1], lon: c.coords[0], alt: ctx.hTx, res, contador: ctx.contador });
+            mapa.set(ci, r);
+            textoLoader(`Simulando con CloudRF… ${ctx.contador.sims + ctx.contador.cache} simulaciones`);
+            return r;
+        }
+
+        function recalibrar(ctx) {
+            ctx.cal = ajustarCalibracion(muestrasCalibracion(ctx.M, new Map([...ctx.sims30, ...ctx.sims10])), CONFIG.vegetacion.coefInicialDb);
+            ctx.sets = conjuntosCalibrados(ctx.M, ctx.cal);
+        }
+
+        function conjuntoRealCtx(ctx, ci) {
+            if (!ctx.reales.has(ci)) ctx.reales.set(ci, conjuntoReal(ctx.M, ctx.sims10.get(ci)));
+            return ctx.reales.get(ci);
+        }
+        // Real donde ya hay simulación a 10 m; modelo calibrado en el resto
+        function setsHibridos(ctx) { return ctx.sets.map((s, ci) => ctx.sims10.has(ci) ? conjuntoRealCtx(ctx, ci) : s); }
+
+        function coberturaRealDestinos(ctx, seleccion) {
+            const sims = seleccion.map(ci => ctx.sims10.get(ci)).filter(Boolean);
+            const cub = new Uint8Array(ctx.M.J);
+            for (let j = 0; j < ctx.M.J; j++) if (sims.some(s => hayCobertura(s, ...ctx.M.destinos[j].coords))) cub[j] = 1;
+            return cub;
+        }
+
+        function bloquearOptimizador(si) {
+            optimizadorEnCurso = si;
+            document.querySelectorAll('#btn-fijo, #btn-objetivo, .btn-recomendacion').forEach(b => b.disabled = si);
+        }
+
+        async function optimizarRed(modo, opciones = {}) {
             if (!geojsonKMLActual) return alert("Primero debes delimitar una zona cargando un archivo KML.");
             if (optimizadorEnCurso) return;
             const cfg = CONFIG.optimizador;
             const objetivo = CONFIG.objetivoCoberturaPct;
-            const nFijo = Math.min(cfg.maxAntenas, Math.max(1, parseInt(document.getElementById('num_antenas').value) || 1));
+            const nFijo = opciones.nFijo || Math.min(cfg.maxAntenas, Math.max(1, parseInt(document.getElementById('num_antenas').value) || 1));
+            const anterior = opciones.encadenar ? ultimoResultado : null;
 
-            optimizadorEnCurso = true;
-            ['btn-fijo', 'btn-objetivo'].forEach(id => document.getElementById(id).disabled = true);
-            limpiarResultadoOptimizador();
-            const contador = { sims: 0, cache: 0 };
+            bloquearOptimizador(true);
+            if (!opciones.encadenar) limpiarResultadoOptimizador();
             const t0 = Date.now();
             mostrarLoader('Preparando análisis del terreno...');
 
             try {
                 const M = await obtenerMatriz();
                 if (!M) throw new Error('No se pudo preparar el análisis del terreno.');
-                const hTx = M.hTx;
-                const pesos = M.candidatos.map(c => c.peso);
-                const sims30 = new Map(), sims10 = new Map();
-                const simular = async (ci, res, mapa) => {
-                    if (mapa.has(ci)) return mapa.get(ci);
-                    const c = M.candidatos[ci];
-                    const r = await simularCloudRF({ lat: c.coords[1], lon: c.coords[0], alt: hTx, res, contador });
-                    mapa.set(ci, r);
-                    textoLoader(`Simulando con CloudRF… ${contador.sims + contador.cache} simulaciones`);
-                    return r;
-                };
-                const opcionesResolver = (sets, pesosLista) => ({
-                    sets, pesos: pesosLista, nInterior: M.nInterior, nTotal: M.J, modo, objetivoPct: objetivo,
-                    maxAntenas: cfg.maxAntenas, nFijo, pesoExterior: cfg.pesoExteriorDesempate, pesoRedundancia: cfg.pesoRedundancia
-                });
+                const permisos = permisosActuales();
+                const pesos = pesosEfectivos(M, permisos);
+                if (!pesos.some(p => p > 0)) throw new Error('No hay emplazamientos permitidos con la configuración actual.');
+                const ctx = { modo, nFijo, M, permisos, pesos, hTx: M.hTx, perfil: document.getElementById('sim_profile').value,
+                              sims30: new Map(), sims10: new Map(), reales: new Map(), contador: { sims: 0, cache: 0 }, cal: null, sets: null, segundos: 0 };
 
                 // 2. Calibración
-                let cal = { offsetDb: 0, coefVegDb: CONFIG.vegetacion.coefInicialDb, precision: null, n: 0 };
-                let sets = conjuntosCalibrados(M, cal);
+                ctx.cal = { offsetDb: 0, coefVegDb: CONFIG.vegetacion.coefInicialDb, precision: null, n: 0 };
+                ctx.sets = conjuntosCalibrados(M, ctx.cal);
                 textoLoader('Calibrando con CloudRF…');
-                const calibradores = elegirCalibradores(M, sets, cfg.simsCalibracion);
-                await Promise.allSettled(calibradores.map(ci => simular(ci, cfg.resolucionCalibracionM, sims30)));
-                if (!sims30.size) throw new Error('CloudRF no respondió a las simulaciones de calibración.');
-                cal = ajustarCalibracion(muestrasCalibracion(M, sims30), CONFIG.vegetacion.coefInicialDb);
-                sets = conjuntosCalibrados(M, cal);
+                const calibradores = elegirCalibradores(M, ctx.sets, cfg.simsCalibracion, pesos);
+                await Promise.allSettled(calibradores.map(ci => simularCandidato(ctx, ci, cfg.resolucionCalibracionM)));
+                if (!ctx.sims30.size) throw new Error('CloudRF no respondió a las simulaciones de calibración.');
+                recalibrar(ctx);
 
                 // 3. Búsqueda local calibrada (sin créditos)
                 textoLoader('Buscando la mejor combinación…');
                 await ceder();
-                let sol = resolverCobertura({ ...opcionesResolver(sets, pesos), reserva: reservaRedundancia(M, sets) });
+                const sol = resolverCobertura({ ...baseResolver(ctx), sets: ctx.sets, pesos, reserva: reservaRedundancia(M, pesos) });
                 let seleccion = sol.seleccion.slice();
 
                 // 4. Validación real a 10 m
-                await Promise.allSettled(seleccion.map(ci => simular(ci, CONFIG.cloudrf.resolucionM, sims10)));
-                seleccion = seleccion.filter(ci => sims10.has(ci));
+                await Promise.allSettled(seleccion.map(ci => simularCandidato(ctx, ci, CONFIG.cloudrf.resolucionM)));
+                seleccion = seleccion.filter(ci => ctx.sims10.has(ci));
                 if (!seleccion.length) throw new Error('CloudRF no respondió a las simulaciones de validación.');
+                const pctInteriorReal = sel => { const cub = coberturaRealDestinos(ctx, sel); let c = 0; for (let j = 0; j < M.nInterior; j++) c += cub[j]; return 100 * c / M.nInterior; };
                 const evaluarReal = () => {
-                    const pool = [...sims10.keys()];
-                    const r = resolverCobertura(opcionesResolver(pool.map(ci => conjuntoReal(M, sims10.get(ci))), pool.map(ci => pesos[ci])));
+                    const pool = [...ctx.sims10.keys()].filter(ci => pesos[ci] > 0);
+                    const r = resolverCobertura({ ...baseResolver(ctx), sets: pool.map(ci => conjuntoRealCtx(ctx, ci)), pesos: pool.map(ci => pesos[ci]) });
                     return { seleccion: r.seleccion.map(i => pool[i]), interiorPct: r.interiorPct };
                 };
-                let real = modo === 'fijo' ? { seleccion, interiorPct: pctUnion(seleccion.map(ci => sims10.get(ci)), M.destinos.slice(0, M.nInterior).map(d => d.coords)) } : evaluarReal();
+                let real = modo === 'fijo' ? { seleccion, interiorPct: pctInteriorReal(seleccion) } : evaluarReal();
 
                 // 5. Corrección dirigida a las zonas sin cobertura real
                 for (let ronda = 0; ronda < cfg.rondasCorreccion; ronda++) {
                     if (modo === 'objetivo' && real.interiorPct >= objetivo) break;
                     if (modo === 'fijo' && ronda >= 1) break;
-                    const todas = new Map([...sims30, ...sims10]);
-                    cal = ajustarCalibracion(muestrasCalibracion(M, todas), CONFIG.vegetacion.coefInicialDb);
-                    sets = conjuntosCalibrados(M, cal);
-                    const simsSel = real.seleccion.map(ci => sims10.get(ci));
+                    recalibrar(ctx);
+                    const cub = coberturaRealDestinos(ctx, real.seleccion);
                     const huecos = new Set();
-                    for (let j = 0; j < M.nInterior; j++) if (!simsSel.some(s => hayCobertura(s, ...M.destinos[j].coords))) huecos.add(j);
+                    for (let j = 0; j < M.nInterior; j++) if (!cub[j]) huecos.add(j);
                     if (!huecos.size) break;
-                    const nuevos = elegirParaHuecos(M, sets, huecos, sims10, cfg.simsPorRonda);
+                    const nuevos = elegirParaHuecos(ctx.sets, huecos, ctx.sims10, cfg.simsPorRonda, pesos);
                     if (!nuevos.length) break;
                     textoLoader(`Corrigiendo zonas sin cobertura (ronda ${ronda + 1})…`);
-                    await Promise.allSettled(nuevos.map(ci => simular(ci, CONFIG.cloudrf.resolucionM, sims10)));
+                    await Promise.allSettled(nuevos.map(ci => simularCandidato(ctx, ci, CONFIG.cloudrf.resolucionM)));
                     const propuesta = evaluarReal();
                     if (modo === 'objetivo' || propuesta.interiorPct > real.interiorPct) real = propuesta;
                 }
+                recalibrar(ctx);
+                ctx.segundos = (Date.now() - t0) / 1000;
 
-                // 6. Resultado final con la cobertura real (malla fina de la finca)
-                const finales = real.seleccion.map(ci => sims10.get(ci));
-                const curva = finales.map((_, i) => pctUnion(finales.slice(0, i + 1), mallaFinca));
-                const pctFinal = curva[curva.length - 1] ?? 0;
-                const exterior = analisisExterior(finales);
-
-                // Estimación de una antena más (modelo local calibrado)
-                let masUna = null;
-                if (modo === 'objetivo' && real.seleccion.length < cfg.maxAntenas) {
-                    const cubiertos = new Uint8Array(M.nInterior);
-                    for (let j = 0; j < M.nInterior; j++) if (finales.some(s => hayCobertura(s, ...M.destinos[j].coords))) cubiertos[j] = 1;
-                    let mejor = 0;
-                    sets.forEach((s, ci) => { if (real.seleccion.includes(ci)) return; let g = 0; for (const j of s) if (j < M.nInterior && !cubiertos[j]) g++; if (g > mejor) mejor = g; });
-                    masUna = Math.min(100, pctFinal + 100 * mejor / M.nInterior);
-                }
-
-                const ids = finales.map((r, i) => mostrarSimulacion(r, `Antena ${i + 1} (auto)`).id);
-                pintarHuecos(finales);
-                ultimoResultado = { ids };
-                await actualizarInterfazGlobal();
-                pintarResumenOptimizador({ modo, nFijo, pctFinal, curva, exterior, masUna, cal, contador, segundos: (Date.now() - t0) / 1000, n: finales.length });
+                const cambio = opciones.cambio ? { ...opciones.cambio, antes: anterior ? resumenCorto(anterior) : null } : null;
+                await presentarResultado(ctx, real.seleccion, cambio);
             } catch (e) {
                 console.error(e);
                 alert('El optimizador no pudo terminar: ' + e.message);
+                if (opciones.alFallar) opciones.alFallar();
             } finally {
-                optimizadorEnCurso = false;
-                ['btn-fijo', 'btn-objetivo'].forEach(id => document.getElementById(id).disabled = false);
+                bloquearOptimizador(false);
                 ocultarLoader();
             }
         }
 
-        // Candidatos (aún no simulados) que más zonas sin cobertura real recuperarían según el modelo calibrado
-        function elegirParaHuecos(M, sets, huecos, yaSimulados, k) {
+        // Candidatos (aún no simulados a 10 m) que más zonas sin cobertura real recuperarían según el modelo calibrado
+        function elegirParaHuecos(sets, huecos, yaSimulados, k, pesos) {
             const pendientes = new Set(huecos), elegidos = [];
             while (elegidos.length < k && pendientes.size) {
                 let mejor = -1, mg = 0;
                 sets.forEach((s, ci) => {
-                    if (yaSimulados.has(ci) || elegidos.includes(ci)) return;
+                    if (pesos[ci] <= 0 || yaSimulados.has(ci) || elegidos.includes(ci)) return;
                     let g = 0; for (const j of s) if (pendientes.has(j)) g++;
-                    g *= M.candidatos[ci].peso;
+                    g *= pesos[ci];
                     if (g > mg) { mg = g; mejor = ci; }
                 });
                 if (mejor < 0) break;
@@ -1748,46 +1884,239 @@
         }
 
         // Si en modo fijo ya no hay cobertura nueva ni redundancia posible: punto alto y separado de los elegidos
-        function reservaRedundancia(M, sets) {
-            const orden = M.candidatos.map((c, ci) => ci).sort((a, b) => M.candidatos[b].elev - M.candidatos[a].elev);
+        function reservaRedundancia(M, pesos) {
+            const orden = M.candidatos.map((c, ci) => ci).filter(ci => pesos[ci] > 0).sort((a, b) => M.candidatos[b].elev - M.candidatos[a].elev);
             return (sel) => orden.find(ci => !sel.includes(ci) && sel.every(s => distanciaM(M.candidatos[ci].coords, M.candidatos[s].coords) >= 400)) ?? -1;
         }
 
-        function pintarHuecos(finales) {
-            const sinCobertura = mallaFinca.filter(([lng, lat]) => !finales.some(s => hayCobertura(s, lng, lat)));
-            const data = turf.featureCollection(sinCobertura.map(c => turf.point(c)));
-            if (map.getSource('huecos-source')) map.getSource('huecos-source').setData(data);
-            else {
-                map.addSource('huecos-source', { type: 'geojson', data });
-                map.addLayer({ id: 'huecos-layer', type: 'circle', source: 'huecos-source',
-                    paint: { 'circle-radius': 3, 'circle-color': '#ef4444', 'circle-opacity': 0.75, 'circle-stroke-width': 0.5, 'circle-stroke-color': '#0B1120' } });
+        function resumenCorto(res) { return { n: res.seleccion.length, pct: res.pct, ext: res.exteriorPct }; }
+
+        // Muestra la solución: simulaciones en el mapa (ordenadas por aporte), curva, exterior y recomendaciones
+        async function presentarResultado(ctx, seleccion, cambio = null) {
+            const coberturas = seleccion.map(ci => {
+                const s = ctx.sims10.get(ci), v = new Uint8Array(mallaFinca.length);
+                mallaFinca.forEach(([lng, lat], k) => { if (hayCobertura(s, lng, lat)) v[k] = 1; });
+                return v;
+            });
+            const union = new Uint8Array(mallaFinca.length), restantes = seleccion.map((_, i) => i), orden = [], curva = [];
+            let cubiertos = 0;
+            while (restantes.length) {
+                let bi = 0, bg = -1;
+                restantes.forEach((i, pos) => { let g = 0; const v = coberturas[i]; for (let k = 0; k < v.length; k++) if (v[k] && !union[k]) g++; if (g > bg) { bg = g; bi = pos; } });
+                const i = restantes.splice(bi, 1)[0];
+                const v = coberturas[i];
+                for (let k = 0; k < v.length; k++) if (v[k] && !union[k]) { union[k] = 1; cubiertos++; }
+                orden.push(seleccion[i]);
+                curva.push(mallaFinca.length ? 100 * cubiertos / mallaFinca.length : 0);
+            }
+            const finales = orden.map(ci => ctx.sims10.get(ci));
+
+            if (ultimoResultado) ultimoResultado.ids.forEach(eliminarSimulacion);
+            const ids = [];
+            for (let i = 0; i < finales.length; i++) ids.push((await mostrarSimulacion(finales[i], `Antena ${i + 1} (auto)`)).id);
+            const exterior = analisisExterior(finales);
+            ultimoResultado = { ctx, seleccion: orden, ids, curva, pct: curva[curva.length - 1] ?? 0,
+                                exteriorPct: exterior && exterior.franjaPct !== null ? exterior.franjaPct : null, aviso: null };
+            ultimoResultado.recs = calcularRecomendaciones(ultimoResultado);
+            await actualizarInterfazGlobal();
+            pintarResumenOptimizador(ultimoResultado, cambio);
+        }
+
+        // Recomendaciones evaluadas con el modelo local (sin créditos). Solo se devuelven las que merecen la pena.
+        function calcularRecomendaciones(res) {
+            const { ctx } = res, M = ctx.M, R = CONFIG.recomendaciones, objetivo = CONFIG.objetivoCoberturaPct;
+            const ok = res.pct >= objetivo, N = res.seleccion.length, recs = [];
+            const sets = setsHibridos(ctx);
+            const cub = coberturaRealDestinos(ctx, res.seleccion);
+            let intDest = 0, extDest = 0;
+            for (let j = 0; j < M.J; j++) if (cub[j]) { if (j < M.nInterior) intDest++; else extDest++; }
+            const nRing = M.J - M.nInterior;
+            const pctIntDest = 100 * intDest / M.nInterior, pctExtDest = nRing ? 100 * extDest / nRing : 0;
+
+            // Antenas contratadas: el número es fijo, no se propone añadir ni quitar
+            if (ctx.modo === 'objetivo' && N < CONFIG.optimizador.maxAntenas) {
+                let mejor = 0;
+                sets.forEach((s, ci) => {
+                    if (ctx.pesos[ci] <= 0 || res.seleccion.includes(ci)) return;
+                    let g = 0; for (const j of s) if (j < M.nInterior && !cub[j]) g++;
+                    if (g > mejor) mejor = g;
+                });
+                const gan = 100 * mejor / M.nInterior;
+                if (gan >= R.minGananciaAnadirPts || (!ok && gan >= R.minMejoraRealPts))
+                    recs.push({ id: 'anadir', boton: 'Añadir antena',
+                                texto: `Una antena más subiría la cobertura de ${res.pct.toFixed(0)}% a ~${Math.min(100, res.pct + gan).toFixed(0)}% (estimación).` });
+            }
+            if (ctx.modo === 'objetivo' && ok && N >= 2) {
+                const r = resolverCobertura({ ...baseResolver(ctx), modo: 'fijo', nFijo: N - 1, sets, pesos: ctx.pesos });
+                if (r.interiorPct >= objetivo + R.margenUnaMenosPts)
+                    recs.push({ id: 'menos', boton: 'Probar con una menos', seleccion: r.seleccion,
+                                texto: `Con ${N - 1} antena${N - 1 === 1 ? '' : 's'} recolocadas se estima ~${r.interiorPct.toFixed(0)}%: podría bastar con una menos.` });
+            }
+            if (res.exteriorPct !== null && res.exteriorPct < R.exteriorBajoPct) {
+                const r = resolverCobertura({ ...baseResolver(ctx), modo: 'fijo', nFijo: N, sets, pesos: ctx.pesos, pesoExterior: 1 });
+                const interiorMin = ok ? objetivo : pctIntDest - 1;
+                if (r.interiorPct >= interiorMin && r.exteriorPct >= pctExtDest + R.minMejoraExteriorPts)
+                    recs.push({ id: 'exterior', boton: 'Mejorar exterior', seleccion: r.seleccion,
+                                texto: `La franja exterior de ${CONFIG.exterior.franjaKm} km solo está cubierta al ${res.exteriorPct.toFixed(0)}%. Recolocando las antenas se estima +${(r.exteriorPct - pctExtDest).toFixed(0)} puntos fuera sin perder cobertura dentro.` });
+            }
+            if (ctx.modo === 'objetivo' && !ok) {
+                const sig = (R.alturasMastil[ctx.perfil] || []).find(a => a > ctx.hTx);
+                if (sig) recs.push({ id: 'mastil', boton: `Repetir con mástil de ${sig} m`, altura: sig,
+                                     texto: `No se alcanza el ${objetivo}% con mástil de ${ctx.hTx} m.` });
+            }
+            const fuera = res.seleccion.filter(ci => !M.candidatos[ci].esInterno).length;
+            if (ctx.permisos.permitirFuera && fuera > 0)
+                recs.push({ id: 'dentro', boton: 'Calcular solo dentro',
+                            texto: `${fuera} antena${fuera > 1 ? 's están' : ' está'} fuera de la finca. Si el cliente no lo permite:` });
+            return recs;
+        }
+
+        function guardarEstado() {
+            const r = ultimoResultado;
+            return { ctx: r.ctx, seleccion: r.seleccion.slice(), resumen: resumenCorto(r),
+                     txHeight: document.getElementById('tx_height').value,
+                     permitir: document.getElementById('permitir_fuera').checked,
+                     dist: document.getElementById('dist_fuera').value };
+        }
+        function apilarDeshacer(estado) {
+            pilaDeshacer.push(estado);
+            while (pilaDeshacer.length > CONFIG.recomendaciones.maxDeshacer) pilaDeshacer.shift();
+        }
+        function restaurarEntradas(estado) {
+            if (!estado) return;
+            document.getElementById('tx_height').value = estado.txHeight;
+            document.getElementById('permitir_fuera').checked = estado.permitir;
+            document.getElementById('dist_fuera').value = estado.dist;
+            sincronizarPermisos();
+            programarPrecalculo();
+        }
+
+        async function aplicarRecomendacion(id) {
+            if (!ultimoResultado || optimizadorEnCurso) return;
+            const res = ultimoResultado, ctx = res.ctx, R = CONFIG.recomendaciones, objetivo = CONFIG.objetivoCoberturaPct;
+            const rec = res.recs.find(r => r.id === id);
+            if (!rec) return;
+
+            // Cambios que requieren repetir el diseño completo
+            if (id === 'mastil' || id === 'dentro') {
+                const estado = guardarEstado();
+                if (id === 'mastil') document.getElementById('tx_height').value = rec.altura;
+                else { document.getElementById('permitir_fuera').checked = false; sincronizarPermisos(); }
+                apilarDeshacer(estado);
+                await optimizarRed(ctx.modo, { encadenar: true, nFijo: ctx.nFijo, cambio: { titulo: rec.boton },
+                                               alFallar: () => restaurarEntradas(pilaDeshacer.pop()) });
+                return;
+            }
+
+            bloquearOptimizador(true);
+            mostrarLoader('Comprobando con CloudRF…');
+            try {
+                let nueva = null;
+                if (id === 'anadir') {
+                    const cub = coberturaRealDestinos(ctx, res.seleccion);
+                    const huecos = new Set(); for (let j = 0; j < ctx.M.nInterior; j++) if (!cub[j]) huecos.add(j);
+                    const sets = setsHibridos(ctx);
+                    const candidatas = sets.map((s, ci) => {
+                        if (ctx.pesos[ci] <= 0 || res.seleccion.includes(ci)) return null;
+                        let g = 0; for (const j of s) if (huecos.has(j)) g++;
+                        return { ci, g: g * ctx.pesos[ci] };
+                    }).filter(x => x && x.g > 0).sort((a, b) => b.g - a.g).slice(0, R.simsAnadir).map(x => x.ci);
+                    await Promise.allSettled(candidatas.map(ci => simularCandidato(ctx, ci, CONFIG.cloudrf.resolucionM)));
+                    let mejor = null, mejorPct = -1;
+                    for (const ci of candidatas.filter(ci => ctx.sims10.has(ci))) {
+                        const p = pctUnion([...res.seleccion, ci].map(c => ctx.sims10.get(c)), mallaFinca);
+                        if (p * ctx.pesos[ci] > mejorPct * (mejor === null ? 1 : ctx.pesos[mejor])) { mejorPct = p; mejor = ci; }
+                    }
+                    if (mejor !== null) nueva = [...res.seleccion, mejor];
+                } else {
+                    await Promise.allSettled(rec.seleccion.map(ci => simularCandidato(ctx, ci, CONFIG.cloudrf.resolucionM)));
+                    nueva = rec.seleccion.filter(ci => ctx.sims10.has(ci));
+                    if (nueva.length !== rec.seleccion.length) nueva = null;
+                }
+                recalibrar(ctx);
+
+                let aceptar = false, motivo = 'CloudRF no respondió.';
+                if (nueva) {
+                    const sims = nueva.map(ci => ctx.sims10.get(ci));
+                    const pct = pctUnion(sims, mallaFinca);
+                    const ext = analisisExterior(sims)?.franjaPct ?? null;
+                    if (id === 'anadir') {
+                        aceptar = pct - res.pct >= R.minMejoraRealPts;
+                        motivo = `con una antena más la cobertura real sería ${pct.toFixed(1)}% (+${(pct - res.pct).toFixed(1)} puntos).`;
+                    } else if (id === 'menos') {
+                        aceptar = pct >= objetivo;
+                        motivo = `con ${nueva.length} antenas la cobertura real sería ${pct.toFixed(1)}%, por debajo del ${objetivo}%.`;
+                    } else if (id === 'exterior') {
+                        const okInt = res.pct >= objetivo ? pct >= objetivo : pct >= res.pct - 0.5;
+                        aceptar = okInt && ext !== null && res.exteriorPct !== null && ext - res.exteriorPct >= R.minMejoraExteriorRealPts;
+                        motivo = `la recolocación daría ${pct.toFixed(1)}% dentro y ${ext === null ? '–' : ext.toFixed(0) + '%'} en la franja exterior.`;
+                    }
+                }
+                if (aceptar) {
+                    apilarDeshacer(guardarEstado());
+                    await presentarResultado(ctx, nueva, { titulo: rec.boton, antes: resumenCorto(res) });
+                } else {
+                    res.recs = res.recs.filter(r => r.id !== id);
+                    res.aviso = `Comprobado con CloudRF: ${motivo} No se aplica el cambio.`;
+                    pintarResumenOptimizador(res, null);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('No se pudo comprobar la mejora: ' + e.message);
+            } finally {
+                bloquearOptimizador(false);
+                ocultarLoader();
             }
         }
 
-        function pintarResumenOptimizador(r) {
-            const ok = r.pctFinal >= CONFIG.objetivoCoberturaPct;
-            const titulo = r.modo === 'fijo' ? `Antenas contratadas: ${r.nFijo}` : `Diseño automático (objetivo ${CONFIG.objetivoCoberturaPct}%)`;
-            const curva = r.curva.map((p, i) => `${i + 1} → ${p.toFixed(0)}%`).join(', ');
+        async function deshacerCambio() {
+            if (optimizadorEnCurso || !pilaDeshacer.length) return;
+            const estado = pilaDeshacer.pop();
+            restaurarEntradas(estado);
+            bloquearOptimizador(true);
+            try { await presentarResultado(estado.ctx, estado.seleccion, { titulo: 'Cambio deshecho', antes: resumenCorto(ultimoResultado) }); }
+            finally { bloquearOptimizador(false); }
+        }
+
+        function pintarResumenOptimizador(r, cambio) {
+            const ctx = r.ctx, objetivo = CONFIG.objetivoCoberturaPct;
+            const ok = r.pct >= objetivo, n = r.seleccion.length;
+            const titulo = ctx.modo === 'fijo' ? `Antenas contratadas: ${ctx.nFijo}` : `Diseño automático (objetivo ${objetivo}%)`;
+            const permiso = ctx.permisos.permitirFuera ? `antenas permitidas hasta ${ctx.permisos.distFueraKm * 1000} m fuera de la finca` : 'solo antenas dentro de la finca';
+            const fmt = x => x === null || x === undefined ? '–' : x.toFixed(1) + '%';
             const lineas = [
                 `<div class="font-semibold text-purple-200">${titulo}</div>`,
-                `<div><b>${r.n} antena${r.n === 1 ? '' : 's'}</b> cubren el <b class="${ok ? 'text-green-400' : 'text-red-400'}">${r.pctFinal.toFixed(1)}%</b> de la finca (CloudRF). ${ok ? 'Objetivo alcanzado.' : 'Objetivo no alcanzado.'}</div>`,
-                `<div>Cobertura por número de antenas: ${curva}</div>`
+                `<div><b>${n} antena${n === 1 ? '' : 's'}</b> cubren el <b class="${ok ? 'text-green-400' : 'text-red-400'}">${r.pct.toFixed(1)}%</b> de la finca (CloudRF). ${ok ? 'Objetivo alcanzado.' : 'Objetivo no alcanzado.'}</div>`,
+                `<div>Cobertura por número de antenas: ${r.curva.map((p, i) => `${i + 1} → ${p.toFixed(0)}%`).join(', ')}</div>`,
+                r.exteriorPct !== null ? `<div>Franja exterior de ${CONFIG.exterior.franjaKm} km: ${r.exteriorPct.toFixed(0)}% cubierta.</div>` : '',
+                `<div class="text-purple-300/70 text-[10px]">Configuración: ${permiso}, mástil ${ctx.hTx} m.</div>`
             ];
-            if (r.exterior && r.exterior.franjaPct !== null) lineas.push(`<div>Franja exterior de ${CONFIG.exterior.franjaKm} km: ${r.exterior.franjaPct.toFixed(0)}% cubierta.</div>`);
-            if (r.masUna !== null && r.masUna > r.pctFinal + 0.5) lineas.push(`<div>Con una antena más (estimación): ~${r.masUna.toFixed(0)}%.</div>`);
-            if (r.modo === 'objetivo' && !ok) lineas.push(`<div class="text-amber-300">No se alcanza el ${CONFIG.objetivoCoberturaPct}% con un máximo de ${CONFIG.optimizador.maxAntenas} antenas desde la finca y su halo de ${CONFIG.optimizador.haloKm * 1000} m. Las zonas en rojo quedan sin cobertura. Opciones: subir la altura del mástil o ampliar el halo.</div>`);
-            lineas.push(`<div class="text-purple-300/70 text-[10px]">Calibración del modelo local: desfase ${r.cal.offsetDb >= 0 ? '+' : ''}${r.cal.offsetDb} dB, vegetación ${r.cal.coefVegDb} dB, acierto ${r.cal.precision === null ? '–' : (r.cal.precision * 100).toFixed(0) + '%'}. Simulaciones CloudRF: ${r.contador.sims} nuevas, ${r.contador.cache} desde caché. Tiempo: ${Math.round(r.segundos)} s.</div>`);
+            if (cambio) {
+                const a = cambio.antes;
+                lineas.push(`<div class="mt-1 p-2 rounded bg-emerald-950/40 border border-emerald-500/20 text-emerald-200">${cambio.titulo}${a ? `: ${a.n} antena${a.n === 1 ? '' : 's'} ${fmt(a.pct)} → ${n} antena${n === 1 ? '' : 's'} ${fmt(r.pct)}${a.ext !== null && r.exteriorPct !== null ? ` (exterior ${a.ext.toFixed(0)}% → ${r.exteriorPct.toFixed(0)}%)` : ''}` : ''}</div>`);
+            }
+            if (ctx.modo === 'objetivo' && !ok) lineas.push(`<div class="text-amber-300">Las zonas en rojo del mapa quedan sin cobertura con un máximo de ${CONFIG.optimizador.maxAntenas} antenas.</div>`);
+            if (r.aviso) lineas.push(`<div class="mt-1 p-2 rounded bg-amber-950/40 border border-amber-500/20 text-amber-200">${r.aviso}</div>`);
+            if (r.recs.length) {
+                lineas.push(`<div class="mt-2 font-semibold text-purple-200">Recomendaciones</div>`);
+                r.recs.forEach(rec => lineas.push(`
+                    <div class="p-2 rounded bg-slate-900/50 border border-purple-500/20">
+                        <div class="mb-1.5">${rec.texto}</div>
+                        <button onclick="aplicarRecomendacion('${rec.id}')" class="btn-recomendacion w-full bg-purple-700 hover:bg-purple-600 disabled:opacity-40 text-white text-xs py-1.5 rounded font-semibold transition-colors">${rec.boton}</button>
+                    </div>`));
+            }
+            if (pilaDeshacer.length) lineas.push(`<button onclick="deshacerCambio()" class="btn-recomendacion w-full mt-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 text-xs py-1.5 rounded border border-slate-600 transition-colors">Deshacer último cambio</button>`);
+            lineas.push(`<div class="text-purple-300/70 text-[10px] mt-1">Calibración del modelo local: desfase ${ctx.cal.offsetDb >= 0 ? '+' : ''}${ctx.cal.offsetDb} dB, vegetación ${ctx.cal.coefVegDb} dB, acierto ${ctx.cal.precision === null ? '–' : (ctx.cal.precision * 100).toFixed(0) + '%'}. Simulaciones CloudRF: ${ctx.contador.sims} nuevas, ${ctx.contador.cache} desde caché. Tiempo de diseño: ${Math.round(ctx.segundos)} s.</div>`);
             document.getElementById('opt-resumen').innerHTML = lineas.join('');
             document.getElementById('opt-panel').classList.remove('hidden');
         }
 
         function limpiarResultadoOptimizador() {
             if (ultimoResultado) { ultimoResultado.ids.forEach(eliminarSimulacion); ultimoResultado = null; }
-            if (map.getLayer('huecos-layer')) map.removeLayer('huecos-layer');
-            if (map.getSource('huecos-source')) map.removeSource('huecos-source');
+            pilaDeshacer = [];
             document.getElementById('opt-panel').classList.add('hidden');
             document.getElementById('opt-resumen').innerHTML = '';
-            if (map.loaded()) actualizarInterfazGlobal();
+            actualizarInterfazGlobal();
         }
     </script>
 </body>
