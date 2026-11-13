@@ -14,7 +14,8 @@
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.1.2/mapbox-gl.css' rel='stylesheet' />
     
-    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
     <style>
         body { background-color: #0B1120; color: #e2e8f0; font-family: 'Inter', sans-serif; }
@@ -151,6 +152,7 @@
             <svg class="w-7 h-7 text-[#39FF14] drop-shadow-[0_0_8px_rgba(57,255,20,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.106-.53-.106a.75.75 0 01-.6-1.07l.6-.8a.75.75 0 011.2 0l.6.8a.75.75 0 01-.6 1.07z"></path></svg>
             <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-500">
                 IXORIGUE RF Coverage Simulator <span class="text-slate-500 font-medium text-sm ml-1 uppercase tracking-widest">| Pro 3D</span>
+                <span id="app-version" class="ml-2 text-[10px] font-mono text-slate-500 align-middle"></span>
             </h1>
         </div>
         <div class="w-1/3"></div> 
@@ -173,7 +175,7 @@
                 <div class="space-y-1.5">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Importar de Google Maps</label>
                     <div class="flex gap-2">
-                        <input type="text" id="gmaps_url" placeholder="URL larga de Google Maps..." class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all">
+                        <input type="text" id="gmaps_url" placeholder="URL de Google Maps o lat, lon" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all">
                         <button onclick="extraerDeMaps()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </button>
@@ -182,10 +184,10 @@
 
                 <div class="space-y-1.5">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Delimitar Zona (KML)</label>
-                    <input type="file" id="kml_upload" accept=".kml" class="hidden" onchange="cargarKML(event)">
+                    <input type="file" id="kml_upload" accept=".kml,.kmz" class="hidden" onchange="cargarKML(event)">
                     <label for="kml_upload" class="w-full bg-slate-900/50 hover:bg-slate-800 text-slate-300 hover:text-green-400 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center cursor-pointer border border-slate-600 border-dashed group">
                         <svg class="w-4 h-4 mr-2 group-hover:text-green-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        Seleccionar polígono .kml
+                        Seleccionar polígono .kml / .kmz
                     </label>
                 </div>
 
@@ -203,6 +205,7 @@
 
                 <div id="draft-actions-panel" class="hidden space-y-2 p-2.5 bg-purple-950/20 border border-purple-500/20 rounded-lg transition-all animate-fadeIn">
                     <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest text-center animate-pulse">Propuesta en Borrador (Pines Lilas)</div>
+                    <div id="draft-estimacion" class="text-[11px] text-purple-200/80 text-center"></div>
                     <div class="grid grid-cols-2 gap-2">
                         <button onclick="descartarPropuesta()" class="bg-slate-800/80 hover:bg-red-950/40 text-red-400 border border-red-500/20 text-xs py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-1">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -230,13 +233,27 @@
                     <div class="space-y-1.5">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Land Cover (Bosques)</label>
                         <select id="land_cover" class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 hover:border-slate-500 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all cursor-pointer font-semibold">
-                            <option value="1">ON</option>
-                            <option value="0" selected>OFF</option>
+                            <option value="1" selected>ON</option>
+                            <option value="0">OFF</option>
                         </select>
                     </div>
                     <div class="space-y-1.5">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Altura Antena (m)</label>
                         <input type="number" id="tx_height" value="3" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dispositivo</label>
+                        <select id="formato_dispositivo" onchange="actualizarInfoEnlace()" class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 hover:border-slate-500 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all cursor-pointer font-semibold">
+                            <option value="crotal" selected>Crotal (CowPro)</option>
+                            <option value="collar">Collar (Ixotrack)</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Enlace</label>
+                        <div id="info-enlace" class="px-3 py-2 bg-slate-900/30 border border-slate-800 rounded-lg text-[11px] leading-snug text-slate-300 font-mono"></div>
                     </div>
                 </div>
 
@@ -250,7 +267,7 @@
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <p class="text-[10px] text-green-400/80 font-bold animate-pulse uppercase tracking-widest">Procesando modelo ITM...</p>
+                    <p id="loader-text" class="text-[10px] text-green-400/80 font-bold animate-pulse uppercase tracking-widest">Procesando modelo ITM...</p>
                 </div>
             </div>
 
@@ -277,7 +294,7 @@
             <div class="map-controls-container">
                 <button id="btn-canopy" onclick="toggleCanopy()" class="map-btn">
                     <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
-                    <span id="text-canopy">Altura Dosel</span>
+                    <span id="text-canopy">Cubierta Arbórea</span>
                 </button>
                 <button id="btn-nodos" onclick="toggleNodos()" class="map-btn">
                     <svg id="icon-nodos" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -292,20 +309,20 @@
             <!-- NUEVA LEYENDA (Histograma de Altura Mejorado y Azul) -->
             <div id="canopy-legend" class="hidden absolute bottom-6 right-6 z-10 glass-panel p-4 rounded-lg w-72 shadow-xl border border-slate-700/50 transition-all">
                 <div class="text-[11px] font-bold text-slate-200 uppercase tracking-widest mb-3 flex items-center justify-between">
-                    <span>🌳 Altura de Vegetación</span>
+                    <span>🌳 Cubierta arbórea</span>
                 </div>
                 <!-- Barra de gradiente AZUL (De transparente a azul oscuro) -->
                 <div class="h-3 w-full rounded bg-gradient-to-r from-transparent via-blue-600 to-blue-900 border border-slate-600 mb-2"></div>
                 <!-- Indicadores métricos explícitos -->
                 <div class="flex justify-between text-[11px] font-bold text-slate-300 font-mono">
-                    <span class="flex flex-col items-start"><span class="text-slate-400">0m</span></span>
-                    <span class="flex flex-col items-center"><span class="text-slate-400">15m</span></span>
-                    <span class="flex flex-col items-end"><span class="text-slate-400">+30m</span></span>
+                    <span class="flex flex-col items-start"><span class="text-slate-400">0%</span></span>
+                    <span class="flex flex-col items-center"><span class="text-slate-400">50%</span></span>
+                    <span class="flex flex-col items-end"><span class="text-slate-400">100%</span></span>
                 </div>
                 <!-- Explicación visual -->
                 <p class="text-[9px] text-slate-400 mt-3 leading-relaxed border-t border-slate-700 pt-2">
-                    Las zonas <span class="text-slate-300 font-bold">transparentes</span> indican terreno sin árboles.<br>
-                    El color <span class="text-blue-500 font-bold">azul intenso</span> revela masas forestales densas.
+                    Porcentaje de suelo cubierto por copa de árbol (densidad, no altura).<br>
+                    Fuente: Hansen/UMD Global Forest Change, año base 2000.
                 </p>
             </div>
 
@@ -316,29 +333,230 @@
 
     <script>
         // =======================================================================
-        // 🔒 CONFIGURACIÓN CORE
+        // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const PROXY_URL = "https://ixorigue.small-leaf-5935.workers.dev";
-        mapboxgl.accessToken = 'pk.eyJ1IjoibWFyY2dwdDk5IiwiYSI6ImNtcmVxbWZzbDByenoyenBkdWU5cXBkYzcifQ.KRu6WKoui20OAQltTw11sQ';
-        
-        const EMBEDDED_DEMO_TOKEN = ""; 
-        const LIMITE_USOS = 2;
-        
-        let simulaciones = []; 
-        let simCounter = 1;
+        const APP_VERSION = '1.1.0';
 
-        let geojsonKMLActual = null;
-        let etiquetaCoberturaActual = null; 
+        // =======================================================================
+        // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
+        // =======================================================================
+        const CONFIG = {
+            proxyUrl: "https://ixorigue.small-leaf-5935.workers.dev",
+            mapboxToken: 'pk.eyJ1IjoibWFyY2dwdDk5IiwiYSI6ImNtcmVxbWZzbDByenoyenBkdWU5cXBkYzcifQ.KRu6WKoui20OAQltTw11sQ',
+            limiteUsosCliente: 2,          // ⏸️ Aplazado: se moverá al servidor
+            objetivoCoberturaPct: 80,      // Objetivo de cobertura de la finca
+
+            perfiles: {
+                EU:    { frecuenciaMHz: 868, plan: 'EU868' },
+                LATAM: { frecuenciaMHz: 915, plan: 'AU915/US915' }
+            },
+
+            dispositivo: {
+                potenciaTxDbm: 14,
+                // Sin medidas propias: pérdida combinada antena chip (Ignion NN02-224) + cuerpo del animal.
+                formatos: {
+                    crotal: { nombre: 'Crotal (CowPro)',   alturaM: 1.3, perdidaAntenaCuerpoDb: 6 },
+                    collar: { nombre: 'Collar (Ixotrack)', alturaM: 1.0, perdidaAntenaCuerpoDb: 6 }
+                }
+            },
+
+            gateway: {
+                gananciaAntenaDbi: 4.3,
+                perdidaCableDb: 1.14,
+                // Calibrado con 191.736 uplinks reales (GW 24e124fffefce32d, 14/10–13/11/2026):
+                //  · ruido de fondo medido ≈ -118 dBm (RSSI cuando SNR < -10 dB)
+                //  · umbral de decodificación efectivo ajustado por datos censurados ≈ -134 dBm en SF11
+                ruidoFondoDbm: -118,
+                sensibilidadDbm: { SF10: -131.5, SF11: -134, SF12: -136.5 }
+            },
+
+            sfDiseno: 'SF11',              // Los equipos trabajan entre SF10 y SF12, casi siempre SF11
+            margenDesvanecimientoDb: 7,    // ≈ 0,84·σ con σ = 8 dB → 80 % de fiabilidad por ubicación
+
+            radioSimulacion: { minKm: 3, maxKm: 15, margenKm: 1, sinKmlKm: 10 },
+
+            terreno: {
+                zoomMax: 14, zoomMin: 10, maxTiles: 100,
+                pasoMuestreoM: 30, maxMuestrasPorPerfil: 200,
+                factorK: 4 / 3, radioTierraM: 6371000,
+                exageracionVisual: 1.2,    // SOLO visual; los cálculos usan el DEM real
+                haloCargaKm: 0.8
+            },
+
+            malla:  { puntosObjetivo: 3000, separacionMinKm: 0.03, separacionMaxKm: 0.5 },
+            cumbres: { puntosObjetivo: 1000, separacionMinKm: 0.03, pesoAltura: 0.7, pesoSeparacion: 0.3,
+                       separacionMinAbsKm: 0.1, separacionMinFraccionDiagonal: 0.15 },
+            optimizador: { haloKm: 0.5, pesoExterno: 0.85, separacionFallbackKm: 0.4,
+                           puntosDestino: 300, puntosCandidatos: 400, alcanceMaxKm: 15 },
+
+            cloudrf: { modelo: { pm: 1, pe: 3, cli: 1, rel: 80, ked: 1 }, resolucionM: 10,
+                       colores: 'LORA.dBm', anchoBandaMHz: 0.125 }
+        };
+
+        // =======================================================================
+        // 🧮 FUNCIONES PURAS (sin dependencias del navegador; testeables)
+        // =======================================================================
+        // @@PURE-START
+        const GRAD = Math.PI / 180;
+
+        function dbmAWatts(dbm) { return Math.pow(10, dbm / 10) / 1000; }
+
+        function distanciaM(a, b) { // a, b = [lng, lat]
+            const R = 6371000;
+            const dLat = (b[1] - a[1]) * GRAD, dLng = (b[0] - a[0]) * GRAD;
+            const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[1] * GRAD) * Math.cos(b[1] * GRAD) * Math.sin(dLng / 2) ** 2;
+            return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+        }
+
+        function coordenadasValidas(lat, lng) {
+            return isFinite(lat) && isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+        }
+
+        // Prioridad: posición del pin (!3d…!4d…) > parámetros de consulta > centro de cámara (@) > "lat, lon" pegado
+        function parsearCoordenadas(texto) {
+            if (!texto) return null;
+            let t = String(texto).trim();
+            try { t = decodeURIComponent(t); } catch (e) { /* texto con % sueltos: se usa tal cual */ }
+            const num = '(-?\\d+(?:\\.\\d+)?)';
+            const pines = [...t.matchAll(new RegExp('!3d' + num + '!4d' + num, 'g'))];
+            if (pines.length) { const m = pines[pines.length - 1]; return validar(m[1], m[2], 'pin'); }
+            let m = t.match(new RegExp('[?&](?:q|query|ll|destination|center)=' + num + '\\s*,\\s*' + num, 'i'));
+            if (m) return validar(m[1], m[2], 'consulta');
+            m = t.match(new RegExp('@' + num + ',' + num));
+            if (m) return validar(m[1], m[2], 'camara');
+            m = t.match(new RegExp('^' + num + '\\s*[,;\\s]\\s*' + num + '$'));
+            if (m) return validar(m[1], m[2], 'texto');
+            return null;
+            function validar(la, lo, fuente) {
+                const lat = parseFloat(la), lng = parseFloat(lo);
+                return coordenadasValidas(lat, lng) ? { lat, lng, fuente } : null;
+            }
+        }
+
+        function lon2tileX(lng, z) { return (lng + 180) / 360 * Math.pow(2, z); }
+        function lat2tileY(lat, z) {
+            const r = lat * GRAD;
+            return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * Math.pow(2, z);
+        }
+        function decodificarDem(r, g, b) { return -10000 + (r * 65536 + g * 256 + b) * 0.1; }
+
+        function perdidaEspacioLibreDb(dM, fMHz) { return 20 * Math.log10(Math.max(dM, 1) / 1000) + 20 * Math.log10(fMHz) + 32.44; }
+        function perdidaTierraPlanaDb(dM, h1, h2) { return 40 * Math.log10(Math.max(dM, 1)) - 20 * Math.log10(Math.max(h1, 0.5)) - 20 * Math.log10(Math.max(h2, 0.5)); }
+        function perdidaDifraccionDb(v) { // Filo de cuchillo (ITU-R P.526)
+            if (v <= -0.78) return 0;
+            return 6.9 + 20 * Math.log10(Math.sqrt((v - 0.1) ** 2 + 1) + v - 0.1);
+        }
+
+        // elev: cotas reales equiespaciadas del perfil (incluye extremos). hTx/hRx: alturas sobre el suelo.
+        // Pérdida base = máx(tierra plana con alturas efectivas, espacio libre) + difracción del obstáculo dominante
+        function evaluarEnlace(elev, dM, fMHz, hTx, hRx, k = 4 / 3, R = 6371000) {
+            const n = elev.length - 1;
+            const zA = elev[0] + hTx, zB = elev[n] + hRx;
+            const lambda = 299.792458 / fMHz;
+            let vMax = -Infinity, suma = 0, cuenta = 0;
+            for (let i = 1; i < n; i++) {
+                const e = elev[i];
+                if (e === null || !isFinite(e)) continue;
+                const d1 = dM * i / n, d2 = dM - d1;
+                const curvatura = d1 * d2 / (2 * k * R);
+                const linea = zA + (zB - zA) * i / n;
+                const h = (e + curvatura) - linea;               // > 0 → el terreno corta la línea de visión
+                const v = h * Math.sqrt(2 * dM / (lambda * d1 * d2));
+                if (v > vMax) vMax = v;
+                suma += e + curvatura; cuenta++;
+            }
+            if (!isFinite(vMax)) vMax = -10;
+            const terrenoMedio = cuenta ? suma / cuenta : Math.min(elev[0], elev[n]);
+            const hEfTx = Math.max(hTx, zA - terrenoMedio);
+            const hEfRx = Math.max(hRx, zB - terrenoMedio);
+            const fspl = perdidaEspacioLibreDb(dM, fMHz);
+            const base = Math.max(perdidaTierraPlanaDb(dM, hEfTx, hEfRx), fspl);
+            const difraccion = perdidaDifraccionDb(vMax);
+            // Obstáculo real (terreno por encima de la línea de visión): la difracción se suma a la pérdida base.
+            // Solo invasión parcial de Fresnel: el modelo de tierra plana ya la recoge; se toma el mayor.
+            const perdida = vMax > 0 ? base + difraccion : Math.max(base, fspl + difraccion);
+            return { perdidaDb: perdida, vMax, difraccionDb: difraccion, fresnelDespejado: vMax <= -0.6 * Math.SQRT2 };
+        }
+
+        // Malla regular centrada en el bbox. Devuelve filas/columnas para poder buscar vecinos.
+        function generarMalla(bbox, sepKm) {
+            const [w, s, e, n] = bbox;
+            const latMedia = (s + n) / 2;
+            const dLat = sepKm / 111.32;
+            const dLng = sepKm / (111.32 * Math.cos(latMedia * GRAD));
+            const cols = Math.max(1, Math.floor((e - w) / dLng) + 1);
+            const rows = Math.max(1, Math.floor((n - s) / dLat) + 1);
+            const offX = ((e - w) - (cols - 1) * dLng) / 2, offY = ((n - s) - (rows - 1) * dLat) / 2;
+            const puntos = [];
+            for (let r = 0; r < rows; r++)
+                for (let c = 0; c < cols; c++)
+                    puntos.push({ r, c, lng: w + offX + c * dLng, lat: s + offY + r * dLat });
+            return { rows, cols, puntos };
+        }
+
+        function separacionPorDensidad(areaKm2, puntosObjetivo, minKm, maxKm) {
+            return Math.min(maxKm, Math.max(minKm, Math.sqrt(areaKm2 / puntosObjetivo)));
+        }
+
+        // KML → lista de anillos [exterior, ...huecos] por polígono. Respeta huecos e ignora líneas y puntos.
+        function parsearKMLaPoligonos(kmlText, DOMParserImpl) {
+            const doc = new DOMParserImpl().parseFromString(kmlText, 'text/xml');
+            if (doc.getElementsByTagName('parsererror').length) throw new Error('El KML no es XML válido.');
+            const porNombre = (nodo, nombre) => Array.from(nodo.getElementsByTagNameNS('*', nombre)).concat(
+                nodo.getElementsByTagNameNS('*', nombre).length ? [] : Array.from(nodo.getElementsByTagName(nombre)));
+            const leerAnillo = (nodo) => {
+                const coordsNodo = porNombre(nodo, 'coordinates')[0];
+                if (!coordsNodo) return null;
+                const pts = coordsNodo.textContent.trim().split(/\s+/).map(t => t.split(',').map(Number))
+                    .filter(p => p.length >= 2 && coordenadasValidas(p[1], p[0])).map(p => [p[0], p[1]]);
+                if (pts.length < 3) return null;
+                const a = pts[0], b = pts[pts.length - 1];
+                if (a[0] !== b[0] || a[1] !== b[1]) pts.push([a[0], a[1]]);
+                return pts.length >= 4 ? pts : null;
+            };
+            const poligonos = [];
+            porNombre(doc, 'Polygon').forEach(pol => {
+                const ext = porNombre(pol, 'outerBoundaryIs')[0];
+                const exterior = ext ? leerAnillo(ext) : null;
+                if (!exterior) return;
+                const huecos = porNombre(pol, 'innerBoundaryIs').map(leerAnillo).filter(Boolean);
+                poligonos.push([exterior, ...huecos]);
+            });
+            let avisoLineas = false;
+            if (poligonos.length === 0) { // Plan B: líneas cerradas dibujadas como contorno
+                porNombre(doc, 'LineString').forEach(ls => {
+                    const anillo = leerAnillo(ls);
+                    if (!anillo) return;
+                    const orig = porNombre(ls, 'coordinates')[0].textContent.trim().split(/\s+/);
+                    const p0 = orig[0].split(',').map(Number), pN = orig[orig.length - 1].split(',').map(Number);
+                    if (distanciaM([p0[0], p0[1]], [pN[0], pN[1]]) < 30) { poligonos.push([anillo]); avisoLineas = true; }
+                });
+            }
+            return { poligonos, avisoLineas };
+        }
+        // @@PURE-END
+
+        // =======================================================================
+        // 🗺️ ESTADO GLOBAL
+        // =======================================================================
+        mapboxgl.accessToken = CONFIG.mapboxToken;
+        const EMBEDDED_DEMO_TOKEN = "";
+
+        let simulaciones = [];
+        let simCounter = 1;
+        let geojsonKMLActual = null;     // Siempre FeatureCollection de Polygons (con huecos)
+        let mallaFinca = [];             // Puntos [lng,lat] dentro de la finca (cacheados)
+        let etiquetaCoberturaActual = null;
         let inputMarker = null;
-        let cumbreMarkers = []; 
-        
-        // Variables para la Optimización Automática
+        let cumbreMarkers = [];
         let draftMarkers = [];
         let draftSites = [];
-
         let is3D = false;
-        let nodosVisibles = true; 
-        let canopyActivo = false; // Variable control de Altura de Dosel
+        let nodosVisibles = true;
+        let canopyActivo = false;
+        let optimizadorEnCurso = false;
+
+        document.getElementById('app-version').innerText = 'v' + APP_VERSION;
 
         if (EMBEDDED_DEMO_TOKEN !== "") {
             document.getElementById('admin-tools').style.display = 'none';
@@ -346,11 +564,126 @@
             actualizarBannerCliente(usos);
         }
 
-        function cambiarPerfil() {
-            const perfil = document.getElementById('sim_profile').value;
-            const selectLandCover = document.getElementById('land_cover');
-            if (perfil === 'EU') selectLandCover.value = "0"; 
-            else selectLandCover.value = "1"; 
+        // ⏸️ Acceso cliente aplazado (se rehará con control en servidor). Evita errores mientras tanto.
+        function descargarHtmlParaCliente() {
+            alert("El acceso de cliente está pendiente de rehacerse con control de usos en el servidor.");
+        }
+        function actualizarBannerCliente(usos) {
+            const b = document.getElementById('demo-banner');
+            b.classList.remove('hidden');
+            b.innerText = `Acceso de demostración: ${Math.max(0, CONFIG.limiteUsosCliente - usos)} simulaciones disponibles`;
+        }
+
+        // =======================================================================
+        // 📡 PARÁMETROS DEL ENLACE
+        // =======================================================================
+        function perfilActivo() { return CONFIG.perfiles[document.getElementById('sim_profile').value]; }
+        function formatoActivo() { return CONFIG.dispositivo.formatos[document.getElementById('formato_dispositivo').value]; }
+        function umbralCoberturaDbm() { return CONFIG.gateway.sensibilidadDbm[CONFIG.sfDiseno] + CONFIG.margenDesvanecimientoDb; }
+        function potenciaEfectivaDispositivoDbm(formato) { return CONFIG.dispositivo.potenciaTxDbm - formato.perdidaAntenaCuerpoDb; }
+        // Pérdida máxima admisible en el enlace de subida (collar → gateway)
+        function perdidaMaximaDb(formato) {
+            return potenciaEfectivaDispositivoDbm(formato) + CONFIG.gateway.gananciaAntenaDbi - CONFIG.gateway.perdidaCableDb - umbralCoberturaDbm();
+        }
+
+        function actualizarInfoEnlace() {
+            const p = perfilActivo(), f = formatoActivo();
+            document.getElementById('info-enlace').innerHTML =
+                `${p.frecuenciaMHz} MHz ${CONFIG.sfDiseno}<br>Umbral ${umbralCoberturaDbm()} dBm<br>Rx a ${f.alturaM} m`;
+        }
+
+        function cambiarPerfil() { actualizarInfoEnlace(); }
+        actualizarInfoEnlace();
+
+        function mostrarLoader(texto) {
+            document.getElementById('loader-text').innerText = texto;
+            document.getElementById('loader').classList.remove('hidden');
+            document.getElementById('loader').classList.add('flex');
+        }
+        function ocultarLoader() {
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('loader').classList.remove('flex');
+        }
+        const ceder = () => new Promise(r => setTimeout(r, 0));
+
+        // =======================================================================
+        // ⛰️ TERRENO PROPIO: tiles DEM de Mapbox decodificados (independiente de la cámara)
+        // =======================================================================
+        const DEM = {
+            z: null,
+            tiles: new Map(),
+
+            async asegurarArea(bbox) {
+                const [w, s, e, n] = bbox;
+                const rango = (z) => {
+                    const x0 = Math.floor(lon2tileX(w, z)), x1 = Math.floor(lon2tileX(e, z));
+                    const y0 = Math.floor(lat2tileY(n, z)), y1 = Math.floor(lat2tileY(s, z));
+                    return { x0, x1, y0, y1, total: (x1 - x0 + 1) * (y1 - y0 + 1) };
+                };
+                let z = CONFIG.terreno.zoomMax;
+                while (z > CONFIG.terreno.zoomMin && rango(z).total > CONFIG.terreno.maxTiles) z--;
+                if (this.z !== z) { this.tiles.clear(); this.z = z; }
+                const r = rango(z), pendientes = [];
+                for (let x = r.x0; x <= r.x1; x++)
+                    for (let y = r.y0; y <= r.y1; y++)
+                        if (!this.tiles.has(`${x}/${y}`)) pendientes.push(this.cargarTile(z, x, y));
+                await Promise.all(pendientes);
+            },
+
+            async cargarTile(z, x, y) {
+                const clave = `${x}/${y}`;
+                for (const sufijo of ['@2x', '']) {
+                    try {
+                        const url = `https://api.mapbox.com/v4/mapbox.mapbox-terrain-dem-v1/${z}/${x}/${y}${sufijo}.pngraw?access_token=${CONFIG.mapboxToken}`;
+                        const resp = await fetch(url);
+                        if (!resp.ok) continue;
+                        const bmp = await createImageBitmap(await resp.blob(), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+                        const canvas = document.createElement('canvas');
+                        canvas.width = bmp.width; canvas.height = bmp.height;
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                        ctx.drawImage(bmp, 0, 0);
+                        const px = ctx.getImageData(0, 0, bmp.width, bmp.height).data;
+                        const elev = new Float32Array(bmp.width * bmp.height);
+                        for (let i = 0; i < elev.length; i++) elev[i] = decodificarDem(px[i * 4], px[i * 4 + 1], px[i * 4 + 2]);
+                        this.tiles.set(clave, { size: bmp.width, elev });
+                        return;
+                    } catch (e) { /* probamos el siguiente formato */ }
+                }
+                this.tiles.set(clave, null);
+            },
+
+            elev(lng, lat) {
+                if (this.z === null) return null;
+                const fx = lon2tileX(lng, this.z), fy = lat2tileY(lat, this.z);
+                const tx = Math.floor(fx), ty = Math.floor(fy);
+                const t = this.tiles.get(`${tx}/${ty}`);
+                if (!t) return null;
+                const S = t.size;
+                const px = Math.min(S - 1, Math.max(0, (fx - tx) * S - 0.5));
+                const py = Math.min(S - 1, Math.max(0, (fy - ty) * S - 0.5));
+                const x0 = Math.floor(px), y0 = Math.floor(py);
+                const x1 = Math.min(S - 1, x0 + 1), y1 = Math.min(S - 1, y0 + 1);
+                const ax = px - x0, ay = py - y0;
+                const E = t.elev;
+                return (E[y0 * S + x0] * (1 - ax) + E[y0 * S + x1] * ax) * (1 - ay) +
+                       (E[y1 * S + x0] * (1 - ax) + E[y1 * S + x1] * ax) * ay;
+            }
+        };
+
+        function muestrearPerfil(a, b, dM) {
+            const n = Math.min(CONFIG.terreno.maxMuestrasPorPerfil, Math.max(2, Math.ceil(dM / CONFIG.terreno.pasoMuestreoM)));
+            const elev = new Array(n + 1);
+            for (let i = 0; i <= n; i++) {
+                const t = i / n;
+                elev[i] = DEM.elev(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t);
+            }
+            return elev;
+        }
+
+        async function asegurarTerrenoFinca() {
+            if (!geojsonKMLActual) return;
+            const zona = turf.bbox(turf.buffer(turf.bboxPolygon(turf.bbox(geojsonKMLActual)), CONFIG.terreno.haloCargaKm, { units: 'kilometers' }));
+            await DEM.asegurarArea(zona);
         }
 
         // =======================================================================
@@ -359,7 +692,7 @@
         const map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/satellite-v9',
-            center: [1.669, 42.025], 
+            center: [1.669, 42.025],
             zoom: 13,
             pitch: 0,
             maxPitch: 0
@@ -374,46 +707,30 @@
                 'tileSize': 512,
                 'maxzoom': 14
             });
-            map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.2 });
-            
-            // 1. Añadimos el origen de tiles globales de Altura de Dosel (Tree Cover/Height)
+            map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': CONFIG.terreno.exageracionVisual });
+
+            // Cubierta arbórea (Hansen/UMD GFC, año 2000). Es % de copa, no altura.
             map.addSource('canopy-height', {
                 'type': 'raster',
-                'tiles': [
-                    'https://storage.googleapis.com/earthenginepartners-hansen/tiles/gfc_v1.4/tree_alpha/{z}/{x}/{y}.png'
-                ],
+                'tiles': ['https://storage.googleapis.com/earthenginepartners-hansen/tiles/gfc_v1.4/tree_alpha/{z}/{x}/{y}.png'],
                 'tileSize': 256,
                 'maxzoom': 12
             });
-
-            // 2. Preparamos la capa visual térmica (empezará apagada)
             map.addLayer({
                 'id': 'capa-canopy-raster',
                 'type': 'raster',
                 'source': 'canopy-height',
-                'layout': {
-                    'visibility': 'none' 
-                },
-                'paint': {
-                    'raster-opacity': 0.85,
-                    'raster-hue-rotate': 120, /* Transforma la imagen a tonos azules */
-                    'raster-contrast': 0.5
-                }
+                'layout': { 'visibility': 'none' },
+                'paint': { 'raster-opacity': 0.85, 'raster-hue-rotate': 120, 'raster-contrast': 0.5 }
             });
         });
 
-        map.on('click', (e) => {
-            const lng = e.lngLat.lng;
-            const lat = e.lngLat.lat;
-            colocarMarcador(lat, lng);
-        });
+        map.on('click', (e) => colocarMarcador(e.lngLat.lat, e.lngLat.lng));
 
         function colocarMarcador(lat, lng) {
             document.getElementById('lat').value = parseFloat(lat).toFixed(6);
             document.getElementById('lon').value = parseFloat(lng).toFixed(6);
-            
-            if(inputMarker) { inputMarker.remove(); }
-
+            if (inputMarker) inputMarker.remove();
             const el = document.createElement('div');
             el.className = 'neon-orange-pin';
             el.innerHTML = `
@@ -423,11 +740,7 @@
                     <path d="M16 3C8.8203 3 3 8.8203 3 16C3 24.7 16 38.3 16 38.3C16 38.3 29 24.7 29 16C29 8.8203 23.1797 3 16 3Z" fill="#ff7e00"/>
                     <circle cx="16" cy="16" r="5" fill="white"/>
                 </svg>`;
-
-            inputMarker = new mapboxgl.Marker(el, { anchor: 'bottom' })
-                .setLngLat([lng, lat])
-                .addTo(map);
-                
+            inputMarker = new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat([lng, lat]).addTo(map);
             map.flyTo({ center: [lng, lat], essential: true });
         }
 
@@ -439,29 +752,19 @@
             const btn = document.getElementById('btn-canopy');
             const text = document.getElementById('text-canopy');
             const legend = document.getElementById('canopy-legend');
-            
-            if (canopyActivo) {
-                map.setLayoutProperty('capa-canopy-raster', 'visibility', 'visible');
-                btn.classList.add('active-3d');
-                text.innerText = "Ocultar Dosel";
-                legend.classList.remove('hidden'); // Muestra la leyenda
-            } else {
-                map.setLayoutProperty('capa-canopy-raster', 'visibility', 'none');
-                btn.classList.remove('active-3d');
-                text.innerText = "Altura Dosel";
-                legend.classList.add('hidden'); // Oculta la leyenda
-            }
+            map.setLayoutProperty('capa-canopy-raster', 'visibility', canopyActivo ? 'visible' : 'none');
+            btn.classList.toggle('active-3d', canopyActivo);
+            text.innerText = canopyActivo ? "Ocultar Cubierta" : "Cubierta Arbórea";
+            legend.classList.toggle('hidden', !canopyActivo);
         }
 
         function toggle3D() {
             const btn = document.getElementById('btn-3d');
             const icon = document.getElementById('icon-3d');
             const text = document.getElementById('text-3d');
-            
             is3D = !is3D;
-            
             if (is3D) {
-                map.setMaxPitch(85); 
+                map.setMaxPitch(85);
                 btn.classList.add('active-3d');
                 text.innerText = "Modo 2D";
                 icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>`;
@@ -480,11 +783,9 @@
             const btn = document.getElementById('btn-nodos');
             const icon = document.getElementById('icon-nodos');
             const text = document.getElementById('text-nodos');
-            
             const displayStyle = nodosVisibles ? 'flex' : 'none';
             cumbreMarkers.forEach(m => m.getElement().style.display = displayStyle);
             draftMarkers.forEach(m => m.getElement().style.display = displayStyle);
-
             if (nodosVisibles) {
                 btn.classList.remove('active-nodos');
                 text.innerText = "Ocultar Cumbres";
@@ -497,350 +798,276 @@
         }
 
         function extraerDeMaps() {
-            const url = document.getElementById('gmaps_url').value;
-            if (!url) return;
-            let match = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
-            if (match) {
-                colocarMarcador(match[1], match[2]); 
-                document.getElementById('gmaps_url').value = ''; 
-            } else {
-                alert("No se encontraron coordenadas en el enlace.");
+            const input = document.getElementById('gmaps_url');
+            const texto = input.value;
+            if (!texto) return;
+            if (/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(texto)) {
+                return alert("Los enlaces cortos no incluyen coordenadas. Ábrelo en el navegador y copia la URL larga, o pega las coordenadas como «lat, lon».");
+            }
+            const r = parsearCoordenadas(texto);
+            if (!r) return alert("No se encontraron coordenadas válidas en el texto.");
+            if (r.fuente === 'camara') console.info('Coordenadas tomadas del centro de la vista (@). Si hay un pin, usa la URL del lugar.');
+            colocarMarcador(r.lat, r.lng);
+            input.value = '';
+        }
+
+        // =======================================================================
+        // 📁 KML / KMZ
+        // =======================================================================
+        async function cargarKML(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            try {
+                let texto;
+                if (/\.kmz$/i.test(file.name)) {
+                    const zip = await JSZip.loadAsync(file);
+                    const kml = Object.keys(zip.files).find(n => /\.kml$/i.test(n));
+                    if (!kml) throw new Error('El KMZ no contiene ningún .kml');
+                    texto = await zip.files[kml].async('string');
+                } else {
+                    texto = await file.text();
+                }
+                await procesarKML(texto);
+            } catch (e) {
+                alert("No se pudo leer el archivo: " + e.message);
+            } finally {
+                document.getElementById('kml_upload').value = '';
             }
         }
 
-        // =======================================================================
-        // 📁 PROCESAMIENTO KML Y RECOMENDADOR INTELIGENTE
-        // =======================================================================
-        function cargarKML(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) { procesarKML(e.target.result); };
-            reader.readAsText(file);
-        }
-
-        function procesarKML(kmlText) {
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(kmlText, "text/xml");
-            
-            let coordinatesList = xmlDoc.getElementsByTagNameNS("*", "coordinates");
-            if (coordinatesList.length === 0) coordinatesList = xmlDoc.getElementsByTagName("coordinates");
-
-            if (coordinatesList.length === 0) return alert("No se encontraron coordenadas en este KML.");
+        async function procesarKML(kmlText) {
+            const { poligonos, avisoLineas } = parsearKMLaPoligonos(kmlText, DOMParser);
+            if (poligonos.length === 0) return alert("No se encontró ningún polígono en este KML.");
 
             if (map.getSource('kml-source')) {
                 map.removeLayer('kml-fill');
                 map.removeLayer('kml-line');
                 map.removeSource('kml-source');
             }
-            
             descartarPropuesta();
-            if (cumbreMarkers.length > 0) { cumbreMarkers.forEach(m => m.remove()); cumbreMarkers = []; }
+            cumbreMarkers.forEach(m => m.remove()); cumbreMarkers = [];
 
-            let featuresKML = [];
-            let bounds = new mapboxgl.LngLatBounds();
+            geojsonKMLActual = turf.featureCollection(poligonos.map(anillos => turf.polygon(anillos)));
+            construirMallaFinca();
 
-            for (let i = 0; i < coordinatesList.length; i++) {
-                const tuples = coordinatesList[i].textContent.match(/-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?(?:,-?\d+(?:\.\d+)?)?/g);
-                if (tuples && tuples.length > 2) {
-                    const turfCoords = [];
-                    tuples.forEach(tuple => {
-                        const parts = tuple.split(',');
-                        const lng = parseFloat(parts[0]); 
-                        const lat = parseFloat(parts[1]);
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            turfCoords.push([lng, lat]);
-                            bounds.extend([lng, lat]);
-                        }
-                    });
+            map.addSource('kml-source', { type: 'geojson', data: geojsonKMLActual });
+            map.addLayer({ 'id': 'kml-fill', 'type': 'fill', 'source': 'kml-source', 'paint': { 'fill-color': '#ec4899', 'fill-opacity': 0.1 } });
+            map.addLayer({ 'id': 'kml-line', 'type': 'line', 'source': 'kml-source', 'paint': { 'line-color': '#ec4899', 'line-width': 3, 'line-dasharray': [2, 2] } });
 
-                    if (turfCoords[0][0] !== turfCoords[turfCoords.length-1][0] || turfCoords[0][1] !== turfCoords[turfCoords.length-1][1]) {
-                        turfCoords.push(turfCoords[0]);
-                    }
-                    featuresKML.push(turf.polygon([turfCoords]));
-                }
-            }
+            const [w, s, e, n] = turf.bbox(geojsonKMLActual);
+            map.fitBounds([[w, s], [e, n]], { padding: 50, duration: 1500 });
+            if (avisoLineas) console.warn('KML sin polígonos: se han usado líneas cerradas como contorno.');
 
-            if (featuresKML.length > 0) {
-                geojsonKMLActual = featuresKML.length === 1 ? featuresKML[0] : turf.featureCollection(featuresKML);
-                
-                map.addSource('kml-source', { type: 'geojson', data: geojsonKMLActual });
-                map.addLayer({ 'id': 'kml-fill', 'type': 'fill', 'source': 'kml-source', 'paint': { 'fill-color': '#ec4899', 'fill-opacity': 0.1 } });
-                map.addLayer({ 'id': 'kml-line', 'type': 'line', 'source': 'kml-source', 'paint': { 'line-color': '#ec4899', 'line-width': 3, 'line-dasharray': [2, 2] } });
+            for (const sim of simulaciones) sim.coberturaLocal = await calcularPorcentajeLocal(sim);
+            await actualizarInterfazGlobal();
 
-                map.fitBounds(bounds, { padding: 50, duration: 1500 });
-                actualizarInterfazGlobal(); 
-                
-                map.once('moveend', () => { setTimeout(() => { buscarCumbresInteligente(); }, 1000); });
-            } else {
-                alert("No se pudo extraer el polígono.");
-                geojsonKMLActual = null;
-            }
-            document.getElementById('kml_upload').value = ''; 
+            mostrarLoader('Cargando terreno...');
+            try {
+                await asegurarTerrenoFinca();
+                buscarCumbresInteligente();
+            } finally { ocultarLoader(); }
         }
 
+        function puntoCaeEnKML(pt) {
+            if (!geojsonKMLActual) return false;
+            for (const f of geojsonKMLActual.features) if (turf.booleanPointInPolygon(pt, f)) return true;
+            return false;
+        }
+
+        function construirMallaFinca() {
+            const area = turf.area(geojsonKMLActual) / 1e6;
+            const sep = separacionPorDensidad(area, CONFIG.malla.puntosObjetivo, CONFIG.malla.separacionMinKm, CONFIG.malla.separacionMaxKm);
+            mallaFinca = generarMalla(turf.bbox(geojsonKMLActual), sep).puntos
+                .filter(p => puntoCaeEnKML([p.lng, p.lat]))
+                .map(p => [p.lng, p.lat]);
+        }
+
+        // =======================================================================
+        // ⛰️ LOCALIZADOR DE CUMBRES (máximos locales, separación mínima, cotas reales)
+        // =======================================================================
         function buscarCumbresInteligente() {
             if (!geojsonKMLActual) return;
-            let parcelas = geojsonKMLActual.type === 'FeatureCollection' ? turf.flatten(geojsonKMLActual).features : [geojsonKMLActual];
-            
-            parcelas.forEach((parcela) => {
-                const areaKm2 = turf.area(parcela) / 1000000;
+            const cfg = CONFIG.cumbres;
+            turf.flatten(geojsonKMLActual).features.forEach(parcela => {
+                const areaKm2 = turf.area(parcela) / 1e6;
                 const maxCumbres = areaKm2 < 0.05 ? 1 : (areaKm2 < 0.2 ? 2 : 3);
-                let spacing = Math.sqrt(areaKm2 / 1000); 
-                if (spacing < 0.03) spacing = 0.03; 
-                
-                const grid = turf.pointGrid(turf.bbox(parcela), spacing, {units: 'kilometers'});
-                let puntosValidos = [];
-                let minElev = 99999; let maxElev = -99999;
-
-                turf.featureEach(grid, function (pt) {
-                    if (turf.booleanPointInPolygon(pt, parcela)) {
-                        const coords = pt.geometry.coordinates;
-                        const elevation = map.queryTerrainElevation(coords);
-                        if (elevation !== null) {
-                            puntosValidos.push({ coords: coords, elevation: elevation, turfPt: pt });
-                            if (elevation < minElev) minElev = elevation;
-                            if (elevation > maxElev) maxElev = elevation;
-                        }
-                    }
+                const bbox = turf.bbox(parcela);
+                const sep = separacionPorDensidad(areaKm2, cfg.puntosObjetivo, cfg.separacionMinKm, 1);
+                const malla = generarMalla(bbox, sep);
+                const rejilla = new Array(malla.rows * malla.cols).fill(null);
+                const validos = [];
+                malla.puntos.forEach(p => {
+                    if (!turf.booleanPointInPolygon([p.lng, p.lat], parcela)) return;
+                    const e = DEM.elev(p.lng, p.lat);
+                    if (e === null) return;
+                    const pt = { ...p, elev: e, coords: [p.lng, p.lat] };
+                    rejilla[p.r * malla.cols + p.c] = pt;
+                    validos.push(pt);
                 });
+                if (validos.length === 0) return;
 
-                if (puntosValidos.length === 0) return;
-                let cumbresElegidas = [];
-                let pt1 = puntosValidos.reduce((max, pt) => pt.elevation > max.elevation ? pt : max, puntosValidos[0]);
-                cumbresElegidas.push(pt1);
-
-                let elevRange = maxElev - minElev; if (elevRange === 0) elevRange = 1;
-
-                if (puntosValidos.length > 10 && maxCumbres >= 2) {
-                    let bestScore = -1; let pt2 = null;
-                    for (let pt of puntosValidos) {
-                        let normElev = (pt.elevation - minElev) / elevRange; 
-                        let distToP1 = turf.distance(pt.turfPt, cumbresElegidas[0].turfPt, {units: 'kilometers'});
-                        if (distToP1 > 0.15) {
-                            let score = (normElev * 0.7) + (distToP1 * 0.3);
-                            if (score > bestScore) { bestScore = score; pt2 = pt; }
-                        }
+                // Máximos locales: ningún vecino de la malla es más alto
+                let maximos = validos.filter(p => {
+                    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+                        if (!dr && !dc) continue;
+                        const r = p.r + dr, c = p.c + dc;
+                        if (r < 0 || c < 0 || r >= malla.rows || c >= malla.cols) continue;
+                        const v = rejilla[r * malla.cols + c];
+                        if (v && v.elev > p.elev) return false;
                     }
-                    if (pt2) cumbresElegidas.push(pt2);
+                    return true;
+                });
+                if (maximos.length === 0) maximos = validos;
+
+                const minE = Math.min(...validos.map(p => p.elev)), maxE = Math.max(...validos.map(p => p.elev));
+                const rangoE = Math.max(1, maxE - minE);
+                const diagKm = distanciaM([bbox[0], bbox[1]], [bbox[2], bbox[3]]) / 1000;
+                const sepMinKm = Math.max(cfg.separacionMinAbsKm, cfg.separacionMinFraccionDiagonal * diagKm);
+
+                const elegidas = [maximos.reduce((a, b) => b.elev > a.elev ? b : a)];
+                while (elegidas.length < maxCumbres) {
+                    let mejor = null, mejorScore = -Infinity;
+                    for (const p of maximos) {
+                        const dMin = Math.min(...elegidas.map(q => distanciaM(p.coords, q.coords))) / 1000;
+                        if (dMin < sepMinKm) continue;
+                        const score = cfg.pesoAltura * (p.elev - minE) / rangoE + cfg.pesoSeparacion * Math.min(1, dMin / diagKm);
+                        if (score > mejorScore) { mejorScore = score; mejor = p; }
+                    }
+                    if (!mejor) break;
+                    elegidas.push(mejor);
                 }
 
-                if (puntosValidos.length > 20 && maxCumbres >= 3 && cumbresElegidas.length === 2) {
-                    let bestScore = -1; let pt3 = null;
-                    for (let pt of puntosValidos) {
-                        let normElev = (pt.elevation - minElev) / elevRange;
-                        let distToP1 = turf.distance(pt.turfPt, cumbresElegidas[0].turfPt, {units: 'kilometers'});
-                        let distToP2 = turf.distance(pt.turfPt, cumbresElegidas[1].turfPt, {units: 'kilometers'});
-                        let minDist = Math.min(distToP1, distToP2);
-                        if (minDist > 0.15) { 
-                            let score = (normElev * 0.7) + (minDist * 0.3);
-                            if (score > bestScore) { bestScore = score; pt3 = pt; }
-                        }
-                    }
-                    if (pt3) cumbresElegidas.push(pt3);
-                }
-
-                cumbresElegidas.forEach((cumbre, index) => {
+                elegidas.forEach((cumbre, index) => {
                     const el = document.createElement('div');
-                    let rankClass = index === 0 ? 'site-primary' : (index === 1 ? 'site-secondary' : 'site-tertiary');
+                    const rankClass = index === 0 ? 'site-primary' : (index === 1 ? 'site-secondary' : 'site-tertiary');
                     el.className = `site-marker-container ${rankClass}`;
-                    if(!nodosVisibles) el.style.display = 'none';
-
+                    if (!nodosVisibles) el.style.display = 'none';
                     el.innerHTML = `
                         <div class="site-label">
-                            <div class="site-elev">${Math.round(cumbre.elevation)} <span class="text-[9px] text-slate-400 font-normal ml-0.5">AMSL</span></div>
+                            <div class="site-elev">${Math.round(cumbre.elev)} <span class="text-[9px] text-slate-400 font-normal ml-0.5">AMSL</span></div>
                         </div>
-                        <div class="site-pin">
-                            <div class="pin-line"></div>
-                            <div class="pin-dot"></div>
-                        </div>`;
-                    let marker = new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat(cumbre.coords).addTo(map);
-                    cumbreMarkers.push(marker);
+                        <div class="site-pin"><div class="pin-line"></div><div class="pin-dot"></div></div>`;
+                    cumbreMarkers.push(new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat(cumbre.coords).addTo(map));
                 });
             });
         }
 
         // =======================================================================
-        // 🧠 NUEVO MOTOR DE OPTIMIZACIÓN AUTOMÁTICA (FASE 3 - BASE)
+        // 🧠 OPTIMIZADOR DE ANTENAS (balance de enlace con terreno real)
         // =======================================================================
-        function calcularUbicacionesOptimas() {
+        async function calcularUbicacionesOptimas() {
             if (!geojsonKMLActual) return alert("Primero debes delimitar una zona cargando un archivo KML.");
+            if (optimizadorEnCurso) return;
             const numAntenas = parseInt(document.getElementById('num_antenas').value) || 1;
             if (numAntenas < 1) return;
 
-            descartarPropuesta(); // Limpiar residuos anteriores
+            optimizadorEnCurso = true;
+            descartarPropuesta();
+            mostrarLoader('Cargando terreno...');
+            try {
+                await asegurarTerrenoFinca();
+                const cfg = CONFIG.optimizador;
+                const formato = formatoActivo();
+                const fMHz = perfilActivo().frecuenciaMHz;
+                const hTx = parseFloat(document.getElementById('tx_height').value) || 3;
+                const perdidaMax = perdidaMaximaDb(formato);
 
-            // 1. Crear el halo exterior (Buffer de 500 metros = 0.5 km) - AHORA ROBUSTO PARA MULTI-KML
-            let areaBusqueda;
-            if (geojsonKMLActual.type === 'FeatureCollection') {
-                let buffers = [];
-                turf.featureEach(geojsonKMLActual, function(currentFeature) {
-                    try { buffers.push(turf.buffer(currentFeature, 0.5, {units: 'kilometers'})); } catch(e){}
+                // 1. Halo de búsqueda alrededor de cada parcela
+                const halos = [];
+                geojsonKMLActual.features.forEach(f => {
+                    try { halos.push(turf.buffer(f, cfg.haloKm, { units: 'kilometers' })); } catch (e) { halos.push(f); }
                 });
-                areaBusqueda = buffers.length > 0 ? turf.featureCollection(buffers) : geojsonKMLActual;
-            } else {
-                try { areaBusqueda = turf.buffer(geojsonKMLActual, 0.5, {units: 'kilometers'}); }
-                catch(e) { areaBusqueda = geojsonKMLActual; }
-            }
+                const enHalo = (pt) => halos.some(h => turf.booleanPointInPolygon(pt, h));
 
-            // 2. Generar Malla de Destinos (Puntos de control dentro de la parcela)
-            const areaFincaKm2 = turf.area(geojsonKMLActual) / 1000000;
-            let spacingDestinos = Math.sqrt(areaFincaKm2 / 300); // Muestreo de control (~300 puntos)
-            if (spacingDestinos < 0.03) spacingDestinos = 0.03;
-            const gridDestinos = turf.pointGrid(turf.bbox(geojsonKMLActual), spacingDestinos, {units: 'kilometers'});
-            
-            let puntosDestino = [];
-            turf.featureEach(gridDestinos, function(pt) {
-                if (puntoCaeEnKML(pt)) {
-                    const elev = map.queryTerrainElevation(pt.geometry.coordinates);
-                    if (elev !== null) puntosDestino.push({ coords: pt.geometry.coordinates, elev: elev, cubierto: false });
-                }
-            });
+                // 2. Puntos de control dentro de la finca
+                const areaFinca = turf.area(geojsonKMLActual) / 1e6;
+                const sepDest = separacionPorDensidad(areaFinca, cfg.puntosDestino, 0.03, 2);
+                const destinos = generarMalla(turf.bbox(geojsonKMLActual), sepDest).puntos
+                    .map(p => [p.lng, p.lat])
+                    .filter(c => puntoCaeEnKML(c))
+                    .map(c => ({ coords: c, elev: DEM.elev(c[0], c[1]) }))
+                    .filter(d => d.elev !== null);
+                if (destinos.length === 0) return alert("No se pudo leer el terreno de la finca. Revisa la conexión y vuelve a intentarlo.");
 
-            if (puntosDestino.length === 0) return alert("Error de texturas 3D. Mueve un poco el mapa y vuelve a intentarlo.");
+                // 3. Candidatos: finca + halo, con penalización a los externos
+                const bboxHalo = turf.bbox(turf.featureCollection(halos));
+                const areaBox = turf.area(turf.bboxPolygon(bboxHalo)) / 1e6;
+                const sepCand = separacionPorDensidad(areaBox, cfg.puntosCandidatos, 0.035, 0.5);
+                let candidatos = generarMalla(bboxHalo, sepCand).puntos
+                    .map(p => [p.lng, p.lat])
+                    .filter(c => enHalo(c))
+                    .map(c => {
+                        const interno = puntoCaeEnKML(c);
+                        return { coords: c, elev: DEM.elev(c[0], c[1]), esInterno: interno, peso: interno ? 1.0 : cfg.pesoExterno };
+                    })
+                    .filter(c => c.elev !== null);
 
-            // 3. Generar Malla de Candidatos (Finca + Halo exterior de 500m)
-            let boxTotal = turf.bboxPolygon(turf.bbox(areaBusqueda));
-            let areaBox = turf.area(boxTotal) / 1000000;
-            let spacingCandidatos = Math.sqrt(areaBox / 400); 
-            if (spacingCandidatos < 0.035) spacingCandidatos = 0.035;
-            if (spacingCandidatos > 0.5) spacingCandidatos = 0.5;
-            
-            const gridCandidatos = turf.pointGrid(turf.bbox(areaBusqueda), spacingCandidatos, {units: 'kilometers'});
-            
-            let candidatos = [];
-            turf.featureEach(gridCandidatos, function(pt) {
-                let esInterno = puntoCaeEnKML(pt);
-                // Si la malla principal no era válida por complejidad de polígono, caemos a comprobación manual
-                let esExterno = false;
-                if(areaBusqueda.type === 'FeatureCollection') {
-                    turf.featureEach(areaBusqueda, function(feat) {
-                        if(turf.booleanPointInPolygon(pt, feat)) esExterno = true;
+                // 4. Matriz de cobertura candidato → destinos (perfil cada 30 m, curvatura, Fresnel, difracción)
+                for (let i = 0; i < candidatos.length; i++) {
+                    const cand = candidatos[i];
+                    const cubre = [];
+                    destinos.forEach((dest, j) => {
+                        const d = distanciaM(cand.coords, dest.coords);
+                        if (d > cfg.alcanceMaxKm * 1000) return;
+                        const perfil = muestrearPerfil(cand.coords, dest.coords, d);
+                        perfil[0] = cand.elev; perfil[perfil.length - 1] = dest.elev;
+                        if (evaluarEnlace(perfil, d, fMHz, hTx, formato.alturaM).perdidaDb <= perdidaMax) cubre.push(j);
                     });
+                    cand.cubre = cubre;
+                    if (i % 10 === 0) { document.getElementById('loader-text').innerText = `Analizando terreno ${Math.round(100 * i / candidatos.length)}%`; await ceder(); }
+                }
+
+                // 5. Greedy: cada antena se coloca donde más zona nueva cubre (ponderada)
+                const cubierto = new Uint8Array(destinos.length);
+                const propuestas = [];
+                for (let a = 0; a < numAntenas; a++) {
+                    let mejor = null, mejorScore = 0, mejorNuevos = 0;
+                    for (const c of candidatos) {
+                        let nuevos = 0;
+                        for (const j of c.cubre) if (!cubierto[j]) nuevos++;
+                        const score = nuevos * c.peso;
+                        if (score > mejorScore) { mejorScore = score; mejor = c; mejorNuevos = nuevos; }
+                    }
+                    if (!mejor) { // Fallback: puntos altos y separados entre sí
+                        const ordenados = [...candidatos].sort((x, y) => y.elev - x.elev);
+                        mejor = ordenados.find(c => propuestas.every(p => distanciaM(c.coords, p.coords) >= cfg.separacionFallbackKm * 1000)) || null;
+                        mejorNuevos = 0;
+                    }
+                    if (!mejor) break;
+                    mejor.cobAportada = mejorNuevos / destinos.length * 100;
+                    mejor.cubre.forEach(j => cubierto[j] = 1);
+                    propuestas.push(mejor);
+                    candidatos = candidatos.filter(c => c !== mejor);
+                }
+
+                const estimacionPct = cubierto.reduce((s, v) => s + v, 0) / destinos.length * 100;
+
+                // 6. Pines lilas (borrador)
+                propuestas.forEach(prop => {
+                    const el = document.createElement('div');
+                    el.className = 'site-marker-container site-draft';
+                    if (!nodosVisibles) el.style.display = 'none';
+                    el.innerHTML = `
+                        <div class="site-label">
+                            <div class="site-elev">${Math.round(prop.elev)} <span class="text-[9px] text-purple-300 font-normal ml-0.5">AMSL</span></div>
+                            <div class="text-[10px] text-purple-200">+${prop.cobAportada.toFixed(0)}% est.</div>
+                        </div>
+                        <div class="site-pin"><div class="pin-line"></div><div class="pin-dot"></div></div>`;
+                    draftMarkers.push(new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat(prop.coords).addTo(map));
+                    draftSites.push({ lat: prop.coords[1], lon: prop.coords[0] });
+                });
+
+                if (draftSites.length > 0) {
+                    const ok = estimacionPct >= CONFIG.objetivoCoberturaPct;
+                    document.getElementById('draft-estimacion').innerText =
+                        `Estimación local: ${estimacionPct.toFixed(0)}% de la finca (objetivo ${CONFIG.objetivoCoberturaPct}% ${ok ? 'alcanzado' : 'no alcanzado'}). La cifra final la da CloudRF.`;
+                    document.getElementById('draft-actions-panel').classList.remove('hidden');
                 } else {
-                    esExterno = turf.booleanPointInPolygon(pt, areaBusqueda);
+                    alert("No se encontraron puntos viables que aporten cobertura útil.");
                 }
-
-                if (esInterno || esExterno) {
-                    const coords = pt.geometry.coordinates;
-                    const elev = map.queryTerrainElevation(coords);
-                    if (elev !== null) {
-                        candidatos.push({
-                            coords: coords, elev: elev, esInterno: esInterno,
-                            peso: esInterno ? 1.0 : 0.85 // 🔥 NUEVO CASTIGO REDUCIDO AL 15%
-                        });
-                    }
-                }
-            });
-
-            // 4. Algoritmo Greedy + Filtro de Oclusión Ray Tracing
-            const txHeight = parseFloat(document.getElementById('tx_height').value) || 3;
-            let propuestas = [];
-
-            for (let a = 0; a < numAntenas; a++) {
-                let mejorCandidato = null;
-                let maxPuntuacion = -1;
-                let puntosParaMarcar = [];
-
-                for (let cand of candidatos) {
-                    let coberturaCount = 0;
-                    let puntosCubiertosPorCand = [];
-
-                    for (let dest of puntosDestino) {
-                        if (dest.cubierto) continue;
-                        
-                        let dist = turf.distance(turf.point(cand.coords), turf.point(dest.coords), {units: 'kilometers'});
-                        if (dist > 7) continue; // Límite de propagación física visual para torres bajas
-
-                        // Declaración explícita para evitar ReferenceError en el Ray-Tracing
-                        let candAlt = cand.elev + txHeight;
-                        let destAlt = dest.elev + 1; // Rx a 1 metro de altura
-
-                        if (candAlt > destAlt) {
-                            
-                            // 🏔️ MINI RAY-TRACING (Comprueba al 25%, 50% y 75% del trayecto)
-                            let deltaZ = destAlt - candAlt;
-                            let bloqueado = false;
-                            
-                            for(let i=1; i<=3; i++) {
-                                let f = i / 4.0;
-                                let checkLon = cand.coords[0] + (dest.coords[0] - cand.coords[0]) * f;
-                                let checkLat = cand.coords[1] + (dest.coords[1] - cand.coords[1]) * f;
-                                let checkElev = map.queryTerrainElevation([checkLon, checkLat]);
-                                let expectedZ = candAlt + (deltaZ * f);
-                                
-                                if (checkElev !== null && checkElev > expectedZ) {
-                                    bloqueado = true;
-                                    break;
-                                }
-                            }
-
-                            if (!bloqueado) {
-                                coberturaCount++;
-                                puntosCubiertosPorCand.push(dest);
-                            }
-                        }
-                    }
-
-                    let score = coberturaCount * cand.peso; // Aplica la penalización geográfica
-                    if (score > maxPuntuacion && coberturaCount > 0) {
-                        maxPuntuacion = score;
-                        mejorCandidato = cand;
-                        puntosParaMarcar = puntosCubiertosPorCand;
-                    }
-                }
-
-                // 🔥 FALLBACK INTELIGENTE (Soluciona el problema de pedir 5 y que solo devuelva 1)
-                if (!mejorCandidato || maxPuntuacion <= 0) {
-                    candidatos.sort((a, b) => b.elev - a.elev); 
-                    for (let c of candidatos) {
-                        let muyCerca = false;
-                        for (let p of propuestas) {
-                            if (turf.distance(turf.point(c.coords), turf.point(p.coords), {units: 'kilometers'}) < 0.4) {
-                                muyCerca = true;
-                                break; 
-                            }
-                        }
-                        if (!muyCerca) {
-                            mejorCandidato = c;
-                            break;
-                        }
-                    }
-                }
-
-                if (mejorCandidato) {
-                    propuestas.push(mejorCandidato);
-                    puntosParaMarcar.forEach(p => p.cubierto = true); // Restamos el área para la siguiente antena
-                    candidatos = candidatos.filter(c => c !== mejorCandidato);
-                } else {
-                    break;
-                }
-            }
-
-            // 5. Dibujar pines lilas en estado de Borrador
-            propuestas.forEach((prop) => {
-                const el = document.createElement('div');
-                el.className = 'site-marker-container site-draft';
-                if (!nodosVisibles) el.style.display = 'none';
-
-                el.innerHTML = `
-                    <div class="site-label">
-                        <div class="site-elev">${Math.round(prop.elev)} <span class="text-[9px] text-purple-300 font-normal ml-0.5">AMSL</span></div>
-                    </div>
-                    <div class="site-pin">
-                        <div class="pin-line"></div>
-                        <div class="pin-dot"></div>
-                    </div>`;
-                
-                let marker = new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat(prop.coords).addTo(map);
-                draftMarkers.push(marker);
-                draftSites.push({ lat: prop.coords[1], lon: prop.coords[0] });
-            });
-
-            if (draftSites.length > 0) {
-                document.getElementById('draft-actions-panel').classList.remove('hidden');
-            } else {
-                alert("No se encontraron puntos viables que aporten cobertura útil.");
+            } finally {
+                optimizadorEnCurso = false;
+                ocultarLoader();
             }
         }
 
@@ -849,151 +1076,76 @@
             draftMarkers = [];
             draftSites = [];
             document.getElementById('draft-actions-panel').classList.add('hidden');
+            document.getElementById('draft-estimacion').innerText = '';
         }
 
         async function confirmarYSimularPropuesta() {
             if (draftSites.length === 0) return;
-            const copiasSitios = [...draftSites];
-            descartarPropuesta(); // Limpiamos el borrador para que no ensucie la pantalla
-
-            // Dispara las simulaciones en cola ordenada hacia el Worker de Cloudflare
-            for (let i = 0; i < copiasSitios.length; i++) {
-                await realizarSimulacion(copiasSitios[i].lat, copiasSitios[i].lon);
-            }
+            const copias = [...draftSites];
+            descartarPropuesta();
+            for (const s of copias) await realizarSimulacion(s.lat, s.lon);
         }
 
         // =======================================================================
-        // 📡 MOTORES DE ESCANEO
+        // 📊 COBERTURA (% local y global sobre la malla cacheada)
         // =======================================================================
-        function puntoCaeEnKML(pt) {
-            if (!geojsonKMLActual) return false;
-            if (geojsonKMLActual.type === 'FeatureCollection') {
-                for (let i = 0; i < geojsonKMLActual.features.length; i++) {
-                    if (turf.booleanPointInPolygon(pt, geojsonKMLActual.features[i])) return true;
-                }
-                return false;
-            }
-            return turf.booleanPointInPolygon(pt, geojsonKMLActual);
-        }
-
-        function obtenerMallaDinamica() {
-            const areaKm2 = turf.area(geojsonKMLActual) / 1000000;
-            let gridSpacing = Math.sqrt(areaKm2 / 3000); 
-            if (gridSpacing < 0.03) gridSpacing = 0.03;  
-            if (gridSpacing > 0.5) gridSpacing = 0.5;    
-            return turf.pointGrid(turf.bbox(geojsonKMLActual), gridSpacing, {units: 'kilometers'});
-        }
-
-        function calcularPorcentajeLocal(boundsSimulacion, imageUrl) {
-            return new Promise((resolve) => {
-                if (!geojsonKMLActual || !boundsSimulacion) return resolve(null);
-
+        function cargarPixeles(url) {
+            return new Promise(resolve => {
                 const img = new Image();
-                img.crossOrigin = "Anonymous"; 
-                img.src = imageUrl;
-
-                img.onload = function() {
+                img.crossOrigin = "Anonymous";
+                img.onload = () => {
                     try {
                         const canvas = document.createElement('canvas');
                         canvas.width = img.width; canvas.height = img.height;
-                        const ctx = canvas.getContext('2d');
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
                         ctx.drawImage(img, 0, 0);
-
-                        const n = boundsSimulacion[0], e = boundsSimulacion[1], s = boundsSimulacion[2], w = boundsSimulacion[3];
-                        const grid = obtenerMallaDinamica();
-                        let puntosFinca = 0; let puntosConSenal = 0;
-
-                        turf.featureEach(grid, function (pt) {
-                            if (puntoCaeEnKML(pt)) {
-                                puntosFinca++;
-                                const ptLon = pt.geometry.coordinates[0]; const ptLat = pt.geometry.coordinates[1];
-
-                                if (ptLat >= s && ptLat <= n && ptLon >= w && ptLon <= e) {
-                                    const pctX = (ptLon - w) / (e - w); const pctY = (n - ptLat) / (n - s); 
-                                    const pixelX = Math.floor(pctX * img.width); const pixelY = Math.floor(pctY * img.height);
-
-                                    if (pixelX >= 0 && pixelX < img.width && pixelY >= 0 && pixelY < img.height) {
-                                        if (ctx.getImageData(pixelX, pixelY, 1, 1).data[3] > 10) puntosConSenal++;
-                                    }
-                                }
-                            }
-                        });
-                        if (puntosFinca === 0) return resolve(0);
-                        resolve(parseFloat(((puntosConSenal / puntosFinca) * 100).toFixed(1)));
-                    } catch (err) { resolve(null); }
+                        resolve({ data: ctx.getImageData(0, 0, img.width, img.height).data, w: img.width, h: img.height });
+                    } catch (e) { resolve(null); }
                 };
                 img.onerror = () => resolve(null);
+                img.src = url;
             });
+        }
+
+        const mercY = lat => Math.log(Math.tan(Math.PI / 4 + lat * GRAD / 2));
+        function hayCobertura(sim, lng, lat) {
+            const px = sim.pixeles;
+            const [n, e, s, w] = sim.boundsCloudRF;
+            if (lat < s || lat > n || lng < w || lng > e) return false;
+            const fx = (lng - w) / (e - w);
+            const fy = sim.proyeccion === 'mercator' ? (mercY(n) - mercY(lat)) / (mercY(n) - mercY(s)) : (n - lat) / (n - s);
+            const x = Math.min(px.w - 1, Math.floor(fx * px.w)), y = Math.min(px.h - 1, Math.floor(fy * px.h));
+            return px.data[(y * px.w + x) * 4 + 3] > 10;
+        }
+
+        async function calcularPorcentajeLocal(sim) {
+            if (!geojsonKMLActual || !sim.pixeles || mallaFinca.length === 0) return null;
+            let c = 0;
+            for (const [lng, lat] of mallaFinca) if (hayCobertura(sim, lng, lat)) c++;
+            return parseFloat((c / mallaFinca.length * 100).toFixed(1));
         }
 
         async function calcularPorcentajeGlobal() {
-            if (!geojsonKMLActual || simulaciones.length === 0) return null;
-            const activas = simulaciones.filter(s => s.visible && s.imageUrl && s.boundsCloudRF);
-            if (activas.length === 0) return 0;
-
-            const canvases = await Promise.all(activas.map(sim => {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.crossOrigin = "Anonymous";
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = img.width; canvas.height = img.height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-                        resolve({ ctx, imgWidth: img.width, imgHeight: img.height, bounds: sim.boundsCloudRF });
-                    };
-                    img.onerror = () => resolve(null);
-                    img.src = sim.imageUrl;
-                });
-            }));
-
-            const validCanvases = canvases.filter(c => c !== null);
-            if(validCanvases.length === 0) return 0;
-
-            const grid = obtenerMallaDinamica();
-            let puntosFinca = 0; let puntosCubiertos = 0;
-
-            turf.featureEach(grid, function (pt) {
-                if (puntoCaeEnKML(pt)) {
-                    puntosFinca++;
-                    const ptLon = pt.geometry.coordinates[0]; const ptLat = pt.geometry.coordinates[1];
-                    let cubierto = false;
-
-                    for (let c of validCanvases) {
-                        const n = c.bounds[0], e = c.bounds[1], s = c.bounds[2], w = c.bounds[3];
-                        if (ptLat >= s && ptLat <= n && ptLon >= w && ptLon <= e) {
-                            const pctX = (ptLon - w) / (e - w); const pctY = (n - ptLat) / (n - s); 
-                            const pixelX = Math.floor(pctX * c.imgWidth); const pixelY = Math.floor(pctY * c.imgHeight);
-
-                            if (pixelX >= 0 && pixelX < c.imgWidth && pixelY >= 0 && pixelY < c.imgHeight) {
-                                if (c.ctx.getImageData(pixelX, pixelY, 1, 1).data[3] > 10) { cubierto = true; break; }
-                            }
-                        }
-                    }
-                    if (cubierto) puntosCubiertos++;
-                }
-            });
-            if (puntosFinca === 0) return 0;
-            return parseFloat(((puntosCubiertos / puntosFinca) * 100).toFixed(1));
+            if (!geojsonKMLActual || mallaFinca.length === 0) return null;
+            const activas = simulaciones.filter(s => s.visible && s.pixeles);
+            if (activas.length === 0) return simulaciones.length ? 0 : null;
+            let c = 0;
+            for (const [lng, lat] of mallaFinca) if (activas.some(s => hayCobertura(s, lng, lat))) c++;
+            return parseFloat((c / mallaFinca.length * 100).toFixed(1));
         }
 
         async function actualizarInterfazGlobal() {
-            if (!geojsonKMLActual) {
-                if (etiquetaCoberturaActual) { etiquetaCoberturaActual.remove(); etiquetaCoberturaActual = null; }
-                renderizarHistorial(null);
-                return;
-            }
-
+            if (etiquetaCoberturaActual) { etiquetaCoberturaActual.remove(); etiquetaCoberturaActual = null; }
+            if (!geojsonKMLActual) { renderizarHistorial(null); return; }
             const globalPct = await calcularPorcentajeGlobal();
-            if (etiquetaCoberturaActual) { etiquetaCoberturaActual.remove(); }
-
             if (globalPct !== null) {
-                const centroTurf = turf.center(geojsonKMLActual);
-                const coordsCentro = [centroTurf.geometry.coordinates[0], centroTurf.geometry.coordinates[1]]; 
+                const ok = globalPct >= CONFIG.objetivoCoberturaPct;
                 const el = document.createElement('div');
                 el.className = 'cobertura-badge';
-                el.innerHTML = `<div style="color:#ef4444; font-size:17px;">Global: ${globalPct}%</div>`;
-                etiquetaCoberturaActual = new mapboxgl.Marker(el, { anchor: 'center' }).setLngLat(coordsCentro).addTo(map);
+                el.innerHTML = `<div style="color:${ok ? '#22c55e' : '#ef4444'}; font-size:17px;">Global: ${globalPct}%</div>
+                                <div style="color:#e2e8f0; font-size:11px;">objetivo ${CONFIG.objetivoCoberturaPct}%</div>`;
+                etiquetaCoberturaActual = new mapboxgl.Marker(el, { anchor: 'center' })
+                    .setLngLat(turf.center(geojsonKMLActual).geometry.coordinates).addTo(map);
             }
             renderizarHistorial(globalPct);
         }
@@ -1003,162 +1155,147 @@
             const msg = document.getElementById('emptyHistoryMsg');
             if (msg) msg.style.display = simulaciones.length > 0 ? 'none' : 'block';
             lista.innerHTML = '';
-            
             [...simulaciones].reverse().forEach(sim => {
-                const checkedStr = sim.visible ? 'checked' : '';
-                let statsHtml = '';
-                if (sim.coberturaLocal !== null && sim.coberturaLocal !== undefined) {
-                    statsHtml += `<span class="text-[#ff7e00] font-bold">Loc: ${sim.coberturaLocal}%</span>`;
-                }
+                let stats = '';
+                if (sim.coberturaLocal !== null && sim.coberturaLocal !== undefined) stats += `<span class="text-[#ff7e00] font-bold">Loc: ${sim.coberturaLocal}%</span>`;
                 if (globalPct !== null && sim.visible) {
-                    if (statsHtml !== '') statsHtml += `<span class="text-slate-500 mx-1.5">|</span>`;
-                    statsHtml += `<span class="text-red-500 font-bold">Glb: ${globalPct}%</span>`;
+                    if (stats) stats += `<span class="text-slate-500 mx-1.5">|</span>`;
+                    stats += `<span class="${globalPct >= CONFIG.objetivoCoberturaPct ? 'text-green-500' : 'text-red-500'} font-bold">Glb: ${globalPct}%</span>`;
                 }
-                if (statsHtml === '') statsHtml = `<span class="text-slate-400 font-medium">Análisis listo</span>`;
-                
-                const itemHtml = `
+                if (!stats) stats = `<span class="text-slate-400 font-medium">Análisis listo</span>`;
+                const meta = `${sim.freq} MHz, ${sim.alt} m, ${sim.formato}, radio ${sim.radioKm} km`;
+                lista.insertAdjacentHTML('beforeend', `
                 <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700 shadow-sm flex items-center justify-between gap-3 group hover:border-slate-600 transition-colors">
                     <div class="relative inline-block w-9 mr-1 align-middle select-none flex-shrink-0">
-                        <input type="checkbox" id="toggle_${sim.id}" onchange="toggleCapa(${sim.id}, this.checked)" ${checkedStr} class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-slate-200 border-2 border-slate-600 appearance-none cursor-pointer transition-all duration-300 z-10 top-0.5 left-0.5"/>
+                        <input type="checkbox" id="toggle_${sim.id}" onchange="toggleCapa(${sim.id}, this.checked)" ${sim.visible ? 'checked' : ''} class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-slate-200 border-2 border-slate-600 appearance-none cursor-pointer transition-all duration-300 z-10 top-0.5 left-0.5"/>
                         <label for="toggle_${sim.id}" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-700 cursor-pointer transition-colors duration-300"></label>
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-semibold text-slate-200 truncate" title="${sim.name}">${sim.name}</p>
-                        <div class="text-[11px] mt-0.5">${statsHtml}</div>
+                        <div class="text-[11px] mt-0.5">${stats}</div>
+                        <div class="text-[10px] text-slate-500 mt-0.5 truncate" title="${meta}">${meta}</div>
                     </div>
                     <a href="${sim.kmz}" target="_blank" title="Descargar KMZ" class="bg-slate-700 hover:bg-green-600 text-slate-300 hover:text-white p-2 rounded-md transition-colors flex-shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     </a>
-                </div>`;
-                lista.insertAdjacentHTML('beforeend', itemHtml);
+                </div>`);
             });
         }
 
         async function toggleCapa(id, isVisible) {
             const sim = simulaciones.find(s => s.id === id);
-            if (sim) {
-                sim.visible = isVisible;
-                if (isVisible) {
-                    map.setLayoutProperty(`sim-layer-${id}`, 'visibility', 'visible');
-                    if(sim.labelMarker) sim.labelMarker.addTo(map);
-                    if(sim.pinMarker) sim.pinMarker.addTo(map);
-                } else {
-                    map.setLayoutProperty(`sim-layer-${id}`, 'visibility', 'none');
-                    if(sim.labelMarker) sim.labelMarker.remove();
-                    if(sim.pinMarker) sim.pinMarker.remove();
-                }
-                document.getElementById('loader').classList.remove('hidden');
-                await actualizarInterfazGlobal(); 
-                document.getElementById('loader').classList.add('hidden');
-            }
+            if (!sim) return;
+            sim.visible = isVisible;
+            if (map.getLayer(`sim-layer-${id}`)) map.setLayoutProperty(`sim-layer-${id}`, 'visibility', isVisible ? 'visible' : 'none');
+            if (isVisible) { sim.labelMarker?.addTo(map); sim.pinMarker?.addTo(map); }
+            else { sim.labelMarker?.remove(); sim.pinMarker?.remove(); }
+            await actualizarInterfazGlobal();
         }
-        
+
+        // =======================================================================
+        // 🛰️ SIMULACIÓN CLOUDRF (enlace de subida por reciprocidad)
+        // =======================================================================
+        // La pérdida de propagación es igual en ambos sentidos. Se simula desde la gateway con la
+        // potencia EFECTIVA del dispositivo (14 dBm - pérdida antena/cuerpo), la ganancia y el cable de
+        // la gateway, y como umbral la sensibilidad real de la gateway + margen. Así los dBm del mapa
+        // son la señal que llegaría a la gateway desde un collar en cada punto.
+        function radioSimulacionKm(lat, lon) {
+            const r = CONFIG.radioSimulacion;
+            if (!geojsonKMLActual) return r.sinKmlKm;
+            let maxKm = 0;
+            turf.coordEach(geojsonKMLActual, c => { maxKm = Math.max(maxKm, distanciaM([lon, lat], c) / 1000); });
+            return Math.min(r.maxKm, Math.max(r.minKm, Math.ceil((maxKm + r.margenKm) * 2) / 2));
+        }
+
+        function construirPayloadCloudRF(lat, lon, altura, perfil, landCover, formato, radioKm) {
+            return {
+                site: `Punto ${simCounter}`, network: "Ixorigue",
+                transmitter: { lat, lon, alt: altura, frq: perfil.frecuenciaMHz,
+                               txw: parseFloat(dbmAWatts(potenciaEfectivaDispositivoDbm(formato)).toFixed(6)),
+                               bwi: CONFIG.cloudrf.anchoBandaMHz },
+                receiver: { alt: formato.alturaM, rxg: 0, rxs: umbralCoberturaDbm() },
+                antenna: { txg: CONFIG.gateway.gananciaAntenaDbi, txl: CONFIG.gateway.perdidaCableDb, ant: 1, pol: "v" },
+                model: { ...CONFIG.cloudrf.modelo },
+                environment: { ele: 1, cll: landCover, clb: 0 },
+                output: { res: CONFIG.cloudrf.resolucionM, rad: radioKm, fmt: "kmz", out: 2, col: CONFIG.cloudrf.colores }
+            };
+        }
+
         async function realizarSimulacion(customLat = null, customLon = null) {
             if (EMBEDDED_DEMO_TOKEN !== "") {
-                let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0');
-                if (usos >= LIMITE_USOS) return; 
+                const usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0');
+                if (usos >= CONFIG.limiteUsosCliente) return;
             }
-
-            // REFACTORIZACIÓN PARA EL LOOP AUTOMÁTICO
-            const lat = customLat !== null ? customLat : document.getElementById('lat').value;
-            const lon = customLon !== null ? customLon : document.getElementById('lon').value;
-            const txHeight = document.getElementById('tx_height').value;
-            const perfilActivo = document.getElementById('sim_profile').value;
+            const lat = parseFloat(customLat !== null ? customLat : document.getElementById('lat').value);
+            const lon = parseFloat(customLon !== null ? customLon : document.getElementById('lon').value);
+            const txHeight = parseFloat(document.getElementById('tx_height').value) || 3;
+            const perfil = perfilActivo();
+            const formato = formatoActivo();
             const landCover = parseInt(document.getElementById('land_cover').value);
+            if (!coordenadasValidas(lat, lon)) return alert("Faltan coordenadas.");
 
-            if (!lat || !lon) return alert("Faltan coordenadas.");
-
+            const radioKm = radioSimulacionKm(lat, lon);
             document.getElementById('btnSimular').classList.add('hidden');
-            document.getElementById('loader').classList.remove('hidden');
+            mostrarLoader('Procesando modelo ITM...');
 
             try {
-                let payload = {};
-                if (perfilActivo === 'EU') {
-                    payload = {
-                        site: `Punto ${simCounter}`, network: "Demo",
-                        transmitter: { lat: parseFloat(lat), lon: parseFloat(lon), alt: parseFloat(txHeight), frq: 868, txw: 0.025, bwi: 0.1 },
-                        receiver: { alt: 1, rxg: 1, rxs: -120 },
-                        antenna: { txg: 4.3, txl: 1.14, ant: 1, pol: "v" },
-                        model: { pm: 1, pe: 3, cli: 1, rel: 80, ked: 1 },
-                        environment: { ele: 1, cll: landCover, clb: 0 },
-                        output: { res: 10, rad: 10, fmt: "kmz", out: 2, col: "LORA.dBm" }
-                    };
-                } else {
-                    payload = {
-                        site: `Punto ${simCounter}`, network: "Demo",
-                        transmitter: { lat: parseFloat(lat), lon: parseFloat(lon), alt: parseFloat(txHeight), frq: 915, txw: 0.025, bwi: 0.1 },
-                        receiver: { alt: 1, rxg: 1, rxs: -120 },
-                        antenna: { txg: 4.3, txl: 1.14, ant: 1, pol: "v" },
-                        model: { pm: 1, pe: 3, cli: 1, rel: 80, ked: 1 },
-                        environment: { ele: 1, cll: landCover, clb: 0 },
-                        output: { res: 10, rad: 8, fmt: "kmz", out: 2, col: "LORA.dBm" }
-                    };
-                }
-
-                const response = await fetch(PROXY_URL, {
+                const payload = construirPayloadCloudRF(lat, lon, txHeight, perfil, landCover, formato, radioKm);
+                const response = await fetch(CONFIG.proxyUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 const data = await response.json();
+                if (!(response.ok && data.kmz)) return alert("Error en la simulación: " + (data.error || "Revisa la consola."));
 
-                if (response.ok && data.kmz) {
-                    if (EMBEDDED_DEMO_TOKEN !== "") {
-                        let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0'); usos++;
-                        localStorage.setItem('uso_demo_' + EMBEDDED_DEMO_TOKEN, usos); actualizarBannerCliente(usos);
-                    }
-
-                    const pinEl = document.createElement('div'); pinEl.className = 'neon-orange-pin';
-                    pinEl.innerHTML = `
-                        <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <ellipse cx="16" cy="38" rx="8" ry="3" fill="black" fill-opacity="0.3"/>
-                            <path d="M16 1C7.71573 1 1 7.71573 1 16C1 26 16 41 16 41C16 41 31 26 31 16C31 7.71573 24.2843 1 16 1Z" fill="white"/>
-                            <path d="M16 3C8.8203 3 3 8.8203 3 16C3 24.7 16 38.3 16 38.3C16 38.3 29 24.7 29 16C29 8.8203 23.1797 3 16 3Z" fill="#ff7e00"/>
-                            <circle cx="16" cy="16" r="5" fill="white"/>
-                        </svg>`;
-                    const marker = new mapboxgl.Marker(pinEl, { anchor: 'bottom' }).setLngLat([parseFloat(lon), parseFloat(lat)]).addTo(map);
-
-                    let imageUrl = data.PNG_WGS84 || data.png || data.PNG_Mercator;
-                    let boundsCloudRF = data.bounds; 
-                    const sourceId = `sim-source-${simCounter}`;
-
-                    if (imageUrl && boundsCloudRF) {
-                        const n = boundsCloudRF[0], e = boundsCloudRF[1], s = boundsCloudRF[2], w = boundsCloudRF[3];
-                        map.addSource(sourceId, { 'type': 'image', 'url': imageUrl, 'coordinates': [[w, n], [e, n], [e, s], [w, s]] });
-                        map.addLayer({ 'id': `sim-layer-${simCounter}`, 'type': 'raster', 'source': sourceId, 'paint': { 'raster-opacity': 0.65 } });
-                    }
-
-                    if(inputMarker) { inputMarker.remove(); inputMarker = null; }
-
-                    let porcentajeLocal = null;
-                    if (geojsonKMLActual && boundsCloudRF && imageUrl) {
-                        porcentajeLocal = await calcularPorcentajeLocal(boundsCloudRF, imageUrl);
-                    }
-
-                    const labelEl = document.createElement('div'); labelEl.className = 'cobertura-badge';
-                    let tooltipHtml = `<div style="color:white; font-size:15px; margin-bottom:1px;">Punto ${simCounter}</div>`;
-                    if (porcentajeLocal !== null) tooltipHtml += `<div style="color:#ff7e00; font-size:14px;">Local: ${porcentajeLocal}%</div>`;
-                    labelEl.innerHTML = tooltipHtml;
-                    
-                    const labelMarker = new mapboxgl.Marker(labelEl, { anchor: 'bottom', offset: [0, -45] })
-                        .setLngLat([parseFloat(lon), parseFloat(lat)]).addTo(map);
-
-                    simulaciones.push({
-                        id: simCounter, name: `Punto ${simCounter}`, freq: perfilActivo === 'EU' ? 868 : 915,
-                        alt: txHeight, kmz: data.kmz, layerGroup: sourceId, visible: true,
-                        coberturaLocal: porcentajeLocal, imageUrl: imageUrl, boundsCloudRF: boundsCloudRF, labelMarker: labelMarker, pinMarker: marker
-                    });
-                    
-                    simCounter++;
-                    await actualizarInterfazGlobal();
-                } else {
-                    alert("Error en la simulación: " + (data.error || "Revisa la consola."));
+                if (EMBEDDED_DEMO_TOKEN !== "") {
+                    let usos = parseInt(localStorage.getItem('uso_demo_' + EMBEDDED_DEMO_TOKEN) || '0') + 1;
+                    localStorage.setItem('uso_demo_' + EMBEDDED_DEMO_TOKEN, usos); actualizarBannerCliente(usos);
                 }
+
+                const pinEl = document.createElement('div'); pinEl.className = 'neon-orange-pin';
+                pinEl.innerHTML = `
+                    <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <ellipse cx="16" cy="38" rx="8" ry="3" fill="black" fill-opacity="0.3"/>
+                        <path d="M16 1C7.71573 1 1 7.71573 1 16C1 26 16 41 16 41C16 41 31 26 31 16C31 7.71573 24.2843 1 16 1Z" fill="white"/>
+                        <path d="M16 3C8.8203 3 3 8.8203 3 16C3 24.7 16 38.3 16 38.3C16 38.3 29 24.7 29 16C29 8.8203 23.1797 3 16 3Z" fill="#ff7e00"/>
+                        <circle cx="16" cy="16" r="5" fill="white"/>
+                    </svg>`;
+                const marker = new mapboxgl.Marker(pinEl, { anchor: 'bottom' }).setLngLat([lon, lat]).addTo(map);
+
+                const imageUrl = data.PNG_WGS84 || data.png || data.PNG_Mercator;
+                const proyeccion = (!data.PNG_WGS84 && !data.png && data.PNG_Mercator) ? 'mercator' : 'wgs84';
+                const boundsCloudRF = data.bounds;
+                const id = simCounter;
+                if (imageUrl && boundsCloudRF) {
+                    const [n, e, s, w] = boundsCloudRF;
+                    map.addSource(`sim-source-${id}`, { 'type': 'image', 'url': imageUrl, 'coordinates': [[w, n], [e, n], [e, s], [w, s]] });
+                    map.addLayer({ 'id': `sim-layer-${id}`, 'type': 'raster', 'source': `sim-source-${id}`, 'paint': { 'raster-opacity': 0.65 } });
+                }
+                if (inputMarker) { inputMarker.remove(); inputMarker = null; }
+
+                const sim = {
+                    id, name: `Punto ${id}`, freq: perfil.frecuenciaMHz, alt: txHeight, formato: formato.nombre.split(' ')[0],
+                    radioKm, kmz: data.kmz, visible: true, imageUrl, boundsCloudRF, proyeccion,
+                    pixeles: imageUrl && boundsCloudRF ? await cargarPixeles(imageUrl) : null,
+                    pinMarker: marker
+                };
+                sim.coberturaLocal = await calcularPorcentajeLocal(sim);
+
+                const labelEl = document.createElement('div'); labelEl.className = 'cobertura-badge';
+                labelEl.innerHTML = `<div style="color:white; font-size:15px; margin-bottom:1px;">Punto ${id}</div>` +
+                    (sim.coberturaLocal !== null ? `<div style="color:#ff7e00; font-size:14px;">Local: ${sim.coberturaLocal}%</div>` : '');
+                sim.labelMarker = new mapboxgl.Marker(labelEl, { anchor: 'bottom', offset: [0, -45] }).setLngLat([lon, lat]).addTo(map);
+
+                simulaciones.push(sim);
+                simCounter++;
+                await actualizarInterfazGlobal();
             } catch (error) {
                 console.error("Error:", error);
+                alert("Error de conexión con el servicio de simulación.");
             } finally {
                 document.getElementById('btnSimular').classList.remove('hidden');
-                document.getElementById('loader').classList.add('hidden');
+                ocultarLoader();
             }
         }
     </script>
