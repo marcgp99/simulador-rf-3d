@@ -18,277 +18,304 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
     <style>
-        body { background-color: #0B1120; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        :root {
+            --fondo: #0B1120;
+            --panel: rgba(15, 23, 42, 0.78);
+            --borde: rgba(255, 255, 255, 0.08);
+            --texto: #e2e8f0;
+            --tenue: #94a3b8;
+            --marca: #39FF14;
+            --accion: #10b981;
+            --optim: #a855f7;
+            --punto: #ff7e00;
+        }
+        body { background-color: var(--fondo); color: var(--texto); font-family: 'Inter', sans-serif; }
         #map { height: 100%; width: 100%; border-radius: 0.75rem; z-index: 1; }
-        
+
         .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
+            background: var(--panel);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--borde);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
-
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        :focus-visible { outline: 2px solid var(--accion); outline-offset: 2px; }
 
-        .toggle-checkbox:checked { right: 0; border-color: #10b981; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
-        
-        .glow-hover:hover { box-shadow: 0 0 20px rgba(57, 255, 20, 0.4); }
+        /* Panel lateral */
+        .tarjeta { background: rgba(2, 6, 23, 0.35); border: 1px solid var(--borde); border-radius: 0.75rem; padding: 1rem; }
+        .titulo-seccion { font-size: 0.8rem; font-weight: 700; color: #f1f5f9; letter-spacing: 0.01em; }
+        .etiqueta { display: block; font-size: 0.7rem; font-weight: 600; color: var(--tenue); margin-bottom: 0.35rem; }
+        .campo { width: 100%; padding: 0.55rem 0.75rem; background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 0.5rem;
+                 font-size: 0.85rem; color: #e2e8f0; transition: border-color .2s; }
+        .campo:hover { border-color: #475569; }
+        .campo:focus { outline: none; border-color: var(--accion); box-shadow: 0 0 0 1px var(--accion); }
+        .descripcion { font-size: 0.75rem; color: var(--tenue); line-height: 1.45; }
+        .boton { display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; padding: 0.7rem 1rem; border-radius: 0.6rem;
+                 font-size: 0.85rem; font-weight: 600; color: white; transition: background .2s, opacity .2s; }
+        .boton:disabled { opacity: 0.45; cursor: not-allowed; }
+        .boton-optim { background: #7e22ce; } .boton-optim:hover:not(:disabled) { background: #9333ea; }
+        .boton-punto { background: #c2410c; } .boton-punto:hover:not(:disabled) { background: #ea580c; }
+        .boton-sec { background: rgba(30, 41, 59, 0.9); border: 1px solid #334155; color: #cbd5e1; font-weight: 500; padding: 0.5rem 0.75rem; font-size: 0.78rem; }
+        .boton-sec:hover:not(:disabled) { background: #1e293b; border-color: #475569; color: white; }
+        .boton-sec.activo { border-color: var(--punto); color: #fdba74; background: rgba(194, 65, 12, 0.15); }
 
+        .pestanas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.25rem; padding: 0.25rem; background: rgba(2, 6, 23, 0.5);
+                    border: 1px solid var(--borde); border-radius: 0.7rem; }
+        .pestana { padding: 0.55rem 0.25rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--tenue); transition: all .2s; }
+        .pestana:hover { color: #e2e8f0; }
+        .pestana.activa { background: #1e293b; color: white; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08); }
+        .pestana[data-modo="planificar"].activa, .pestana[data-modo="optimizar"].activa { box-shadow: inset 0 -2px 0 var(--optim); }
+        .pestana[data-modo="punto"].activa { box-shadow: inset 0 -2px 0 var(--punto); }
+
+        details.avanzado > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+                                     font-size: 0.75rem; color: var(--tenue); padding-top: 0.25rem; }
+        details.avanzado > summary::-webkit-details-marker { display: none; }
+        details.avanzado > summary .flecha { transition: transform .2s; }
+        details.avanzado[open] > summary .flecha { transform: rotate(90deg); }
+
+        .chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+        .chip-ok { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .chip-ko { background: rgba(245, 158, 11, 0.12); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .barra-curva { display: flex; align-items: flex-end; gap: 6px; height: 64px; }
+        .barra-curva > div { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 3px; }
+        .barra-curva .b { width: 100%; border-radius: 4px 4px 2px 2px; background: linear-gradient(to top, #6b21a8, #a855f7); min-height: 3px; }
+        .barra-curva .v { font-size: 10px; color: #d8b4fe; font-weight: 600; }
+
+        .item-antena { display: flex; align-items: center; gap: 0.7rem; padding: 0.65rem 0.75rem; border-radius: 0.65rem;
+                       background: rgba(30, 41, 59, 0.55); border: 1px solid rgba(255,255,255,0.06); transition: border-color .2s, opacity .2s; }
+        .item-antena:hover { border-color: rgba(255,255,255,0.14); }
+        .item-antena.apagada { opacity: 0.55; }
+        .numero { flex-shrink: 0; width: 28px; height: 28px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+                  font-size: 12px; font-weight: 800; color: #0B1120; border: 2px solid rgba(255,255,255,0.85); }
+        .icono-accion { padding: 0.4rem; border-radius: 0.4rem; color: #94a3b8; transition: all .2s; }
+        .icono-accion:hover { background: #334155; color: white; }
+        .interruptor { position: relative; width: 34px; height: 20px; flex-shrink: 0; }
+        .interruptor input { opacity: 0; width: 0; height: 0; }
+        .interruptor span { position: absolute; inset: 0; background: #334155; border-radius: 999px; cursor: pointer; transition: background .2s; }
+        .interruptor span::before { content: ""; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: white; border-radius: 999px; transition: transform .2s; }
+        .interruptor input:checked + span { background: var(--accion); }
+        .interruptor input:checked + span::before { transform: translateX(14px); }
+        .interruptor input:focus-visible + span { outline: 2px solid var(--accion); outline-offset: 2px; }
+
+        /* Mapa */
         .mapboxgl-marker { cursor: pointer; z-index: 20; }
-        .neon-orange-pin { filter: drop-shadow(0 0 5px rgba(255, 126, 0, 0.8)); }
-        
-        /* PIN DE COBERTURA GLOBAL */
-        .cobertura-badge {
-            text-align: center;
-            font-family: 'Inter', sans-serif !important;
-            font-weight: 800 !important;
-            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0px 4px 10px rgba(0,0,0,0.8);
-            pointer-events: none;
-        }
+        .pin-num { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6)); }
+        .pin-num .cabeza { width: 30px; height: 30px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+                           font-size: 13px; font-weight: 800; color: #0B1120; border: 2.5px solid white; }
+        .pin-num .punta { width: 2px; height: 12px; background: white; }
+        .pin-num.actual .cabeza { background: #475569 !important; color: white; border-style: dashed; }
+        .mapboxgl-popup-content { background: #0f172a; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.1); border-radius: 0.6rem;
+                                  padding: 0.7rem 0.9rem; font-family: 'Inter', sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .mapboxgl-popup-tip { border-top-color: #0f172a !important; border-bottom-color: #0f172a !important; }
+        .mapboxgl-popup-close-button { color: #94a3b8; font-size: 16px; padding: 2px 6px; }
 
-        /* ====================================================
-           PINES TOPOGRÁFICOS MINIMALISTAS
-           ==================================================== */
-        .site-marker-container { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            pointer-events: none; 
-            transform: translateY(5px); 
-        }
-        .site-label { 
-            background: rgba(15, 23, 42, 0.9); 
-            border: 1px solid rgba(255,255,255,0.08); 
-            border-left: 3px solid; 
-            padding: 5px 10px; 
-            border-radius: 6px; 
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); 
-            margin-bottom: 2px; 
-            backdrop-filter: blur(8px); 
-        }
-        .site-elev { 
-            font-size: 15px; 
-            font-weight: 700; 
-            color: #f8fafc; 
-            display: flex; 
-            align-items: baseline; 
-            gap: 4px;
-        }
-        .site-pin { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-        }
-        .pin-line { 
-            width: 1.5px; 
-            height: 35px; 
-            opacity: 0.75; 
-        }
-        .pin-dot { 
-            width: 9px; 
-            height: 9px; 
-            border-radius: 50%; 
-            border: 1.5px solid #0B1120; 
-            box-shadow: 0 0 12px currentColor; 
-        }
-        
+        .site-marker-container { display: flex; flex-direction: column; align-items: center; pointer-events: none; transform: translateY(5px); }
+        .site-label { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255,255,255,0.08); border-left: 3px solid; padding: 4px 9px;
+                      border-radius: 6px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); margin-bottom: 2px; backdrop-filter: blur(8px); }
+        .site-elev { font-size: 13px; font-weight: 700; color: #f8fafc; display: flex; align-items: baseline; gap: 4px; }
+        .site-pin { display: flex; flex-direction: column; align-items: center; }
+        .pin-line { width: 1.5px; height: 30px; opacity: 0.75; }
+        .pin-dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid #0B1120; box-shadow: 0 0 12px currentColor; }
         .site-primary .site-label { border-left-color: #39FF14; }
         .site-primary .pin-line { background: linear-gradient(to bottom, #39FF14, transparent); }
         .site-primary .pin-dot { background: #39FF14; color: #39FF14; }
-
         .site-secondary .site-label { border-left-color: #0ea5e9; }
         .site-secondary .pin-line { background: linear-gradient(to bottom, #0ea5e9, transparent); }
         .site-secondary .pin-dot { background: #0ea5e9; color: #0ea5e9; }
-
         .site-tertiary .site-label { border-left-color: #f59e0b; }
         .site-tertiary .pin-line { background: linear-gradient(to bottom, #f59e0b, transparent); }
         .site-tertiary .pin-dot { background: #f59e0b; color: #f59e0b; }
 
-        .site-draft .site-label { border-left-color: #d946ef; }
-        .site-draft .pin-line { background: linear-gradient(to bottom, #d946ef, transparent); }
-        .site-draft .pin-dot { background: #d946ef; color: #d946ef; }
-
-        /* Botones Flotantes del Mapa */
-        .map-controls-container {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            z-index: 10;
-            display: flex;
-            gap: 10px;
-        }
-        .map-btn {
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.875rem;
-            cursor: pointer;
-            backdrop-filter: blur(8px);
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .map-controls-container { position: absolute; top: 14px; right: 14px; z-index: 10; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: calc(100% - 300px); }
+        .map-btn { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0; padding: 7px 12px; border-radius: 8px;
+                   font-weight: 600; font-size: 0.78rem; cursor: pointer; backdrop-filter: blur(8px); transition: all 0.2s ease;
+                   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5); display: flex; align-items: center; gap: 7px; }
+        .map-btn svg { width: 16px; height: 16px; }
         .map-btn:hover { background: #1e293b; border-color: #64748b; }
-        .map-btn.active-3d { background: #10b981; border-color: #34d399; box-shadow: 0 0 15px rgba(16, 185, 129, 0.5); }
+        .map-btn.active-3d { background: var(--accion); border-color: #34d399; }
         .map-btn.active-nodos { color: #94a3b8; border-color: rgba(255,255,255,0.05); }
+
+        @media (max-width: 767px) {
+            .map-controls-container { max-width: calc(100% - 28px); top: auto; bottom: 46px; }
+        }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
 
-    <div id="demo-banner" class="hidden w-full text-center py-2 text-xs font-semibold tracking-wide shadow-md z-20 relative bg-amber-500/10 text-amber-400 border-b border-amber-500/20 uppercase"></div>
-
-    <header class="bg-[#0B1120]/95 backdrop-blur border-b border-slate-800/80 py-4 px-6 flex items-center justify-between z-10 relative">
-        <div class="flex items-center gap-3 w-1/3">
-            <svg class="w-7 h-7 text-[#39FF14] drop-shadow-[0_0_8px_rgba(57,255,20,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.106-.53-.106a.75.75 0 01-.6-1.07l.6-.8a.75.75 0 011.2 0l.6.8a.75.75 0 01-.6 1.07z"></path></svg>
-            <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-500">
-                IXORIGUE RF Coverage Simulator <span class="text-slate-500 font-medium text-sm ml-1 uppercase tracking-widest">| Pro 3D</span>
-                <span id="app-version" class="ml-2 text-[10px] font-mono text-slate-500 align-middle"></span>
-            </h1>
+    <header class="bg-[#0B1120]/95 backdrop-blur border-b border-slate-800/80 py-3 px-6 flex items-center justify-between z-10 relative gap-4">
+        <div class="flex items-center gap-3 min-w-0">
+            <svg class="w-7 h-7 flex-shrink-0 text-[#39FF14] drop-shadow-[0_0_8px_rgba(57,255,20,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.106-.53-.106a.75.75 0 01-.6-1.07l.6-.8a.75.75 0 011.2 0l.6.8a.75.75 0 01-.6 1.07z"></path></svg>
+            <h1 class="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-500 whitespace-nowrap">IXORIGUE RF Coverage Simulator</h1>
+            <span class="text-slate-500 text-xs font-medium whitespace-nowrap">Pro 3D <span id="app-version" class="font-mono ml-1"></span></span>
         </div>
-        <div class="w-1/3"></div> 
+        <div id="nombre-proyecto" class="hidden text-sm text-slate-300 font-medium truncate"></div>
     </header>
 
     <main class="flex-1 flex flex-col md:flex-row p-4 gap-4 h-full relative overflow-hidden">
-        
-        <aside class="glass-panel w-full md:w-[400px] rounded-xl p-5 flex flex-col z-10 relative overflow-y-auto h-full">
 
-            <div class="flex flex-col gap-4 pb-2">
+        <aside class="glass-panel w-full md:w-[400px] flex-shrink-0 rounded-xl z-10 relative overflow-y-auto h-full">
+            <div class="p-4 flex flex-col gap-4">
 
-                <div class="space-y-1.5 pb-3 border-b border-slate-700/50">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Perfil de Simulación</label>
-                    <select id="sim_profile" onchange="cambiarPerfil()" class="w-full px-4 py-2.5 bg-slate-900/80 border border-slate-600 hover:border-slate-500 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all cursor-pointer font-semibold">
-                        <option value="EU" selected>EU</option>
-                        <option value="LATAM">LATAM</option>
-                    </select>
-                </div>
-
-                <div class="space-y-1.5">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Importar de Google Maps</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="gmaps_url" placeholder="URL de Google Maps o lat, lon" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all">
-                        <button onclick="extraerDeMaps()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="space-y-1.5">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Delimitar Zona (KML)</label>
+                <!-- PROYECTO -->
+                <section class="tarjeta flex flex-col gap-3">
+                    <div class="titulo-seccion">Proyecto</div>
                     <input type="file" id="kml_upload" accept=".kml,.kmz" class="hidden" onchange="cargarKML(event)">
-                    <label for="kml_upload" class="w-full bg-slate-900/50 hover:bg-slate-800 text-slate-300 hover:text-green-400 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center cursor-pointer border border-slate-600 border-dashed group">
-                        <svg class="w-4 h-4 mr-2 group-hover:text-green-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        Seleccionar polígono .kml / .kmz
+                    <label for="kml_upload" class="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-dashed border-slate-600 hover:border-emerald-500 hover:bg-emerald-500/5 cursor-pointer transition-colors">
+                        <svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                        <span class="min-w-0">
+                            <span id="kml-nombre" class="block text-sm font-semibold text-slate-200 truncate">Cargar finca</span>
+                            <span id="kml-detalle" class="block text-[11px] text-slate-400">Archivo .kml o .kmz con el perímetro</span>
+                        </span>
                     </label>
-                </div>
-
-                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-3 border-t border-slate-700/50">Configuración del enlace</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1.5">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Land Cover (Bosques)</label>
-                        <select id="land_cover" class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 hover:border-slate-500 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all cursor-pointer font-semibold">
-                            <option value="1" selected>ON</option>
-                            <option value="0">OFF</option>
-                        </select>
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Altura Antena (m)</label>
-                        <input type="number" id="tx_height" value="3" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1.5">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dispositivo</label>
-                        <select id="formato_dispositivo" onchange="actualizarInfoEnlace()" class="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 hover:border-slate-500 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all cursor-pointer font-semibold">
-                            <option value="crotal" selected>Crotal (CowPro)</option>
-                            <option value="collar">Collar (Ixotrack)</option>
-                        </select>
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Enlace</label>
-                        <div id="info-enlace" class="px-3 py-2 bg-slate-900/30 border border-slate-800 rounded-lg text-[11px] leading-snug text-slate-300 font-mono"></div>
-                    </div>
-                </div>
-
-                <h3 class="text-[10px] font-bold text-purple-400 uppercase tracking-widest pt-3 border-t border-slate-700/50">Diseño de red</h3>
-                <div class="space-y-1.5">
-                    <label class="block text-[10px] font-bold text-purple-400 uppercase tracking-widest">Antenas Contratadas</label>
-                    <div class="grid grid-cols-3 gap-2 items-center">
-                        <div class="col-span-2">
-                            <input type="number" id="num_antenas" min="1" max="10" value="2" class="w-full px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 focus:outline-none transition-all font-mono" placeholder="Nº Antenas">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="etiqueta" for="sim_profile">Región</label>
+                            <select id="sim_profile" onchange="cambiarPerfil()" class="campo cursor-pointer">
+                                <option value="EU" selected>Europa (868 MHz)</option>
+                                <option value="LATAM">LATAM (915 MHz)</option>
+                            </select>
                         </div>
-                        <button id="btn-fijo" onclick="optimizarRed('fijo')" class="col-span-1 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white p-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center h-full">
-                            Calcular
+                        <div>
+                            <label class="etiqueta" for="formato_dispositivo">Dispositivo</label>
+                            <select id="formato_dispositivo" onchange="actualizarInfoEnlace()" class="campo cursor-pointer">
+                                <option value="crotal" selected>Crotal (CowPro)</option>
+                                <option value="collar">Collar (Ixotrack)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <details class="avanzado">
+                        <summary><span>Ajustes avanzados <span id="resumen-ajustes" class="text-slate-500 ml-1"></span></span>
+                            <svg class="flecha w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </summary>
+                        <div class="grid grid-cols-2 gap-3 mt-3">
+                            <div>
+                                <label class="etiqueta" for="tx_height">Altura del mástil (m)</label>
+                                <input type="number" id="tx_height" value="3" min="1" max="60" class="campo font-mono">
+                            </div>
+                            <div>
+                                <label class="etiqueta" for="land_cover">Vegetación en el cálculo</label>
+                                <select id="land_cover" class="campo cursor-pointer">
+                                    <option value="1" selected>Sí</option>
+                                    <option value="0">No</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="info-enlace" class="mt-3 px-3 py-2 rounded-lg bg-slate-900/40 border border-slate-800 text-[11px] leading-relaxed text-slate-400 font-mono"></div>
+                    </details>
+                </section>
+
+                <!-- MODOS DE TRABAJO -->
+                <section class="flex flex-col gap-3">
+                    <div class="pestanas" role="tablist" aria-label="Modo de trabajo">
+                        <button class="pestana activa" data-modo="planificar" role="tab" onclick="cambiarModo('planificar')">Planificar red</button>
+                        <button class="pestana" data-modo="optimizar" role="tab" onclick="cambiarModo('optimizar')">Optimizar red</button>
+                        <button class="pestana" data-modo="punto" role="tab" onclick="cambiarModo('punto')">Comprobar punto</button>
+                    </div>
+
+                    <div id="modo-planificar" class="modo-panel tarjeta flex flex-col gap-3">
+                        <p class="descripcion"><b class="text-slate-200">Cliente nuevo.</b> Calcula el mínimo de antenas necesario para cubrir el <span class="txt-objetivo">80</span>% de la finca y dónde colocarlas.</p>
+                        <button id="btn-objetivo" onclick="optimizarRed('objetivo')" class="accion boton boton-optim">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                            Calcular red para <span class="txt-objetivo">80</span>%
                         </button>
                     </div>
-                    <button id="btn-objetivo" onclick="optimizarRed('objetivo')" class="w-full mt-2 bg-fuchsia-700 hover:bg-fuchsia-600 disabled:opacity-40 text-white py-2.5 rounded-lg text-xs font-semibold transition-colors">
-                        Diseño automático
-                    </button>
-                    <div class="flex items-center justify-between gap-2 pt-1">
-                        <label for="permitir_fuera" class="flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer select-none">
-                            <input type="checkbox" id="permitir_fuera" checked class="w-3.5 h-3.5 accent-fuchsia-600 cursor-pointer">
-                            Permitir antenas fuera de la finca
+
+                    <div id="modo-optimizar" class="modo-panel tarjeta flex flex-col gap-3 hidden">
+                        <p class="descripcion"><b class="text-slate-200">Cliente actual con problemas de cobertura.</b> Indica dónde están sus antenas hoy (opcional) y el sistema propone dónde reubicarlas.</p>
+                        <div class="flex flex-col gap-2 p-3 rounded-lg bg-slate-900/40 border border-slate-800">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold text-slate-300">Antenas instaladas hoy</span>
+                                <span id="n-actuales" class="text-[11px] text-slate-500">ninguna</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="btn-colocar-actuales" onclick="toggleColocarActuales()" class="boton boton-sec">Marcar en el mapa</button>
+                                <input type="file" id="kml_actuales" accept=".kml,.kmz" class="hidden" onchange="cargarActualesKML(event)">
+                                <label for="kml_actuales" class="boton boton-sec cursor-pointer">Cargar KML</label>
+                            </div>
+                            <div id="lista-actuales" class="flex flex-col gap-1"></div>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <label for="num_antenas" class="text-xs font-semibold text-slate-300">Antenas contratadas</label>
+                            <input type="number" id="num_antenas" min="1" max="10" value="2" class="campo font-mono w-20 text-center">
+                        </div>
+                        <button id="btn-fijo" onclick="optimizarRed('fijo')" class="accion boton boton-optim">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Reubicar <span id="txt-n">2</span> antenas
+                        </button>
+                    </div>
+
+                    <!-- Bloque compartido por Planificar y Optimizar (se mueve al panel activo) -->
+                    <div id="bloque-permisos" class="flex items-center justify-between gap-2">
+                        <label for="permitir_fuera" class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                            <span class="interruptor"><input type="checkbox" id="permitir_fuera" checked><span></span></span>
+                            Antenas fuera de la finca
                         </label>
-                        <select id="dist_fuera" title="Distancia máxima fuera del límite" class="px-2 py-1 bg-slate-900/50 border border-slate-700 rounded text-[11px] text-slate-200 disabled:opacity-40 cursor-pointer">
-                            <option value="0.25">250 m</option>
-                            <option value="0.5" selected>500 m</option>
-                            <option value="1">1000 m</option>
+                        <select id="dist_fuera" title="Distancia máxima fuera del límite" class="campo !w-auto !py-1 !text-xs cursor-pointer disabled:opacity-40">
+                            <option value="0.25">hasta 250 m</option>
+                            <option value="0.5" selected>hasta 500 m</option>
+                            <option value="1">hasta 1000 m</option>
                         </select>
                     </div>
-                    <p id="estado-precalculo" class="text-[10px] text-slate-500 text-center min-h-[14px]"></p>
-                </div>
 
-
-                <div id="opt-panel" class="hidden space-y-2 p-3 bg-purple-950/20 border border-purple-500/20 rounded-lg">
-                    <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest text-center">Resultado del optimizador</div>
-                    <div id="opt-resumen" class="text-[11px] text-purple-100/90 leading-relaxed space-y-1"></div>
-                    <button onclick="limpiarResultadoOptimizador()" class="w-full bg-slate-800/80 hover:bg-red-950/40 text-red-400 border border-red-500/20 text-xs py-2 px-3 rounded-lg font-medium transition-colors">
-                        Limpiar resultado
-                    </button>
-                </div>
-
-
-                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-3 border-t border-slate-700/50">Simulación manual</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1.5">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Latitud</label>
-                        <input type="number" id="lat" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
+                    <div id="modo-punto" class="modo-panel tarjeta flex flex-col gap-3 hidden">
+                        <p class="descripcion">Haz clic en el mapa, pega un enlace de Google Maps o escribe las coordenadas del punto que quieres comprobar.</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="gmaps_url" placeholder="Enlace de Google Maps o «lat, lon»" class="campo">
+                            <button onclick="extraerDeMaps()" title="Ir a la ubicación" class="flex-shrink-0 px-3 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="etiqueta" for="lat">Latitud</label><input type="number" id="lat" class="campo font-mono"></div>
+                            <div><label class="etiqueta" for="lon">Longitud</label><input type="number" id="lon" class="campo font-mono"></div>
+                        </div>
+                        <button id="btnSimular" onclick="realizarSimulacion()" class="accion boton boton-punto">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            Simular este punto
+                        </button>
                     </div>
-                    <div class="space-y-1.5">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Longitud</label>
-                        <input type="number" id="lon" class="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-sm text-slate-200 focus:ring-1 focus:ring-green-500 focus:border-green-500 focus:outline-none transition-all font-mono">
+
+                    <p id="estado-precalculo" class="text-[11px] text-slate-500 text-center min-h-[16px]"></p>
+                </section>
+
+                <!-- RESULTADO DEL OPTIMIZADOR -->
+                <section id="opt-panel" class="hidden tarjeta flex flex-col gap-3 !border-purple-500/30 !bg-purple-950/20">
+                    <div id="opt-resumen" class="flex flex-col gap-3 text-xs text-slate-300 leading-relaxed"></div>
+                    <button onclick="limpiarResultadoOptimizador()" class="boton boton-sec !text-red-300 hover:!text-red-200">Limpiar resultado</button>
+                </section>
+
+                <!-- ANTENAS Y SIMULACIONES -->
+                <section id="historyArea" class="flex flex-col gap-2.5">
+                    <div class="flex items-center justify-between">
+                        <div class="titulo-seccion">Antenas y simulaciones <span id="contador-sims" class="text-slate-500 font-medium ml-1"></span></div>
+                        <button id="btn-descargar-todo" onclick="descargarTodo()" class="hidden text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Descargar todo
+                        </button>
                     </div>
-                </div>
-
-                <button id="btnSimular" onclick="realizarSimulacion()" class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold py-3 px-4 rounded-lg glow-hover transition-all duration-300 flex justify-center items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    Iniciar Simulación
-                </button>
+                    <p id="emptyHistoryMsg" class="text-slate-500 text-xs text-center py-4 border border-dashed border-slate-700 rounded-lg">Aún no hay simulaciones.</p>
+                    <div id="simulationList" class="flex flex-col gap-2"></div>
+                    <div id="resumen-exterior" class="hidden"></div>
+                </section>
             </div>
-            </div>
-
-            <div id="historyArea" class="flex flex-col border-t border-slate-700/50 pt-4 mt-2">
-                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Simulaciones <span id="contador-sims" class="text-slate-500"></span></h3>
-                <p class="text-[10px] text-slate-500 mb-3">Activa o desactiva cada cobertura en el mapa y descárgala en KMZ.</p>
-                <p id="emptyHistoryMsg" class="text-slate-500 text-sm italic text-center mt-1">Aún no hay simulaciones.</p>
-                <div id="simulationList" class="flex flex-col gap-2.5"></div>
-                <div id="resumen-exterior" class="hidden mt-3 p-2.5 bg-slate-900/40 border border-slate-700/60 rounded-lg text-[11px] text-slate-300"></div>
-            </div>
-
         </aside>
 
-        <section class="flex-1 bg-slate-900 rounded-xl shadow-2xl relative h-full overflow-hidden border border-slate-800">
-            <!-- Botones Superiores del Mapa -->
+        <section class="flex-1 bg-slate-900 rounded-xl shadow-2xl relative h-full overflow-hidden border border-slate-800 min-h-[420px]">
+            <!-- Indicador de cobertura de la finca -->
+            <div id="kpi-card" class="hidden absolute top-3.5 left-3.5 z-10 glass-panel rounded-xl px-4 py-3 min-w-[170px]">
+                <div class="text-[11px] text-slate-400 font-medium">Cobertura de la finca</div>
+                <div class="flex items-baseline gap-2">
+                    <span id="kpi-valor" class="text-3xl font-extrabold tracking-tight">–</span>
+                </div>
+                <div id="kpi-detalle" class="text-[11px] text-slate-400"></div>
+            </div>
+
             <div class="map-controls-container">
                 <button id="btn-huecos" onclick="toggleHuecos()" class="map-btn hidden">
                     <span class="inline-block w-3 h-3 rounded-sm" style="background:#ef4444; opacity:0.8"></span>
@@ -308,24 +335,20 @@
                 </button>
             </div>
 
-            <!-- NUEVA LEYENDA (Histograma de Altura Mejorado y Azul) -->
-            <div id="canopy-legend" class="hidden absolute bottom-6 right-6 z-10 glass-panel p-4 rounded-lg w-72 shadow-xl border border-slate-700/50 transition-all">
-                <div class="text-[11px] font-bold text-slate-200 uppercase tracking-widest mb-3 flex items-center justify-between">
-                    <span>🌳 Cubierta arbórea</span>
+            <!-- Leyendas -->
+            <div class="absolute bottom-9 left-3 z-10 flex flex-col gap-2 w-64 pointer-events-none">
+                <div id="leyenda-senal" class="hidden glass-panel rounded-lg p-3 pointer-events-auto">
+                    <div class="text-[11px] font-semibold text-slate-200 mb-2">Nivel de señal recibida</div>
+                    <div id="leyenda-barra" class="h-2.5 w-full rounded border border-slate-600"></div>
+                    <div class="flex justify-between text-[10px] text-slate-400 mt-1.5"><span>Más señal</span><span id="leyenda-umbral">Límite</span></div>
+                    <div class="flex items-center gap-2 mt-2 text-[10px] text-slate-400"><span class="inline-block w-3 h-3 rounded-sm" style="background:#ef4444;opacity:.8"></span>Zona de la finca sin cobertura</div>
                 </div>
-                <!-- Barra de gradiente AZUL (De transparente a azul oscuro) -->
-                <div class="h-3 w-full rounded bg-gradient-to-r from-transparent via-blue-600 to-blue-900 border border-slate-600 mb-2"></div>
-                <!-- Indicadores métricos explícitos -->
-                <div class="flex justify-between text-[11px] font-bold text-slate-300 font-mono">
-                    <span class="flex flex-col items-start"><span class="text-slate-400">0%</span></span>
-                    <span class="flex flex-col items-center"><span class="text-slate-400">50%</span></span>
-                    <span class="flex flex-col items-end"><span class="text-slate-400">100%</span></span>
+                <div id="canopy-legend" class="hidden glass-panel rounded-lg p-3 pointer-events-auto">
+                    <div class="text-[11px] font-semibold text-slate-200 mb-2">🌳 Cubierta arbórea</div>
+                    <div class="h-2.5 w-full rounded bg-gradient-to-r from-transparent via-blue-600 to-blue-900 border border-slate-600"></div>
+                    <div class="flex justify-between text-[10px] text-slate-400 mt-1.5"><span>0%</span><span>50%</span><span>100%</span></div>
+                    <p class="text-[10px] text-slate-500 mt-2 leading-relaxed">Densidad de copa, no altura. Fuente: Hansen/UMD Global Forest Change (año 2000).</p>
                 </div>
-                <!-- Explicación visual -->
-                <p class="text-[9px] text-slate-400 mt-3 leading-relaxed border-t border-slate-700 pt-2">
-                    Porcentaje de suelo cubierto por copa de árbol (densidad, no altura).<br>
-                    Fuente: Hansen/UMD Global Forest Change, año base 2000.
-                </p>
             </div>
 
             <div id="loader" class="hidden absolute top-4 left-1/2 -translate-x-1/2 z-20 glass-panel px-4 py-2.5 rounded-lg items-center gap-3 shadow-xl">
@@ -333,19 +356,21 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <p id="loader-text" class="text-[11px] text-green-300 font-semibold tracking-wide">Procesando modelo ITM...</p>
+                <p id="loader-text" class="text-xs text-green-300 font-semibold tracking-wide">Procesando...</p>
             </div>
+
+            <div id="aviso-mapa" class="hidden absolute bottom-9 left-1/2 -translate-x-1/2 z-20 glass-panel px-4 py-2 rounded-lg text-xs text-orange-200 border !border-orange-500/30"></div>
 
             <div id="map"></div>
         </section>
-        
+
     </main>
 
     <script>
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.3.1';
+        const APP_VERSION = '1.4.0';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -398,7 +423,9 @@
                        separacionMinAbsKm: 0.1, separacionMinFraccionDiagonal: 0.15 },
 
             // Cobertura fuera de la finca (fugas de animales)
-            exterior: { franjaKm: 1, alcanceAnalisisKm: 5, puntosAnalisis: 2500 },
+            // mostrarResumen: false → sin recuadro ni % exterior. La franja de 1 km se sigue usando como
+            // desempate interno (entre soluciones iguales dentro, gana la que cubre más fuera).
+            exterior: { mostrarResumen: false, franjaKm: 1, alcanceAnalisisKm: 5, puntosAnalisis: 2500 },
 
             optimizador: {
                 haloKm: 0.5, haloMaxKm: 1.0, pesoExterno: 0.85, maxAntenas: 10,
@@ -712,6 +739,19 @@
             return { seleccion: orden, curva, interiorPct, exteriorPct, objetivoAlcanzado: interiorPct >= objetivoPct };
         }
 
+        function parsearKMLaPuntos(kmlText, DOMParserImpl) {
+            const doc = new DOMParserImpl().parseFromString(kmlText, 'text/xml');
+            if (doc.getElementsByTagName('parsererror').length) throw new Error('El KML no es XML válido.');
+            let pts = Array.from(doc.getElementsByTagNameNS('*', 'Point'));
+            if (!pts.length) pts = Array.from(doc.getElementsByTagName('Point'));
+            return pts.map(p => {
+                const c = (p.getElementsByTagNameNS('*', 'coordinates')[0] || p.getElementsByTagName('coordinates')[0]);
+                if (!c) return null;
+                const [lng, lat] = c.textContent.trim().split(',').map(Number);
+                return coordenadasValidas(lat, lng) ? [lng, lat] : null;
+            }).filter(Boolean);
+        }
+
         function hashTexto(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(16); }
         // @@PURE-END
 
@@ -737,9 +777,22 @@
         let mallaMascara = null;         // Malla fina de la finca para pintar las zonas sin cobertura
         let urlMascara = null;
         let huecosVisibles = true;
+        let modoActual = 'planificar';
+        let antenasActuales = [];        // [{lat, lon, marker}] antenas instaladas hoy (modo Optimizar)
+        let colocandoActuales = false;
+        let numAntenasTocado = false;
+        let contadorPuntos = 0;
+        let nombreProyecto = '';
+        const COLORES_ANTENA = ['#f97316', '#22d3ee', '#facc15', '#a78bfa', '#4ade80', '#f472b6', '#60a5fa', '#fb7185', '#a3e635', '#e879f9'];
 
         document.getElementById('app-version').innerText = 'v' + APP_VERSION;
-        document.getElementById('btn-objetivo').innerText = `Diseño automático: ${CONFIG.objetivoCoberturaPct}% de cobertura`;
+        document.querySelectorAll('.txt-objetivo').forEach(e => e.innerText = CONFIG.objetivoCoberturaPct);
+        document.getElementById('num_antenas').addEventListener('input', () => { numAntenasTocado = true; actualizarTextoN(); });
+        function actualizarTextoN() {
+            const n = Math.max(1, parseInt(document.getElementById('num_antenas').value) || 1);
+            document.getElementById('txt-n').innerText = n;
+            document.getElementById('btn-fijo').lastChild.textContent = n === 1 ? ' antena' : ' antenas';
+        }
 
         // =======================================================================
         // 📡 PARÁMETROS DEL ENLACE
@@ -757,7 +810,9 @@
         function actualizarInfoEnlace() {
             const p = perfilActivo(), f = formatoActivo();
             document.getElementById('info-enlace').innerHTML =
-                `${p.frecuenciaMHz} MHz ${CONFIG.sfDiseno}<br>Umbral ${umbralCoberturaDbm()} dBm<br>Rx a ${f.alturaM} m`;
+                `Enlace ${p.frecuenciaMHz} MHz, ${CONFIG.sfDiseno}. Umbral de cobertura ${umbralCoberturaDbm()} dBm.<br>Dispositivo a ${f.alturaM} m del suelo, ${CONFIG.dispositivo.potenciaTxDbm} dBm.`;
+            const veg = document.getElementById('land_cover').value === '1' ? 'con vegetación' : 'sin vegetación';
+            document.getElementById('resumen-ajustes').innerText = `· mástil ${alturaMastil()} m, ${veg}`;
         }
 
         function cambiarPerfil() {
@@ -767,7 +822,30 @@
         }
         actualizarInfoEnlace();
         document.getElementById('formato_dispositivo').addEventListener('change', () => programarPrecalculo());
-        document.getElementById('tx_height').addEventListener('change', () => programarPrecalculo());
+        document.getElementById('tx_height').addEventListener('change', () => { actualizarInfoEnlace(); programarPrecalculo(); });
+        document.getElementById('land_cover').addEventListener('change', actualizarInfoEnlace);
+
+        function cambiarModo(modo) {
+            modoActual = modo;
+            document.querySelectorAll('.pestana').forEach(b => { const a = b.dataset.modo === modo; b.classList.toggle('activa', a); b.setAttribute('aria-selected', a); });
+            ['planificar', 'optimizar', 'punto'].forEach(m => document.getElementById('modo-' + m).classList.toggle('hidden', m !== modo));
+            const bloque = document.getElementById('bloque-permisos');
+            if (modo === 'punto') bloque.classList.add('hidden');
+            else {
+                const panel = document.getElementById('modo-' + modo);
+                panel.insertBefore(bloque, panel.querySelector('.accion'));
+                bloque.classList.remove('hidden');
+            }
+            if (modo !== 'optimizar' && colocandoActuales) toggleColocarActuales();
+            if (modo !== 'punto' && inputMarker) { inputMarker.remove(); inputMarker = null; }
+            map.getCanvas().style.cursor = modo === 'punto' ? 'crosshair' : '';
+        }
+
+        function avisoMapa(texto) {
+            const a = document.getElementById('aviso-mapa');
+            if (!texto) return a.classList.add('hidden');
+            a.innerText = texto; a.classList.remove('hidden');
+        }
 
         function mostrarLoader(texto) {
             document.getElementById('loader-text').innerText = texto;
@@ -923,7 +1001,12 @@
             });
         });
 
-        map.on('click', (e) => colocarMarcador(e.lngLat.lat, e.lngLat.lng));
+        map.on('click', (e) => {
+            if (colocandoActuales) return anadirAntenaActual(e.lngLat.lat, e.lngLat.lng);
+            if (modoActual === 'punto') colocarMarcador(e.lngLat.lat, e.lngLat.lng);
+        });
+        cambiarModo('planificar');
+        actualizarTextoN();
 
         function colocarMarcador(lat, lng) {
             document.getElementById('lat').value = parseFloat(lat).toFixed(6);
@@ -934,6 +1017,70 @@
             el.innerHTML = svgPin();
             inputMarker = new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat([lng, lat]).addTo(map);
             map.flyTo({ center: [lng, lat], essential: true });
+        }
+
+        function elementoPin(texto, color, clase = '') {
+            const el = document.createElement('div');
+            el.className = 'pin-num ' + clase;
+            el.innerHTML = `<div class="cabeza" style="background:${color}">${texto}</div><div class="punta"></div>`;
+            return el;
+        }
+
+        function toggleColocarActuales() {
+            colocandoActuales = !colocandoActuales;
+            const b = document.getElementById('btn-colocar-actuales');
+            b.classList.toggle('activo', colocandoActuales);
+            b.innerText = colocandoActuales ? 'Terminar' : 'Marcar en el mapa';
+            map.getCanvas().style.cursor = colocandoActuales ? 'crosshair' : (modoActual === 'punto' ? 'crosshair' : '');
+            avisoMapa(colocandoActuales ? 'Haz clic en el mapa donde está cada antena instalada. Pulsa «Terminar» al acabar.' : null);
+        }
+
+        function anadirAntenaActual(lat, lon) {
+            const marker = new mapboxgl.Marker(elementoPin('A' + (antenasActuales.length + 1), '#475569', 'actual'), { anchor: 'bottom' }).setLngLat([lon, lat]).addTo(map);
+            antenasActuales.push({ lat, lon, marker });
+            renderActuales();
+        }
+
+        function eliminarAntenaActual(i) {
+            antenasActuales[i].marker.remove();
+            antenasActuales.splice(i, 1);
+            antenasActuales.forEach((a, k) => a.marker.getElement().querySelector('.cabeza').innerText = 'A' + (k + 1));
+            renderActuales();
+        }
+
+        function limpiarAntenasActuales() {
+            antenasActuales.forEach(a => a.marker.remove());
+            antenasActuales = [];
+            renderActuales();
+        }
+
+        function renderActuales() {
+            const n = antenasActuales.length;
+            document.getElementById('n-actuales').innerText = n ? `${n} marcada${n === 1 ? '' : 's'}` : 'ninguna';
+            document.getElementById('lista-actuales').innerHTML = antenasActuales.map((a, i) => `
+                <div class="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                    <span><b class="text-slate-300 font-sans">A${i + 1}</b> ${a.lat.toFixed(5)}, ${a.lon.toFixed(5)}</span>
+                    <button onclick="eliminarAntenaActual(${i})" title="Quitar" class="icono-accion !p-1">✕</button>
+                </div>`).join('');
+            if (n && !numAntenasTocado) { document.getElementById('num_antenas').value = n; actualizarTextoN(); }
+        }
+
+        async function cargarActualesKML(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            try {
+                let texto;
+                if (/\.kmz$/i.test(file.name)) {
+                    const zip = await JSZip.loadAsync(file);
+                    const kml = Object.keys(zip.files).find(n => /\.kml$/i.test(n));
+                    if (!kml) throw new Error('El KMZ no contiene ningún .kml');
+                    texto = await zip.files[kml].async('string');
+                } else texto = await file.text();
+                const puntos = parsearKMLaPuntos(texto, DOMParser);
+                if (!puntos.length) return alert('El archivo no contiene puntos (Placemark con Point).');
+                puntos.forEach(([lng, lat]) => anadirAntenaActual(lat, lng));
+            } catch (e) { alert('No se pudo leer el archivo: ' + e.message); }
+            finally { document.getElementById('kml_actuales').value = ''; }
         }
 
         function svgPin() {
@@ -1027,6 +1174,7 @@
                 } else {
                     texto = await file.text();
                 }
+                nombreProyecto = file.name.replace(/\.(kml|kmz)$/i, '');
                 await procesarKML(texto);
             } catch (e) {
                 alert("No se pudo leer el archivo: " + e.message);
@@ -1049,6 +1197,12 @@
 
             geojsonKMLActual = turf.featureCollection(poligonos.map(anillos => turf.polygon(anillos)));
             versionKML++;
+            limpiarAntenasActuales();
+            const areaHa = turf.area(geojsonKMLActual) / 1e4;
+            document.getElementById('kml-nombre').innerText = nombreProyecto || 'Finca cargada';
+            document.getElementById('kml-detalle').innerText = `${areaHa.toLocaleString('es-ES', { maximumFractionDigits: 0 })} ha${poligonos.length > 1 ? `, ${poligonos.length} parcelas` : ''} · pulsa para cambiarla`;
+            const np = document.getElementById('nombre-proyecto');
+            np.innerText = nombreProyecto; np.classList.toggle('hidden', !nombreProyecto);
             construirMallaFinca();
             construirMallaMascara();
             construirPuntosExterior();
@@ -1145,6 +1299,7 @@
         function construirPuntosExterior() {
             const cfg = CONFIG.exterior;
             puntosExterior = [];
+            if (!cfg.mostrarResumen) return;
             try {
                 const lineas = [];
                 turf.flatten(geojsonKMLActual).features.forEach(f => {
@@ -1504,28 +1659,54 @@
             });
         }
 
-        async function mostrarSimulacion(r, nombre) {
+        async function mostrarSimulacion(r, nombre, op = {}) {
             const id = simCounter++;
-            const marker = new mapboxgl.Marker(Object.assign(document.createElement('div'), { className: 'neon-orange-pin', innerHTML: svgPin() }), { anchor: 'bottom' })
-                .setLngLat([r.lon, r.lat]).addTo(map);
+            const tipo = op.tipo || 'punto';
+            const numero = op.numero || 1;
+            const color = tipo === 'antena' ? COLORES_ANTENA[(numero - 1) % COLORES_ANTENA.length] : (tipo === 'actual' ? '#475569' : '#ff7e00');
+            const etiqueta = tipo === 'antena' ? String(numero) : (tipo === 'actual' ? 'A' + numero : 'P' + numero);
+            const visible = op.visible !== false;
             const urlLocal = r.pixeles ? await urlDesdePixeles(r.pixeles) : null;
             if (urlLocal && r.boundsCloudRF) {
                 const [n, e, s, w] = r.boundsCloudRF;
                 map.addSource(`sim-source-${id}`, { 'type': 'image', 'url': urlLocal, 'coordinates': [[w, n], [e, n], [e, s], [w, s]] });
-                map.addLayer({ 'id': `sim-layer-${id}`, 'type': 'raster', 'source': `sim-source-${id}`, 'paint': { 'raster-opacity': 0.65 } });
+                map.addLayer({ 'id': `sim-layer-${id}`, 'type': 'raster', 'source': `sim-source-${id}`,
+                               'layout': { 'visibility': visible ? 'visible' : 'none' }, 'paint': { 'raster-opacity': 0.65 } },
+                             map.getLayer('huecos-layer') ? 'huecos-layer' : undefined);
             }
             const sim = {
-                id, name: nombre || `Punto ${id}`, freq: perfilActivo().frecuenciaMHz, alt: r.alt, formato: formatoActivo().nombre.split(' ')[0],
-                radioKm: r.radioKm, kmz: r.kmz, visible: true, imageUrl: r.imageUrl, boundsCloudRF: r.boundsCloudRF,
-                proyeccion: r.proyeccion, pixeles: r.pixeles, pinMarker: marker, urlLocal
+                id, name: nombre, tipo, color, etiqueta, freq: perfilActivo().frecuenciaMHz, alt: r.alt, formato: formatoActivo().nombre.split(' ')[0],
+                radioKm: r.radioKm, kmz: r.kmz, visible, imageUrl: r.imageUrl, boundsCloudRF: r.boundsCloudRF,
+                proyeccion: r.proyeccion, pixeles: r.pixeles, urlLocal, lat: r.lat, lon: r.lon, elev: DEM.valor(r.lon, r.lat)
             };
             sim.coberturaLocal = calcularPorcentajeLocal(sim);
-            const labelEl = document.createElement('div'); labelEl.className = 'cobertura-badge';
-            labelEl.innerHTML = `<div style="color:white; font-size:15px; margin-bottom:1px;">${sim.name}</div>` +
-                (sim.coberturaLocal !== null ? `<div style="color:#ff7e00; font-size:14px;">Local: ${sim.coberturaLocal}%</div>` : '');
-            sim.labelMarker = new mapboxgl.Marker(labelEl, { anchor: 'bottom', offset: [0, -45] }).setLngLat([r.lon, r.lat]).addTo(map);
+            if (tipo !== 'actual') { // las antenas actuales ya tienen su pin gris en el mapa
+                sim.pinMarker = new mapboxgl.Marker(elementoPin(etiqueta, color), { anchor: 'bottom' })
+                    .setLngLat([r.lon, r.lat]).setPopup(new mapboxgl.Popup({ offset: 34 }).setHTML(htmlPopup(sim)));
+                if (visible) sim.pinMarker.addTo(map);
+            }
             simulaciones.push(sim);
             return sim;
+        }
+
+        function htmlPopup(sim) {
+            return `<div class="text-sm font-bold mb-1" style="color:${sim.color === '#475569' ? '#cbd5e1' : sim.color}">${sim.name}</div>
+                <div class="text-xs text-slate-300">${sim.coberturaLocal !== null ? `Cubre el <b>${sim.coberturaLocal.toLocaleString('es-ES')}%</b> de la finca` : 'Sin finca cargada'}</div>
+                <div class="text-[11px] text-slate-400 mt-1 font-mono">${sim.lat.toFixed(5)}, ${sim.lon.toFixed(5)}</div>
+                <div class="text-[11px] text-slate-400">${sim.elev !== null ? Math.round(sim.elev) + ' m de altitud · ' : ''}mástil ${sim.alt} m</div>`;
+        }
+
+        function verSimulacion(id) {
+            const sim = simulaciones.find(s => s.id === id);
+            if (!sim) return;
+            if (!sim.visible) toggleCapa(id, true);
+            map.flyTo({ center: [sim.lon, sim.lat], zoom: Math.max(map.getZoom(), 14), essential: true });
+            if (sim.pinMarker && !sim.pinMarker.getPopup().isOpen()) sim.pinMarker.togglePopup();
+        }
+
+        function eliminarSimulacionUI(id) {
+            eliminarSimulacion(id);
+            actualizarInterfazGlobal();
         }
 
         function eliminarSimulacion(id) {
@@ -1541,20 +1722,21 @@
         async function realizarSimulacion(customLat = null, customLon = null) {
             const lat = parseFloat(customLat !== null ? customLat : document.getElementById('lat').value);
             const lon = parseFloat(customLon !== null ? customLon : document.getElementById('lon').value);
-            if (!coordenadasValidas(lat, lon)) return alert("Faltan coordenadas.");
-
-            document.getElementById('btnSimular').classList.add('hidden');
+            if (!coordenadasValidas(lat, lon)) return alert("Indica un punto: haz clic en el mapa o escribe las coordenadas.");
+            const btn = document.getElementById('btnSimular');
+            btn.disabled = true;
             mostrarLoader('Procesando modelo ITM...');
             try {
                 const r = await simularCloudRF({ lat, lon, alt: alturaMastil() });
                 if (inputMarker) { inputMarker.remove(); inputMarker = null; }
-                await mostrarSimulacion(r);
+                contadorPuntos++;
+                await mostrarSimulacion(r, `Punto ${contadorPuntos}`, { tipo: 'punto', numero: contadorPuntos });
                 await actualizarInterfazGlobal();
             } catch (error) {
                 console.error("Error:", error);
                 alert("Error en la simulación: " + error.message);
             } finally {
-                document.getElementById('btnSimular').classList.remove('hidden');
+                btn.disabled = false;
                 ocultarLoader();
             }
         }
@@ -1634,56 +1816,122 @@
         }
 
         async function actualizarInterfazGlobal() {
-            if (etiquetaCoberturaActual) { etiquetaCoberturaActual.remove(); etiquetaCoberturaActual = null; }
             const activas = simulaciones.filter(s => s.visible && s.pixeles);
-            if (!geojsonKMLActual) { renderizarHistorial(null); pintarResumenExterior([]); await actualizarMascaraHuecos([]); return; }
-            const globalPct = simulaciones.length ? (activas.length ? pctUnion(activas, mallaFinca) : 0) : null;
-            if (globalPct !== null) {
-                const ok = globalPct >= CONFIG.objetivoCoberturaPct;
-                const el = document.createElement('div');
-                el.className = 'cobertura-badge';
-                el.innerHTML = `<div style="color:${ok ? '#22c55e' : '#ef4444'}; font-size:17px;">Global: ${globalPct}%</div>
-                                <div style="color:#e2e8f0; font-size:11px;">objetivo ${CONFIG.objetivoCoberturaPct}%</div>`;
-                etiquetaCoberturaActual = new mapboxgl.Marker(el, { anchor: 'center' })
-                    .setLngLat(turf.center(geojsonKMLActual).geometry.coordinates).addTo(map);
+            const kpi = document.getElementById('kpi-card');
+            if (!geojsonKMLActual || !simulaciones.length) kpi.classList.add('hidden');
+            else {
+                const pct = activas.length ? pctUnion(activas, mallaFinca) : 0;
+                const ok = pct >= CONFIG.objetivoCoberturaPct;
+                const v = document.getElementById('kpi-valor');
+                v.innerText = pct.toLocaleString('es-ES', { maximumFractionDigits: 1 }) + '%';
+                v.style.color = ok ? '#4ade80' : '#fbbf24';
+                document.getElementById('kpi-detalle').innerText =
+                    `objetivo ${CONFIG.objetivoCoberturaPct}% · ${activas.length} cobertura${activas.length === 1 ? '' : 's'} activa${activas.length === 1 ? '' : 's'}`;
+                kpi.classList.remove('hidden');
             }
-            renderizarHistorial(globalPct);
+            renderizarHistorial();
             pintarResumenExterior(activas);
+            actualizarLeyenda(activas);
             await actualizarMascaraHuecos(activas);
         }
 
-        function renderizarHistorial(globalPct = null) {
+        // Leyenda a partir de los colores reales de la imagen, ordenados de más cerca a más lejos de la antena
+        function paletaSimulacion(sim) {
+            if (sim.paleta !== undefined) return sim.paleta;
+            const px = sim.pixeles;
+            if (!px || !sim.boundsCloudRF) return (sim.paleta = null);
+            const [n, e, s, w] = sim.boundsCloudRF;
+            const cx = (sim.lon - w) / (e - w) * px.w, cy = (n - sim.lat) / (n - s) * px.h;
+            const paso = Math.max(1, Math.floor(Math.sqrt(px.w * px.h / 40000)));
+            const grupos = new Map(); let total = 0;
+            for (let y = 0; y < px.h; y += paso) for (let x = 0; x < px.w; x += paso) {
+                const o = (y * px.w + x) * 4;
+                if (px.data[o + 3] <= 10) continue;
+                const clave = ((px.data[o] >> 4) << 8) | ((px.data[o + 1] >> 4) << 4) | (px.data[o + 2] >> 4);
+                let g = grupos.get(clave);
+                if (!g) { g = { r: 0, g: 0, b: 0, n: 0, d: 0 }; grupos.set(clave, g); }
+                g.r += px.data[o]; g.g += px.data[o + 1]; g.b += px.data[o + 2]; g.n++; g.d += Math.hypot(x - cx, y - cy); total++;
+            }
+            const lista = [...grupos.values()].filter(g => g.n >= total * 0.01)
+                .map(g => ({ color: `rgb(${Math.round(g.r / g.n)},${Math.round(g.g / g.n)},${Math.round(g.b / g.n)})`, d: g.d / g.n }))
+                .sort((a, b) => a.d - b.d);
+            const max = 8, sel = lista.length <= max ? lista : Array.from({ length: max }, (_, i) => lista[Math.round(i * (lista.length - 1) / (max - 1))]);
+            return (sim.paleta = sel.map(x => x.color));
+        }
+
+        function actualizarLeyenda(activas) {
+            const caja = document.getElementById('leyenda-senal');
+            const pal = activas.length ? paletaSimulacion(activas[0]) : null;
+            if (!pal || pal.length < 2) return caja.classList.add('hidden');
+            document.getElementById('leyenda-barra').style.background = `linear-gradient(to right, ${pal.join(', ')})`;
+            document.getElementById('leyenda-umbral').innerText = `Límite de cobertura (${umbralCoberturaDbm()} dBm)`;
+            caja.classList.remove('hidden');
+        }
+
+        async function descargarTodo() {
+            if (!simulaciones.length) return;
+            mostrarLoader('Preparando la descarga…');
+            try {
+                const esc = t => String(t).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+                const limpio = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') || 'proyecto';
+                const base = limpio(nombreProyecto || 'proyecto');
+                const zip = new JSZip();
+                const marcas = simulaciones.map(s => `
+    <Placemark><name>${esc(s.name)}</name>
+      <description>${esc(`${s.coberturaLocal !== null ? 'Cubre el ' + s.coberturaLocal + '% de la finca. ' : ''}Mástil ${s.alt} m.${s.elev !== null ? ' Altitud ' + Math.round(s.elev) + ' m.' : ''}`)}</description>
+      <Point><coordinates>${s.lon},${s.lat},0</coordinates></Point></Placemark>`).join('');
+                zip.file(`${base}_antenas.kml`, `<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${esc(nombreProyecto || 'Proyecto')}</name>${marcas}\n</Document></kml>`);
+                const fallidos = [];
+                await Promise.all(simulaciones.map(async s => {
+                    try { const r = await fetch(s.kmz); if (!r.ok) throw new Error(); zip.file(`cobertura/${limpio(s.name)}.kmz`, await r.blob()); }
+                    catch (e) { fallidos.push(`${s.name}: ${s.kmz}`); }
+                }));
+                if (fallidos.length) zip.file('enlaces_kmz.txt', 'Estos KMZ no se pudieron incluir; se pueden descargar desde estos enlaces:\n\n' + fallidos.join('\n'));
+                const blob = await zip.generateAsync({ type: 'blob' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob); a.download = `${base}_ixorigue.zip`;
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+            } catch (e) {
+                alert('No se pudo preparar la descarga: ' + e.message);
+            } finally { ocultarLoader(); }
+        }
+
+        function renderizarHistorial() {
             const lista = document.getElementById('simulationList');
             const msg = document.getElementById('emptyHistoryMsg');
-            if (msg) msg.style.display = simulaciones.length > 0 ? 'none' : 'block';
+            msg.style.display = simulaciones.length ? 'none' : 'block';
             const activasN = simulaciones.filter(x => x.visible).length;
-            document.getElementById('contador-sims').innerText = simulaciones.length ? `(${activasN} de ${simulaciones.length} activas)` : '';
-            lista.innerHTML = '';
-            [...simulaciones].reverse().forEach(sim => {
-                let stats = '';
-                if (sim.coberturaLocal !== null && sim.coberturaLocal !== undefined) stats += `<span class="text-[#ff7e00] font-bold">Loc: ${sim.coberturaLocal}%</span>`;
-                if (globalPct !== null && sim.visible) {
-                    if (stats) stats += `<span class="text-slate-500 mx-1.5">|</span>`;
-                    stats += `<span class="${globalPct >= CONFIG.objetivoCoberturaPct ? 'text-green-500' : 'text-red-500'} font-bold">Glb: ${globalPct}%</span>`;
-                }
-                if (!stats) stats = `<span class="text-slate-400 font-medium">Análisis listo</span>`;
-                const meta = `${sim.freq} MHz, ${sim.alt} m, ${sim.formato}, radio ${sim.radioKm} km`;
-                lista.insertAdjacentHTML('beforeend', `
-                <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700 shadow-sm flex items-center justify-between gap-3 group hover:border-slate-600 transition-colors">
-                    <div class="relative inline-block w-9 mr-1 align-middle select-none flex-shrink-0">
-                        <input type="checkbox" id="toggle_${sim.id}" onchange="toggleCapa(${sim.id}, this.checked)" ${sim.visible ? 'checked' : ''} class="toggle-checkbox absolute block w-4 h-4 rounded-full bg-slate-200 border-2 border-slate-600 appearance-none cursor-pointer transition-all duration-300 z-10 top-0.5 left-0.5"/>
-                        <label for="toggle_${sim.id}" class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-700 cursor-pointer transition-colors duration-300"></label>
-                    </div>
+            document.getElementById('contador-sims').innerText = simulaciones.length ? `${activasN} de ${simulaciones.length} visibles` : '';
+            document.getElementById('btn-descargar-todo').classList.toggle('hidden', !simulaciones.length);
+            const rango = { antena: 0, actual: 1, punto: 2 };
+            const orden = [...simulaciones].sort((a, b) => (rango[a.tipo] - rango[b.tipo]) || (a.id - b.id));
+            const ico = {
+                ver: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>',
+                kmz: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>',
+                borrar: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>'
+            };
+            lista.innerHTML = orden.map(sim => {
+                const local = sim.coberturaLocal !== null && sim.coberturaLocal !== undefined
+                    ? `<b class="text-slate-200">${sim.coberturaLocal.toLocaleString('es-ES')}%</b> de la finca` : 'sin finca cargada';
+                const sub = sim.tipo === 'actual' ? 'Situación actual · ' : '';
+                const estiloNum = sim.tipo === 'actual' ? 'color:white;border-style:dashed;' : '';
+                return `
+                <div class="item-antena ${sim.visible ? '' : 'apagada'}">
+                    <label class="interruptor" title="${sim.visible ? 'Ocultar' : 'Mostrar'} cobertura">
+                        <input type="checkbox" ${sim.visible ? 'checked' : ''} onchange="toggleCapa(${sim.id}, this.checked)" aria-label="Mostrar ${sim.name}"><span></span>
+                    </label>
+                    <div class="numero" style="background:${sim.color};${estiloNum}">${sim.etiqueta}</div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-slate-200 truncate" title="${sim.name}">${sim.name}</p>
-                        <div class="text-[11px] mt-0.5">${stats}</div>
-                        <div class="text-[10px] text-slate-500 mt-0.5 truncate" title="${meta}">${meta}</div>
+                        <div class="text-sm font-semibold text-slate-100 truncate">${sim.name}</div>
+                        <div class="text-[11px] text-slate-400 truncate">${sub}${local}${sim.elev !== null ? ` · ${Math.round(sim.elev)} m` : ''}</div>
+                        <div class="text-[10px] text-slate-500 font-mono truncate">${sim.lat.toFixed(5)}, ${sim.lon.toFixed(5)} · mástil ${sim.alt} m</div>
                     </div>
-                    <a href="${sim.kmz}" target="_blank" title="Descargar KMZ" class="bg-slate-700 hover:bg-green-600 text-slate-300 hover:text-white p-2 rounded-md transition-colors flex-shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    </a>
-                </div>`);
-            });
+                    <button class="icono-accion" title="Ver en el mapa" onclick="verSimulacion(${sim.id})">${ico.ver}</button>
+                    <a class="icono-accion" href="${sim.kmz}" target="_blank" title="Descargar KMZ">${ico.kmz}</a>
+                    ${sim.tipo === 'punto' ? `<button class="icono-accion hover:!text-red-300" title="Eliminar" onclick="eliminarSimulacionUI(${sim.id})">${ico.borrar}</button>` : ''}
+                </div>`;
+            }).join('');
         }
 
         async function toggleCapa(id, isVisible) {
@@ -1691,8 +1939,7 @@
             if (!sim) return;
             sim.visible = isVisible;
             if (map.getLayer(`sim-layer-${id}`)) map.setLayoutProperty(`sim-layer-${id}`, 'visibility', isVisible ? 'visible' : 'none');
-            if (isVisible) { sim.labelMarker?.addTo(map); sim.pinMarker?.addTo(map); }
-            else { sim.labelMarker?.remove(); sim.pinMarker?.remove(); }
+            if (sim.pinMarker) { if (isVisible) sim.pinMarker.addTo(map); else sim.pinMarker.remove(); }
             await actualizarInterfazGlobal();
         }
 
@@ -1780,6 +2027,11 @@
                 const ctx = { modo, nFijo, M, permisos, pesos, hTx: M.hTx, perfil: document.getElementById('sim_profile').value,
                               sims30: new Map(), sims10: new Map(), reales: new Map(), contador: { sims: 0, cache: 0 }, cal: null, sets: null, segundos: 0 };
 
+                // Situación actual del cliente (solo Optimizar, si ha marcado sus antenas)
+                const promesaActual = (modo === 'fijo' && antenasActuales.length)
+                    ? Promise.allSettled(antenasActuales.map(a => simularCloudRF({ lat: a.lat, lon: a.lon, alt: ctx.hTx, contador: ctx.contador })))
+                    : null;
+
                 // 2. Calibración
                 ctx.cal = { offsetDb: 0, coefVegDb: CONFIG.vegetacion.coefInicialDb, precision: null, n: 0 };
                 ctx.sets = conjuntosCalibrados(M, ctx.cal);
@@ -1824,6 +2076,10 @@
                     if (modo === 'objetivo' || propuesta.interiorPct > real.interiorPct) real = propuesta;
                 }
                 recalibrar(ctx);
+                if (promesaActual) {
+                    const sims = (await promesaActual).filter(x => x.status === 'fulfilled').map(x => x.value);
+                    if (sims.length) ctx.actual = { sims, n: antenasActuales.length, pct: pctUnion(sims, mallaFinca) };
+                }
                 ctx.segundos = (Date.now() - t0) / 1000;
 
                 const cambio = opciones.cambio ? { ...opciones.cambio, antes: anterior ? resumenCorto(anterior) : null } : null;
@@ -1886,7 +2142,10 @@
 
             if (ultimoResultado) ultimoResultado.ids.forEach(eliminarSimulacion);
             const ids = [];
-            for (let i = 0; i < finales.length; i++) ids.push((await mostrarSimulacion(finales[i], `Antena ${i + 1} (auto)`)).id);
+            for (let i = 0; i < finales.length; i++) ids.push((await mostrarSimulacion(finales[i], `Antena ${i + 1}`, { tipo: 'antena', numero: i + 1 })).id);
+            if (ctx.actual) for (let i = 0; i < ctx.actual.sims.length; i++)
+                ids.push((await mostrarSimulacion(ctx.actual.sims[i], `Actual ${i + 1}`, { tipo: 'actual', numero: i + 1, visible: false })).id);
+            if (nodosVisibles) toggleNodos(); // las cumbres se ocultan para limpiar el mapa
             const exterior = analisisExterior(finales);
             ultimoResultado = { ctx, seleccion: orden, ids, curva, pct: curva[curva.length - 1] ?? 0,
                                 exteriorPct: exterior && exterior.franjaPct !== null ? exterior.franjaPct : null, aviso: null };
@@ -2054,33 +2313,62 @@
         function pintarResumenOptimizador(r, cambio) {
             const ctx = r.ctx, objetivo = CONFIG.objetivoCoberturaPct;
             const ok = r.pct >= objetivo, n = r.seleccion.length;
-            const titulo = ctx.modo === 'fijo' ? `Antenas contratadas: ${ctx.nFijo}` : `Diseño automático (objetivo ${objetivo}%)`;
-            const permiso = ctx.permisos.permitirFuera ? `antenas permitidas hasta ${ctx.permisos.distFueraKm * 1000} m fuera de la finca` : 'solo antenas dentro de la finca';
-            const fmt = x => x === null || x === undefined ? '–' : x.toFixed(1) + '%';
-            const lineas = [
-                `<div class="font-semibold text-purple-200">${titulo}</div>`,
-                `<div><b>${n} antena${n === 1 ? '' : 's'}</b> cubren el <b class="${ok ? 'text-green-400' : 'text-red-400'}">${r.pct.toFixed(1)}%</b> de la finca (CloudRF). ${ok ? 'Objetivo alcanzado.' : 'Objetivo no alcanzado.'}</div>`,
-                `<div>Cobertura por número de antenas: ${r.curva.map((p, i) => `${i + 1} → ${p.toFixed(0)}%`).join(', ')}</div>`,
-                r.exteriorPct !== null ? `<div>Franja exterior de ${CONFIG.exterior.franjaKm} km: ${r.exteriorPct.toFixed(0)}% cubierta.</div>` : '',
-                `<div class="text-purple-300/70 text-[10px]">Configuración: ${permiso}, mástil ${ctx.hTx} m.</div>`
-            ];
+            const pctTxt = x => x === null || x === undefined ? '–' : x.toLocaleString('es-ES', { maximumFractionDigits: 1 }) + '%';
+            const plural = (k, a, b) => k === 1 ? a : b;
+            const titulo = ctx.modo === 'fijo' ? 'Optimizar red existente' : 'Planificar red';
+            const p = [];
+            p.push(`<div class="flex items-center justify-between gap-2">
+                        <span class="titulo-seccion">${titulo}</span>
+                        <span class="chip ${ok ? 'chip-ok' : 'chip-ko'}">${ok ? '✓ Objetivo ' + objetivo + '% alcanzado' : 'Objetivo ' + objetivo + '% no alcanzado'}</span>
+                    </div>`);
+            p.push(`<div class="flex items-end justify-between">
+                        <div><div class="text-4xl font-extrabold text-white tracking-tight leading-none">${pctTxt(r.pct)}</div>
+                             <div class="text-[11px] text-slate-400 mt-1">de la finca con cobertura</div></div>
+                        <div class="text-right"><div class="text-3xl font-extrabold text-purple-300 leading-none">${n}</div>
+                             <div class="text-[11px] text-slate-400 mt-1">${plural(n, 'antena', 'antenas')}</div></div>
+                    </div>`);
+            if (ctx.actual) {
+                const d = r.pct - ctx.actual.pct;
+                p.push(`<div class="p-2.5 rounded-lg bg-slate-900/50 border border-slate-700">
+                            Hoy, con ${ctx.actual.n} ${plural(ctx.actual.n, 'antena', 'antenas')}: <b class="text-slate-100">${pctTxt(ctx.actual.pct)}</b>.
+                            Reubicando: <b class="text-emerald-300">${pctTxt(r.pct)}</b> <span class="${d >= 0 ? 'text-emerald-400' : 'text-amber-300'}">(${d >= 0 ? '+' : ''}${d.toLocaleString('es-ES', { maximumFractionDigits: 1 })} puntos)</span>.
+                            <span class="block text-[10px] text-slate-500 mt-1">La cobertura actual está en la lista como «Actual»; actívala para compararla.</span>
+                        </div>`);
+            }
+            if (r.curva.length > 1) {
+                const barras = r.curva.map((v, i) => `
+                    <div><span class="v">${v.toFixed(0)}%</span>
+                         <div class="w-full flex-1 flex items-end"><div class="b" style="height:${Math.max(4, v)}%; background:linear-gradient(to top, ${COLORES_ANTENA[i % COLORES_ANTENA.length]}88, ${COLORES_ANTENA[i % COLORES_ANTENA.length]})"></div></div>
+                         <span class="text-[10px] text-slate-500">${i + 1}</span></div>`).join('');
+                p.push(`<div><div class="text-[11px] text-slate-400 mb-1.5">Cobertura acumulada al añadir cada antena</div><div class="barra-curva">${barras}</div></div>`);
+            }
             if (cambio) {
                 const a = cambio.antes;
-                lineas.push(`<div class="mt-1 p-2 rounded bg-emerald-950/40 border border-emerald-500/20 text-emerald-200">${cambio.titulo}${a ? `: ${a.n} antena${a.n === 1 ? '' : 's'} ${fmt(a.pct)} → ${n} antena${n === 1 ? '' : 's'} ${fmt(r.pct)}${a.ext !== null && r.exteriorPct !== null ? ` (exterior ${a.ext.toFixed(0)}% → ${r.exteriorPct.toFixed(0)}%)` : ''}` : ''}</div>`);
+                p.push(`<div class="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/25 text-emerald-200">
+                            <b>${cambio.titulo}</b>${a ? `: ${a.n} ${plural(a.n, 'antena', 'antenas')} ${pctTxt(a.pct)} → ${n} ${plural(n, 'antena', 'antenas')} ${pctTxt(r.pct)}` : ''}</div>`);
             }
-            if (ctx.modo === 'objetivo' && !ok) lineas.push(`<div class="text-amber-300">Las zonas en rojo del mapa quedan sin cobertura con un máximo de ${CONFIG.optimizador.maxAntenas} antenas.</div>`);
-            if (r.aviso) lineas.push(`<div class="mt-1 p-2 rounded bg-amber-950/40 border border-amber-500/20 text-amber-200">${r.aviso}</div>`);
+            if (r.aviso) p.push(`<div class="p-2.5 rounded-lg bg-amber-950/40 border border-amber-500/25 text-amber-200">${r.aviso}</div>`);
+            if (ctx.modo === 'objetivo' && !ok)
+                p.push(`<div class="text-amber-300">Las zonas en rojo del mapa quedan sin cobertura con un máximo de ${CONFIG.optimizador.maxAntenas} antenas.</div>`);
             if (r.recs.length) {
-                lineas.push(`<div class="mt-2 font-semibold text-purple-200">Recomendaciones</div>`);
-                r.recs.forEach(rec => lineas.push(`
-                    <div class="p-2 rounded bg-slate-900/50 border border-purple-500/20">
-                        <div class="mb-1.5">${rec.texto}</div>
-                        <button onclick="aplicarRecomendacion('${rec.id}')" class="btn-recomendacion w-full bg-purple-700 hover:bg-purple-600 disabled:opacity-40 text-white text-xs py-1.5 rounded font-semibold transition-colors">${rec.boton}</button>
+                p.push(`<div class="titulo-seccion mt-1">Recomendaciones</div>`);
+                r.recs.forEach(rec => p.push(`
+                    <div class="p-3 rounded-lg bg-slate-900/50 border border-purple-500/25">
+                        <div class="mb-2 text-slate-300">${rec.texto}</div>
+                        <button onclick="aplicarRecomendacion('${rec.id}')" class="btn-recomendacion boton boton-optim !py-2 !text-xs">${rec.boton}</button>
                     </div>`));
             }
-            if (pilaDeshacer.length) lineas.push(`<button onclick="deshacerCambio()" class="btn-recomendacion w-full mt-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 text-xs py-1.5 rounded border border-slate-600 transition-colors">Deshacer último cambio</button>`);
-            lineas.push(`<div class="text-purple-300/70 text-[10px] mt-1">Calibración del modelo local: desfase ${ctx.cal.offsetDb >= 0 ? '+' : ''}${ctx.cal.offsetDb} dB, vegetación ${ctx.cal.coefVegDb} dB, acierto ${ctx.cal.precision === null ? '–' : (ctx.cal.precision * 100).toFixed(0) + '%'}. Simulaciones CloudRF: ${ctx.contador.sims} nuevas, ${ctx.contador.cache} desde caché. Tiempo de diseño: ${Math.round(ctx.segundos)} s.</div>`);
-            document.getElementById('opt-resumen').innerHTML = lineas.join('');
+            if (pilaDeshacer.length) p.push(`<button onclick="deshacerCambio()" class="btn-recomendacion boton boton-sec">↶ Deshacer último cambio</button>`);
+            const permiso = ctx.permisos.permitirFuera ? `antenas permitidas hasta ${ctx.permisos.distFueraKm * 1000} m fuera de la finca` : 'solo antenas dentro de la finca';
+            p.push(`<details class="avanzado">
+                        <summary><span>Detalles técnicos</span><svg class="flecha w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></summary>
+                        <div class="mt-2 text-[11px] text-slate-400 leading-relaxed">
+                            Configuración: ${permiso}, mástil ${ctx.hTx} m.<br>
+                            Calibración del modelo local con CloudRF: desfase ${ctx.cal.offsetDb >= 0 ? '+' : ''}${ctx.cal.offsetDb} dB, vegetación ${ctx.cal.coefVegDb} dB, acierto ${ctx.cal.precision === null ? '–' : (ctx.cal.precision * 100).toFixed(0) + '%'}.<br>
+                            Simulaciones CloudRF: ${ctx.contador.sims} nuevas, ${ctx.contador.cache} desde caché. Tiempo de cálculo: ${Math.round(ctx.segundos)} s.
+                        </div>
+                    </details>`);
+            document.getElementById('opt-resumen').innerHTML = p.join('');
             const panel = document.getElementById('opt-panel');
             panel.classList.remove('hidden');
             panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
