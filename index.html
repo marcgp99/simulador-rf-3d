@@ -182,7 +182,12 @@
 
                 <!-- PROYECTO -->
                 <section class="tarjeta flex flex-col gap-3">
-                    <div class="cabecera-tarjeta">Proyecto</div>
+                    <div class="cabecera-tarjeta"><span>Proyecto</span>
+                        <span class="flex items-center gap-3 text-[13px] font-medium">
+                            <input type="file" id="proyecto_abrir" accept=".rfproj" class="hidden" onchange="abrirProyecto(event)">
+                            <label for="proyecto_abrir" class="cursor-pointer hover:underline" style="color:#58A6FF" title="Abrir un proyecto guardado (.rfproj)">Abrir</label>
+                            <button id="btn-guardar-proyecto" onclick="guardarProyecto()" class="hover:underline" style="color:#58A6FF" title="Guarda la finca, los ajustes, las antenas y las coberturas en un archivo">Guardar</button>
+                        </span></div>
                     <input type="file" id="kml_upload" accept=".kml,.kmz" class="hidden" onchange="cargarKML(event)">
                     <label for="kml_upload" class="flex items-center gap-3 px-3 py-2.5 rounded border border-dashed cursor-pointer transition-colors hover:!border-[#3FB950]" style="border-color:var(--borde); background:var(--campo)">
                         <svg aria-hidden="true" class="w-5 h-5 flex-shrink-0" style="color:var(--acento)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
@@ -336,6 +341,9 @@
                 <!-- RESULTADO DEL OPTIMIZADOR -->
                 <section id="opt-panel" class="hidden tarjeta flex flex-col gap-3">
                     <div id="opt-resumen" class="flex flex-col gap-3 text-[13.5px] leading-relaxed" style="color:var(--texto-2)"></div>
+                    <button onclick="generarInforme()" class="boton boton-sec">
+                        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+                        Informe PDF para el cliente</button>
                     <button onclick="limpiarResultadoOptimizador()" class="boton boton-sec" style="color:#FF7B72">Limpiar resultado</button>
                 </section>
 
@@ -343,10 +351,16 @@
                 <section id="historyArea" class="lista flex flex-col">
                     <div class="flex items-center justify-between px-3.5 py-2.5">
                         <div class="titulo-seccion">Antenas <span id="contador-sims" class="mono ml-1 text-[12px]" style="font-weight:400; color:var(--tenue)"></span></div>
+                        <span class="flex items-center gap-3">
+                        <button id="btn-informe" onclick="generarInforme()" class="hidden text-[13px] font-medium flex items-center gap-1 hover:underline" style="color:#58A6FF">
+                            <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+                            Informe PDF
+                        </button>
                         <button id="btn-descargar-todo" onclick="descargarTodo()" class="hidden text-[13px] font-medium flex items-center gap-1 hover:underline" style="color:#58A6FF">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                             Descargar todo
                         </button>
+                        </span>
                     </div>
                     <p id="emptyHistoryMsg" class="text-[13px] text-center py-5" style="color:var(--tenue); border-top:1px solid var(--borde)">Aún no hay simulaciones.</p>
                     <div id="simulationList" class="flex flex-col"></div>
@@ -420,7 +434,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.8.0';
+        const APP_VERSION = '1.9.0';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -507,9 +521,9 @@
                 muyBuenaDbm: -110,
                 buenaDbm: -120,
                 colores: {                       // RGBA por código: 3 muy buena, 2 buena, 1 suficiente, 4 sin clave
-                    3: [34, 211, 238, 215],
-                    2: [34, 211, 238, 135],
-                    1: [165, 243, 252, 95],
+                    3: [34, 211, 238, 235],
+                    2: [34, 211, 238, 120],
+                    1: [190, 248, 255, 45],
                     4: [34, 211, 238, 150]
                 },
                 maxLadoCapa: 1400                // píxeles máximos por lado de la capa combinada
@@ -2193,6 +2207,11 @@
         async function procesarKML(kmlText) {
             const { poligonos, nombres, avisoLineas } = parsearKMLaPoligonos(kmlText, DOMParser);
             if (poligonos.length === 0) return alert("No se encontró ningún polígono en este KML.");
+            if (avisoLineas) console.warn('KML sin polígonos: se han usado líneas cerradas como contorno.');
+            await montarFinca(poligonos, nombres);
+        }
+
+        async function montarFinca(poligonos, nombres, activas = null) {
 
             if (map.getSource('kml-source')) {
                 map.removeLayer('kml-fill');
@@ -2204,8 +2223,9 @@
             limpiarPuntosLuz();
 
             zonas = poligonos.map((anillos, i) => {
-                const feature = turf.polygon(anillos, { idx: i, activa: true });
-                return { nombre: nombres[i], feature, activa: true, ha: turf.area(feature) / 1e4 };
+                const activa = activas ? activas[i] !== false : true;
+                const feature = turf.polygon(anillos, { idx: i, activa });
+                return { nombre: nombres[i], feature, activa, ha: turf.area(feature) / 1e4 };
             });
             geojsonTodas = turf.featureCollection(zonas.map(z => z.feature));
             const np = document.getElementById('nombre-proyecto');
@@ -2220,7 +2240,7 @@
                                       'line-width': ['case', ['get', 'activa'], 3, 1.5], 'line-dasharray': [2, 2] } });
             const [w, s, e, n] = turf.bbox(geojsonTodas);
             map.fitBounds([[w, s], [e, n]], { padding: 50, duration: 1500 });
-            if (avisoLineas) console.warn('KML sin polígonos: se han usado líneas cerradas como contorno.');
+            if (!zonas.some(z => z.activa)) { zonas[0].activa = true; zonas[0].feature.properties.activa = true; }
 
             await aplicarZonas({ inicial: true });
             mostrarLoader('Cargando terreno...');
@@ -2694,8 +2714,13 @@
                 const pixeles = imageUrl && data.bounds ? await cargarPixeles(imageUrl) : null;
                 const esc = CONFIG.escalaSenal;
                 const niveles = pixeles ? decodificarNiveles(pixeles.data, pixeles.w * pixeles.h, construirTablaClave(data.key), esc.muyBuenaDbm, esc.buenaDbm) : null;
-                return { lat, lon, alt, res, radioKm, data, kmz: data.kmz, imageUrl, boundsCloudRF: data.bounds, proyeccion, pixeles, niveles, desdeCache };
+                return { lat, lon, alt, res, radioKm, data, kmz: data.kmz, imageUrl, boundsCloudRF: data.bounds, proyeccion, pixeles, niveles, desdeCache, clave };
             };
+            const local = imagenesLocales.get(clave);
+            if (local) {
+                const r = await preparar(local, true);
+                if (r.pixeles) { if (contador) contador.cache++; return r; }
+            }
             const enCache = cacheSims.get(clave);
             if (enCache) {
                 const r = await preparar(enCache, true);
@@ -2727,6 +2752,7 @@
                 id, name: nombre, tipo, etiqueta, icono, nota: op.nota || '', freq: perfilActivo().frecuenciaMHz, alt: r.alt,
                 formato: formatoActivo().nombre.split(' ')[0], radioKm: r.radioKm, kmz: r.kmz, visible, imageUrl: r.imageUrl,
                 boundsCloudRF: r.boundsCloudRF, proyeccion: r.proyeccion, pixeles: r.pixeles, niveles: r.niveles,
+                res: r.res, clave: r.clave || null, claveColores: (r.data && r.data.key) || null,
                 lat: r.lat, lon: r.lon, elev: DEM.valor(r.lon, r.lat)
             };
             info4GSim(sim);
@@ -2977,7 +3003,8 @@
             const caja = document.getElementById('leyenda-senal');
             if (!activas.length) return caja.classList.add('hidden');
             const esc = CONFIG.escalaSenal, u = umbralCoberturaDbm();
-            const rgba = c => `rgba(${c[0]},${c[1]},${c[2]},${(c[3] / 255).toFixed(2)})`;
+            // Muestra tal como se ve sobre el satélite (tono de campo), no sobre el panel oscuro
+            const rgba = c => { const a = c[3] / 255, f = [74, 72, 48]; return `rgb(${[0, 1, 2].map(i => Math.round(c[i] * a + f[i] * (1 - a))).join(',')})`; };
             const menos = v => String(v).replace('-', '−');
             const filas = [
                 [esc.colores[3], 'Muy buena', `≥ ${menos(esc.muyBuenaDbm)}`],
@@ -2994,6 +3021,410 @@
             html += `<div class="flex items-center gap-2"><span class="muestra muestra-rayada"></span><span>Sin cobertura dentro de la finca</span></div>`;
             document.getElementById('leyenda-filas').innerHTML = html;
             caja.classList.remove('hidden');
+        }
+
+        // =======================================================================
+        // 💾 PROYECTOS: guardar y abrir (.rfproj = zip con proyecto.json + imágenes de cobertura)
+        // =======================================================================
+        const FORMATO_PROYECTO = 'ixorigue-rf-proyecto';
+        const AJUSTES_PROYECTO = ['sim_profile', 'formato_dispositivo', 'tx_height', 'land_cover', 'permitir_fuera', 'dist_fuera', 'exigir_4g', 'num_antenas'];
+        const imagenesLocales = new Map();   // clave de simulación → datos con la imagen del proyecto abierto (sin volver a CloudRF)
+
+        const nombreArchivo = t => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') || 'proyecto';
+        const fechaArchivo = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}`; };
+        function descargarBlob(blob, nombre) {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = nombre;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+        }
+        function pngDePixeles(px) {
+            return new Promise((resolve, reject) => {
+                const c = document.createElement('canvas');
+                c.width = px.w; c.height = px.h;
+                c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(px.data), px.w, px.h), 0, 0);
+                c.toBlob(b => b ? resolve(b) : reject(new Error('no se pudo codificar la imagen')), 'image/png');
+            });
+        }
+
+        function leerAjustes() {
+            const a = { modo: modoActual, numAntenasTocado };
+            AJUSTES_PROYECTO.forEach(id => { const el = document.getElementById(id); a[id] = el.type === 'checkbox' ? el.checked : el.value; });
+            return a;
+        }
+        function aplicarAjustes(a) {
+            if (!a) return;
+            AJUSTES_PROYECTO.forEach(id => {
+                const el = document.getElementById(id);
+                if (a[id] === undefined || !el) return;
+                if (el.type === 'checkbox') el.checked = !!a[id]; else el.value = a[id];
+            });
+            numAntenasTocado = !!a.numAntenasTocado;
+            actualizarInfoEnlace();
+            sincronizarPermisos();
+            actualizarTextoN();
+            if (a.modo) cambiarModo(a.modo);
+        }
+
+        function resultadoParaGuardar() {
+            const r = ultimoResultado;
+            if (!r) return null;
+            const copia = document.getElementById('opt-resumen').cloneNode(true);
+            copia.querySelectorAll('#opt-recs, .aviso-restaurado').forEach(e => e.remove());
+            const c4 = copia.querySelector('#opt-4g');
+            if (c4) c4.innerHTML = '';
+            const r4 = r.ctx && r.ctx.red4g;
+            return { html: copia.innerHTML, ids: r.ids.slice(), resumen: r.resumen || null,
+                     red4g: r4 ? { estado: r4.estado, exigido: r4.exigido, relajado: r4.relajado, descartados: r4.descartados, permitidos: r4.permitidos } : null };
+        }
+
+        async function guardarProyecto() {
+            if (!geojsonTodas) return alert('Carga primero una finca.');
+            if (optimizadorEnCurso) return alert('Espera a que termine el cálculo.');
+            mostrarLoader('Guardando el proyecto…');
+            try {
+                const zip = new JSZip();
+                const sims = [];
+                for (const s of simulaciones) {
+                    if (!s.pixeles) continue;
+                    const imagen = `coberturas/${s.id}.png`;
+                    zip.file(imagen, await pngDePixeles(s.pixeles));
+                    sims.push({ id: s.id, nombre: s.name, tipo: s.tipo, etiqueta: s.etiqueta, nota: s.nota, visible: s.visible,
+                                lat: s.lat, lon: s.lon, alt: s.alt, res: s.res, radioKm: s.radioKm, proyeccion: s.proyeccion,
+                                bounds: s.boundsCloudRF, claveColores: s.claveColores || null, kmz: s.kmz || null, clave: s.clave || null, imagen });
+                }
+                const proyecto = {
+                    formato: FORMATO_PROYECTO, version: 1, app: APP_VERSION, guardado: new Date().toISOString(), nombre: nombreProyecto,
+                    zonas: zonas.map(z => ({ nombre: z.nombre, activa: z.activa, anillos: z.feature.geometry.coordinates })),
+                    ajustes: leerAjustes(),
+                    puntosInstalacion: puntosLuz.map(p => ({ lat: p.lat, lon: p.lon })),
+                    antenasActuales: antenasActuales.map(a => ({ lat: a.lat, lon: a.lon, fija: !!a.fija })),
+                    simulaciones: sims,
+                    resultado: resultadoParaGuardar()
+                };
+                zip.file('proyecto.json', JSON.stringify(proyecto));
+                const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+                descargarBlob(blob, `${nombreArchivo(nombreProyecto || 'proyecto')}_${fechaArchivo()}.rfproj`);
+                return proyecto;
+            } catch (e) {
+                alert('No se pudo guardar el proyecto: ' + e.message);
+            } finally { ocultarLoader(); }
+        }
+
+        async function abrirProyecto(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            try { await abrirProyectoDesde(file, file.name); }
+            finally { event.target.value = ''; }
+        }
+
+        async function abrirProyectoDesde(blob, nombreFichero = '') {
+            if (optimizadorEnCurso) return alert('Espera a que termine el cálculo.');
+            mostrarLoader('Abriendo el proyecto…');
+            try {
+                let zip;
+                try { zip = await JSZip.loadAsync(blob); } catch (e) { throw new Error('el archivo no es un proyecto del simulador (.rfproj).'); }
+                const pj = zip.file('proyecto.json');
+                if (!pj) throw new Error('el archivo no es un proyecto del simulador (.rfproj).');
+                const P = JSON.parse(await pj.async('string'));
+                if (P.formato !== FORMATO_PROYECTO) throw new Error('el archivo no es un proyecto del simulador (.rfproj).');
+                if (!Array.isArray(P.zonas) || !P.zonas.length) throw new Error('el proyecto no tiene finca.');
+
+                // Empezar de cero
+                limpiarResultadoOptimizador();
+                [...simulaciones].forEach(s => eliminarSimulacion(s.id));
+                imagenesLocales.forEach(d => URL.revokeObjectURL(d.PNG_WGS84 || d.PNG_Mercator));
+                imagenesLocales.clear();
+
+                nombreProyecto = P.nombre || String(nombreFichero).replace(/(_\d{8})?\.rfproj$/i, '');
+                aplicarAjustes(P.ajustes);
+                await montarFinca(P.zonas.map(z => z.anillos), P.zonas.map(z => z.nombre || 'Zona'), P.zonas.map(z => z.activa !== false));
+                (P.puntosInstalacion || []).forEach(p => anadirPuntoLuz(p.lat, p.lon));
+                (P.antenasActuales || []).forEach(a => { anadirAntenaActual(a.lat, a.lon); if (a.fija) toggleFijaActual(antenasActuales.length - 1); });
+
+                textoLoader('Cargando las coberturas guardadas…');
+                const esc = CONFIG.escalaSenal, mapaIds = {};
+                let perdidas = 0;
+                for (const s of P.simulaciones || []) {
+                    const f = s.imagen && zip.file(s.imagen);
+                    if (!f) { perdidas++; continue; }
+                    const url = URL.createObjectURL(await f.async('blob'));
+                    const pixeles = await cargarPixeles(url);
+                    if (!pixeles) { perdidas++; URL.revokeObjectURL(url); continue; }
+                    const niveles = decodificarNiveles(pixeles.data, pixeles.w * pixeles.h, construirTablaClave(s.claveColores), esc.muyBuenaDbm, esc.buenaDbm);
+                    const data = { bounds: s.bounds, key: s.claveColores, kmz: s.kmz, [s.proyeccion === 'mercator' ? 'PNG_Mercator' : 'PNG_WGS84']: url };
+                    if (s.clave) imagenesLocales.set(s.clave, data);
+                    const r = { lat: s.lat, lon: s.lon, alt: s.alt, res: s.res, radioKm: s.radioKm, data, kmz: s.kmz, imageUrl: url,
+                                boundsCloudRF: s.bounds, proyeccion: s.proyeccion, pixeles, niveles, clave: s.clave, desdeCache: true };
+                    const sim = await mostrarSimulacion(r, s.nombre, { tipo: s.tipo, etiqueta: s.etiqueta, nota: s.nota, visible: s.visible !== false });
+                    mapaIds[s.id] = sim.id;
+                }
+                if (P.resultado) restaurarResultado(P.resultado, mapaIds, P.guardado);
+                await actualizarInterfazGlobal();
+                if (perdidas) alert(`${perdidas} cobertura${perdidas > 1 ? 's' : ''} del proyecto no se ${perdidas > 1 ? 'han' : 'ha'} podido cargar.`);
+                return P;
+            } catch (e) {
+                alert('No se pudo abrir el proyecto: ' + e.message);
+            } finally { ocultarLoader(); }
+        }
+
+        // El resultado guardado se muestra tal cual; las recomendaciones necesitan volver a calcular
+        function restaurarResultado(R, mapaIds, guardado) {
+            const ids = (R.ids || []).map(i => mapaIds[i]).filter(i => i !== undefined);
+            ultimoResultado = { restaurado: true, ids, seleccion: [], recs: [], resumen: R.resumen || null,
+                                pct: R.resumen ? R.resumen.pct : null, calidad: R.resumen ? R.resumen.calidad : null, ctx: { red4g: R.red4g || null } };
+            const caja = document.getElementById('opt-resumen');
+            caja.innerHTML = R.html || '';
+            const fecha = guardado ? new Date(guardado).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+            const nota = document.createElement('div');
+            nota.className = 'bloque-interno aviso-restaurado';
+            nota.innerHTML = `Resultado guardado${fecha ? ' el ' + fecha : ''}. Para ver recomendaciones, vuelve a calcular: se reutilizan las coberturas del proyecto.`;
+            const cab = caja.querySelector('.cabecera-tarjeta');
+            if (cab) cab.after(nota); else caja.prepend(nota);
+            document.getElementById('opt-panel').classList.remove('hidden');
+            pintar4GResultado();
+        }
+
+        // =======================================================================
+        // 📄 INFORME PDF PARA EL CLIENTE
+        // =======================================================================
+        const LIBS_INFORME = {
+            jspdf: 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+            autotable: 'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js'
+        };
+        function cargarScript(url) {
+            return new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = url; s.onload = resolve; s.onerror = () => reject(new Error('no se pudo cargar ' + url.split('/').pop()));
+                document.head.appendChild(s);
+            });
+        }
+        async function asegurarLibsInforme() {
+            if (!window.jspdf) await cargarScript(LIBS_INFORME.jspdf);
+            if (!window.jspdf.jsPDF.API.autoTable) await cargarScript(LIBS_INFORME.autotable);
+            return window.jspdf.jsPDF;
+        }
+
+        // Imagen del mapa centrada en la finca, con las antenas dibujadas encima (los pines son HTML, no van en el lienzo)
+        async function capturarMapa(sims) {
+            const cam = { center: map.getCenter(), zoom: map.getZoom(), pitch: map.getPitch(), bearing: map.getBearing() };
+            const [w, s, e, n] = turf.bbox(geojsonTodas);
+            const pts = sims.map(x => [x.lon, x.lat]);
+            const bw = Math.min(w, ...pts.map(p => p[0])), bs = Math.min(s, ...pts.map(p => p[1]));
+            const be = Math.max(e, ...pts.map(p => p[0])), bn = Math.max(n, ...pts.map(p => p[1]));
+            const esperarIdle = () => new Promise(r => { let hecho = false; const fin = () => { if (!hecho) { hecho = true; r(); } }; map.once('idle', fin); setTimeout(fin, 9000); });
+            try {
+                map.jumpTo({ pitch: 0, bearing: 0 });
+                map.fitBounds([[bw, bs], [be, bn]], { padding: 70, duration: 0 });
+                await esperarIdle();
+                const lienzo = map.getCanvas();
+                const base = await new Promise(r => { map.once('render', () => r(lienzo.toDataURL('image/png'))); map.triggerRepaint(); });
+                const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = base; });
+                const c = document.createElement('canvas');
+                c.width = img.width; c.height = img.height;
+                const g = c.getContext('2d');
+                g.drawImage(img, 0, 0);
+                const k = img.width / (lienzo.clientWidth || img.width);
+                const colores = { antena: ['#E6EDF3', '#0D1117'], luz: ['#E3B341', '#1F1500'], fija: ['#8B949E', '#0D1117'], actual: ['#8B949E', '#0D1117'], punto: ['#388BFD', '#FFFFFF'] };
+                sims.forEach(sim => {
+                    const p = map.project([sim.lon, sim.lat]);
+                    const x = p.x * k, y = p.y * k, r = 13 * k;
+                    const [fondo, texto] = colores[sim.tipo] || colores.antena;
+                    g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2);
+                    g.fillStyle = fondo; g.fill(); g.lineWidth = 2.5 * k; g.strokeStyle = '#0D1117'; g.stroke();
+                    g.fillStyle = texto; g.font = `700 ${Math.round(12 * k)}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+                    g.fillText(String(sim.etiqueta), x, y + 0.5 * k);
+                });
+                return { url: c.toDataURL('image/jpeg', 0.88), w: c.width, h: c.height };
+            } finally {
+                map.jumpTo(cam);
+            }
+        }
+
+        // Texto apto para las fuentes estándar del PDF (Latin-1)
+        const txtPdf = t => String(t ?? '').replace(/[−–—]/g, '-').replace(/≥/g, '>=').replace(/≤/g, '<=').replace(/→/g, '->')
+            .replace(/[“”«»]/g, '"').replace(/[‘’]/g, "'").replace(/ /g, ' ').replace(/[^\x00-\xFF]/g, '');
+
+        function datosInforme() {
+            const visibles = simulaciones.filter(s => s.visible && s.pixeles);
+            const res = ultimoResultado && ultimoResultado.resumen ? ultimoResultado.resumen : null;
+            const pct = visibles.length ? pctUnion(visibles, mallaFinca) : 0;
+            const calidad = visibles.length ? calidadUnion(visibles, mallaFinca) : null;
+            const ha = zonas.filter(z => z.activa).reduce((t, z) => t + z.ha, 0);
+            const enMapa = visibles.filter(s => s.tipo !== 'actual');
+            return { visibles, enMapa, pct, calidad, ha, res };
+        }
+
+        async function generarInforme() {
+            if (!geojsonKMLActual) return alert('Carga primero una finca.');
+            const d = datosInforme();
+            if (!d.visibles.length) return alert('No hay coberturas visibles para el informe.');
+            if (optimizadorEnCurso) return alert('Espera a que termine el cálculo.');
+            mostrarLoader('Preparando el informe…');
+            try {
+                const jsPDF = await asegurarLibsInforme();
+                textoLoader('Capturando el mapa…');
+                const imagen = await capturarMapa(d.visibles);
+                const doc = construirInformePdf(jsPDF, d, imagen);
+                descargarBlob(doc.output('blob'), `${nombreArchivo(nombreProyecto || 'finca')}_informe_cobertura_${fechaArchivo()}.pdf`);
+                return doc;
+            } catch (e) {
+                alert('No se pudo generar el informe: ' + e.message);
+            } finally { ocultarLoader(); }
+        }
+
+        function construirInformePdf(jsPDF, d, imagen) {
+            const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+            const W = 210, M = 14, ancho = W - 2 * M;
+            const objetivo = CONFIG.objetivoCoberturaPct, esc = CONFIG.escalaSenal, u = umbralCoberturaDbm();
+            const fmt1 = v => v === null || v === undefined ? '-' : v.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+            const fmt0 = v => v.toLocaleString('es-ES', { maximumFractionDigits: 0 });
+            const T = (t, x, y, o) => doc.text(txtPdf(t), x, y, o);
+            const oscuro = [13, 17, 23], gris = [96, 104, 114], suave = [234, 238, 242], acento = [8, 145, 178];
+            const fecha = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+            const res = d.res;
+            const titulo = res ? res.titulo : 'Simulación de cobertura';
+            const alturas = [...new Set(d.enMapa.map(s => s.alt))].sort((a, b) => a - b);
+            const mastil = alturas.length > 1 ? `entre ${alturas[0]} y ${alturas[alturas.length - 1]} m` : `de ${alturas[0] ?? alturaMastil()} m`;
+
+            // Cabecera
+            doc.setFillColor(...oscuro); doc.rect(0, 0, W, 24, 'F');
+            doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+            T('Informe de cobertura LoRaWAN', M, 11);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(200, 208, 216);
+            T('Ixorigue', M, 17.5);
+            T(fecha, W - M, 11, { align: 'right' });
+            T(titulo, W - M, 17.5, { align: 'right' });
+
+            let y = 34;
+            doc.setTextColor(...oscuro); doc.setFont('helvetica', 'bold'); doc.setFontSize(17);
+            T(nombreProyecto || 'Finca', M, y);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...gris);
+            const nZonas = zonas.filter(z => z.activa).length;
+            T(`${fmt0(d.ha)} ha${zonas.length > 1 ? ` en ${nZonas} zona${nZonas > 1 ? 's' : ''}` : ''} · ${perfilActivo().frecuenciaMHz} MHz · ${formatoActivo().nombre}`, M, y + 6);
+            y += 12;
+
+            // Cifras clave
+            const nAnt = d.enMapa.filter(s => s.tipo !== 'punto').length || d.enMapa.length;
+            const cajas = [
+                [fmt1(d.pct) + ' %', 'de la finca con cobertura', d.pct >= objetivo ? `objetivo ${objetivo} % alcanzado` : `objetivo ${objetivo} %`],
+                [d.calidad === null ? '-' : fmt1(d.calidad) + ' %', 'con señal buena o muy buena', `más fuerte que ${esc.buenaDbm} dBm`],
+                [String(nAnt), nAnt === 1 ? 'antena' : 'antenas', `mástil ${mastil}`],
+                [fmt0(d.ha) + ' ha', 'superficie analizada', '']
+            ];
+            const cw = (ancho - 3 * 4) / 4;
+            cajas.forEach(([v, l, s], i) => {
+                const x = M + i * (cw + 4);
+                doc.setFillColor(...suave); doc.roundedRect(x, y, cw, 22, 2, 2, 'F');
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+                doc.setTextColor(...(i === 0 ? (d.pct >= objetivo ? [26, 127, 55] : [154, 103, 0]) : oscuro));
+                T(v, x + 4, y + 9);
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...oscuro);
+                T(l, x + 4, y + 14.5);
+                doc.setTextColor(...gris); doc.setFontSize(7.5);
+                if (s) T(s, x + 4, y + 19);
+            });
+            y += 28;
+
+            if (res && res.actual) {
+                const dif = d.pct - res.actual.pct;
+                doc.setFontSize(9.5); doc.setTextColor(...oscuro);
+                T(`Red actual: ${res.actual.n} antena${res.actual.n === 1 ? '' : 's'}, ${fmt1(res.actual.pct)} % de la finca  ->  propuesta: ${fmt1(d.pct)} % (${dif >= 0 ? '+' : ''}${fmt1(dif)} puntos).`, M, y);
+                y += 6;
+            }
+            if (res && res.aLaBaja) {
+                doc.setFontSize(9.5); doc.setTextColor(154, 103, 0);
+                T(`Propuesta a la baja: no alcanza el objetivo del ${objetivo} %.`, M, y);
+                y += 6;
+            }
+
+            // Mapa
+            const maxH = 112;
+            let iw = ancho, ih = iw * imagen.h / imagen.w;
+            if (ih > maxH) { ih = maxH; iw = ih * imagen.w / imagen.h; }
+            const ix = M + (ancho - iw) / 2;
+            doc.addImage(imagen.url, 'JPEG', ix, y, iw, ih);
+            doc.setDrawColor(...suave); doc.rect(ix, y, iw, ih);
+            y += ih + 5;
+
+            // Leyenda (colores de la capa mezclados sobre un fondo oscuro de satélite)
+            const mezcla = c => [0, 1, 2].map(i => Math.round(c[i] * c[3] / 255 + [60, 62, 44][i] * (1 - c[3] / 255)));
+            const ley = [[esc.colores[3], `Muy buena (>= ${esc.muyBuenaDbm} dBm)`], [esc.colores[2], `Buena (${esc.muyBuenaDbm} a ${esc.buenaDbm})`],
+                         [esc.colores[1], `Suficiente (${esc.buenaDbm} a ${u})`]];
+            doc.setFontSize(8.5);
+            let lx = M;
+            ley.forEach(([c, t]) => {
+                doc.setFillColor(...mezcla(c)); doc.rect(lx, y - 3, 4, 4, 'F');
+                doc.setTextColor(...oscuro); T(t, lx + 5.5, y);
+                lx += 6 + doc.getTextWidth(txtPdf(t)) + 6;
+            });
+            doc.setDrawColor(236, 72, 153); doc.setLineWidth(0.6); doc.line(lx, y - 1, lx + 5, y - 1); doc.setLineWidth(0.2);
+            T('Finca', lx + 6.5, y);
+            if (huecosVisibles) { lx += 6.5 + doc.getTextWidth('Finca') + 6; doc.setDrawColor(220, 38, 38); doc.setLineWidth(0.5);
+                for (let k = 0; k < 3; k++) doc.line(lx + k * 1.6, y + 1, lx + k * 1.6 + 2.4, y - 3); doc.setLineWidth(0.2); T('Sin cobertura', lx + 6.5, y); }
+            y += 8;
+
+            // Tabla de antenas
+            const tipoTxt = { antena: res && res.modo === 'fijo' ? 'Reubicada' : 'Nueva', luz: 'Punto de instalación', fija: 'Fija (se mantiene)', actual: 'Actual', punto: 'Punto comprobado' };
+            const filas = d.enMapa.map(s => {
+                const r4 = s.red4g ? resumen4G(s.red4g, !red4g || red4g.oficial) : null;
+                return [s.etiqueta, tipoTxt[s.tipo] || s.tipo, `${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}`,
+                        s.elev !== null && s.elev !== undefined ? `${Math.round(s.elev)} m` : '-', `${s.alt} m`,
+                        s.coberturaLocal !== null && s.coberturaLocal !== undefined ? `${fmt1(s.coberturaLocal)} %` : '-',
+                        r4 ? r4.texto : '-'].map(txtPdf);
+            });
+            const tituloSeccion = (t) => {
+                if (y > 262) { doc.addPage(); y = 20; }
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.setTextColor(...oscuro); T(t, M, y); y += 3;
+                doc.setFont('helvetica', 'normal');
+            };
+            tituloSeccion('Antenas');
+            doc.autoTable({
+                startY: y, margin: { left: M, right: M },
+                head: [['Nº', 'Tipo', 'Coordenadas (lat, lon)', 'Altitud', 'Mástil', 'Cubre', '4G disponible']],
+                body: filas,
+                styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 1.8, textColor: oscuro, lineColor: [220, 225, 230], lineWidth: 0.1 },
+                headStyles: { fillColor: oscuro, textColor: 255, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [246, 248, 250] },
+                columnStyles: { 0: { cellWidth: 10, fontStyle: 'bold' }, 2: { cellWidth: 38 }, 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' } }
+            });
+            y = doc.lastAutoTable.finalY + 8;
+
+            // Conectividad 4G
+            if (red4g && red4g.estado === 'ok') {
+                tituloSeccion('Conectividad 4G de las antenas');
+                const lineas = [];
+                const fuente = red4g.pais === 'MX' ? 'cobertura declarada por cada operador a la CRT'
+                    : red4g.cobertura ? 'cobertura 4G declarada por los operadores al Ministerio (junio de 2024) y señal estimada desde las antenas de InfoAntenas con el terreno real'
+                    : red4g.fuente + (red4g.oficial ? '' : ' (datos colaborativos: puede faltar alguna antena)');
+                lineas.push(`La gateway envía los datos por 4G con una SIM multioperador. Fuente: ${fuente}.`);
+                const sat = d.enMapa.filter(s => s.red4g && resumen4G(s.red4g, red4g.oficial)?.nivel === 'satelite');
+                if (sat.length) lineas.push(`Sin 4G usable en ${sat.map(s => s.etiqueta).join(', ')}: necesitará enlace por satélite.`);
+                doc.setFontSize(9); doc.setTextColor(...oscuro);
+                lineas.forEach(t => { const partes = doc.splitTextToSize(txtPdf(t), ancho); doc.text(partes, M, y + 3); y += partes.length * 4.2 + 1; });
+                y += 4;
+            }
+
+            // Método
+            tituloSeccion('Cómo se ha calculado');
+            const veg = document.getElementById('land_cover').value === '1';
+            const metodo = [
+                `Simulación de propagación con el modelo ITM de CloudRF sobre el relieve real${veg ? ' y la vegetación' : ''}, a ${CONFIG.cloudrf.resolucionM} m de resolución.`,
+                `Enlace de subida del ${formatoActivo().nombre.split(' (')[0].toLowerCase()} a la gateway (${perfilActivo().frecuenciaMHz} MHz, ${String(CONFIG.sfDiseno).replace(/^(SF)?/, 'SF')}). Un punto se considera cubierto si la señal recibida supera ${u} dBm, con ${CONFIG.margenDesvanecimientoDb} dB de margen sobre la sensibilidad de la gateway.`,
+                `Antenas en mástil ${mastil}. Las cifras se calculan sobre ${fmt0(d.ha)} ha de la finca.`,
+                'Es una estimación: recomendamos comprobar la cobertura en campo antes de la instalación definitiva.'
+            ];
+            doc.setFontSize(9); doc.setTextColor(...gris);
+            metodo.forEach(t => { const partes = doc.splitTextToSize(txtPdf(t), ancho); if (y + partes.length * 4.2 > 285) { doc.addPage(); y = 20; } doc.text(partes, M, y + 3); y += partes.length * 4.2 + 1; });
+
+            // Pie de página
+            const n = doc.getNumberOfPages();
+            for (let i = 1; i <= n; i++) {
+                doc.setPage(i); doc.setFontSize(8); doc.setTextColor(...gris);
+                T(`Ixorigue · Simulador de cobertura RF v${APP_VERSION}`, M, 290);
+                T(`Página ${i} de ${n}`, W - M, 290, { align: 'right' });
+            }
+            return doc;
         }
 
         async function descargarTodo() {
@@ -3032,6 +3463,7 @@
             const activasN = simulaciones.filter(x => x.visible).length;
             document.getElementById('contador-sims').innerText = simulaciones.length ? `${activasN}/${simulaciones.length} visibles` : '';
             document.getElementById('btn-descargar-todo').classList.toggle('hidden', !simulaciones.length);
+            document.getElementById('btn-informe').classList.toggle('hidden', !simulaciones.length || !geojsonKMLActual);
             const rango = { fija: 0, luz: 0, antena: 0, actual: 1, punto: 2 };
             const orden = [...simulaciones].sort((a, b) => ((rango[a.tipo] ?? 3) - (rango[b.tipo] ?? 3)) || (a.id - b.id));
             const ico = {
@@ -3137,6 +3569,15 @@
 
         function marcarResultadoObsoleto(texto) {
             if (!ultimoResultado) return;
+            if (ultimoResultado.restaurado) {
+                const caja = document.getElementById('opt-resumen');
+                caja.querySelector('.aviso-obsoleto')?.remove();
+                const a = document.createElement('div');
+                a.className = 'bloque-interno aviso-obsoleto'; a.style.cssText = 'border-color:#9E6A03; color:#E3B341';
+                a.textContent = texto;
+                (caja.querySelector('.aviso-restaurado') || caja.firstElementChild)?.after(a);
+                return;
+            }
             ultimoResultado.aviso = texto;
             ultimoResultado.recs = [];
             pilaDeshacer = [];
@@ -3158,7 +3599,7 @@
             if (modo === 'fijo' && nContratadas <= fijas.length)
                 return alert('Todas las antenas contratadas están marcadas como fijas: no queda ninguna para reubicar. Sube el número de antenas contratadas o marca alguna como reubicable.');
             const luces = modo === 'objetivo' ? puntosLuz.slice(0, CONFIG.puntosLuz.max) : [];
-            const anterior = opciones.encadenar ? ultimoResultado : null;
+            const anterior = opciones.encadenar && ultimoResultado && !ultimoResultado.restaurado ? ultimoResultado : null;
 
             bloquearOptimizador(true);
             if (!opciones.encadenar) limpiarResultadoOptimizador();
@@ -3538,6 +3979,8 @@
                        : r.aLaBaja ? `<span class="chip chip-ko">Propuesta a la baja</span>`
                        : `<span class="chip chip-ko">Objetivo ${objetivo} % no alcanzado</span>`;
             const nFijas = ctx.base.filter(b => b.tipo === 'fija').length, nLuz = ctx.base.filter(b => b.tipo === 'luz').length;
+            r.resumen = { titulo, modo: ctx.modo, pct: r.pct, calidad: r.calidad ?? null, n, ok, aLaBaja: !!r.aLaBaja,
+                          actual: ctx.actual ? { n: ctx.actual.n, pct: ctx.actual.pct } : null };
             const detalleN = ctx.luz ? `${nLuz} en instalación${nSel ? ` · ${nSel} adicional${nSel > 1 ? 'es' : ''}` : ''}` : (nFijas ? `${nFijas} fija${nFijas > 1 ? 's' : ''}` : '');
             const p = [];
             p.push(`<div class="cabecera-tarjeta"><span>${titulo}</span>${chip}</div>`);
@@ -3592,6 +4035,7 @@
             if (r.aviso) p.push(`<div class="bloque-interno" style="border-color:#9E6A03; color:#E3B341">${r.aviso}</div>`);
             if (ctx.modo === 'objetivo' && !ok && !r.aLaBaja)
                 p.push(`<div style="color:#E3B341">Las zonas rayadas en rojo quedan sin cobertura con un máximo de ${CONFIG.optimizador.maxAntenas} antenas.</div>`);
+            p.push('<div id="opt-recs" class="contents">');
             if (r.recs.length) {
                 p.push(`<div class="titulo-seccion" style="margin-top:2px">Recomendaciones</div>`);
                 r.recs.forEach(rec => p.push(`
@@ -3601,6 +4045,7 @@
                     </div>`));
             }
             if (pilaDeshacer.length) p.push(`<button onclick="deshacerCambio()" class="btn-recomendacion boton boton-sec">Deshacer último cambio</button>`);
+            p.push('</div>');
             const permiso = ctx.permisos.permitirFuera ? `antenas hasta ${ctx.permisos.distFueraKm * 1000} m fuera de la finca` : 'solo antenas dentro de la finca';
             const cal = ctx.cal ? `calibración: desfase ${ctx.cal.offsetDb >= 0 ? '+' : ''}${ctx.cal.offsetDb} dB · vegetación ${ctx.cal.coefVegDb} dB · acierto ${ctx.cal.precision === null ? '–' : (ctx.cal.precision * 100).toFixed(0) + ' %'}<br>` : '';
             p.push(`<details class="avanzado">
