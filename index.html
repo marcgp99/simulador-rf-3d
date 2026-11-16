@@ -3304,15 +3304,22 @@
             T(`${fmt0(d.ha)} ha${zonas.length > 1 ? ` en ${nZonas} zona${nZonas > 1 ? 's' : ''}` : ''} · ${perfilActivo().frecuenciaMHz} MHz · ${formatoActivo().nombre}`, M, y + 6);
             y += 12;
 
-            // Cifras clave
+            // Frase clara para el ganadero
             const nAnt = d.enMapa.filter(s => s.tipo !== 'punto').length || d.enMapa.length;
+            const frase = `Con ${nAnt} ${nAnt === 1 ? 'antena' : 'antenas'}, los animales quedan localizados en el ${fmt0(d.pct)} % de la finca.`;
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(...oscuro);
+            const lineasFrase = doc.splitTextToSize(txtPdf(frase), ancho);
+            doc.text(lineasFrase, M, y + 3);
+            doc.setFont('helvetica', 'normal');
+            y += lineasFrase.length * 5.5 + 3;
+
+            // Cifras clave
             const cajas = [
                 [fmt1(d.pct) + ' %', 'de la finca con cobertura', d.pct >= objetivo ? `objetivo ${objetivo} % alcanzado` : `objetivo ${objetivo} %`],
-                [d.calidad === null ? '-' : fmt1(d.calidad) + ' %', 'con señal buena o muy buena', `más fuerte que ${esc.buenaDbm} dBm`],
                 [String(nAnt), nAnt === 1 ? 'antena' : 'antenas', `mástil ${mastil}`],
                 [fmt0(d.ha) + ' ha', 'superficie analizada', '']
             ];
-            const cw = (ancho - 3 * 4) / 4;
+            const cw = (ancho - (cajas.length - 1) * 4) / cajas.length;
             cajas.forEach(([v, l, s], i) => {
                 const x = M + i * (cw + 4);
                 doc.setFillColor(...suave); doc.roundedRect(x, y, cw, 22, 2, 2, 'F');
@@ -3349,8 +3356,7 @@
 
             // Leyenda (colores de la capa mezclados sobre un fondo oscuro de satélite)
             const mezcla = c => [0, 1, 2].map(i => Math.round(c[i] * c[3] / 255 + [60, 62, 44][i] * (1 - c[3] / 255)));
-            const ley = [[esc.colores[3], `Muy buena (>= ${esc.muyBuenaDbm} dBm)`], [esc.colores[2], `Buena (${esc.muyBuenaDbm} a ${esc.buenaDbm})`],
-                         [esc.colores[1], `Suficiente (${esc.buenaDbm} a ${u})`]];
+            const ley = [[esc.colores[3], 'Señal muy buena'], [esc.colores[2], 'Señal buena'], [esc.colores[1], 'Señal suficiente']];
             doc.setFontSize(8.5);
             let lx = M;
             ley.forEach(([c, t]) => {
@@ -3362,6 +3368,10 @@
             T('Finca', lx + 6.5, y);
             if (huecosVisibles) { lx += 6.5 + doc.getTextWidth('Finca') + 6; doc.setDrawColor(220, 38, 38); doc.setLineWidth(0.5);
                 for (let k = 0; k < 3; k++) doc.line(lx + k * 1.6, y + 1, lx + k * 1.6 + 2.4, y - 3); doc.setLineWidth(0.2); T('Sin cobertura', lx + 6.5, y); }
+            y += 5;
+            doc.setFont('helvetica', 'italic'); doc.setFontSize(8.5); doc.setTextColor(...gris);
+            T('Cobertura estimada por simulación; se confirma durante la instalación.', M, y);
+            doc.setFont('helvetica', 'normal');
             y += 8;
 
             // Tabla de antenas
@@ -3389,33 +3399,6 @@
                 columnStyles: { 0: { cellWidth: 10, fontStyle: 'bold' }, 2: { cellWidth: 38 }, 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' } }
             });
             y = doc.lastAutoTable.finalY + 8;
-
-            // Conectividad 4G
-            if (red4g && red4g.estado === 'ok') {
-                tituloSeccion('Conectividad 4G de las antenas');
-                const lineas = [];
-                const fuente = red4g.pais === 'MX' ? 'cobertura declarada por cada operador a la CRT'
-                    : red4g.cobertura ? 'cobertura 4G declarada por los operadores al Ministerio (junio de 2024) y señal estimada desde las antenas de InfoAntenas con el terreno real'
-                    : red4g.fuente + (red4g.oficial ? '' : ' (datos colaborativos: puede faltar alguna antena)');
-                lineas.push(`La gateway envía los datos por 4G con una SIM multioperador. Fuente: ${fuente}.`);
-                const sat = d.enMapa.filter(s => s.red4g && resumen4G(s.red4g, red4g.oficial)?.nivel === 'satelite');
-                if (sat.length) lineas.push(`Sin 4G usable en ${sat.map(s => s.etiqueta).join(', ')}: necesitará enlace por satélite.`);
-                doc.setFontSize(9); doc.setTextColor(...oscuro);
-                lineas.forEach(t => { const partes = doc.splitTextToSize(txtPdf(t), ancho); doc.text(partes, M, y + 3); y += partes.length * 4.2 + 1; });
-                y += 4;
-            }
-
-            // Método
-            tituloSeccion('Cómo se ha calculado');
-            const veg = document.getElementById('land_cover').value === '1';
-            const metodo = [
-                `Simulación de propagación con el modelo ITM de CloudRF sobre el relieve real${veg ? ' y la vegetación' : ''}, a ${CONFIG.cloudrf.resolucionM} m de resolución.`,
-                `Enlace de subida del ${formatoActivo().nombre.split(' (')[0].toLowerCase()} a la gateway (${perfilActivo().frecuenciaMHz} MHz, ${String(CONFIG.sfDiseno).replace(/^(SF)?/, 'SF')}). Un punto se considera cubierto si la señal recibida supera ${u} dBm, con ${CONFIG.margenDesvanecimientoDb} dB de margen sobre la sensibilidad de la gateway.`,
-                `Antenas en mástil ${mastil}. Las cifras se calculan sobre ${fmt0(d.ha)} ha de la finca.`,
-                'Es una estimación: recomendamos comprobar la cobertura en campo antes de la instalación definitiva.'
-            ];
-            doc.setFontSize(9); doc.setTextColor(...gris);
-            metodo.forEach(t => { const partes = doc.splitTextToSize(txtPdf(t), ancho); if (y + partes.length * 4.2 > 285) { doc.addPage(); y = 20; } doc.text(partes, M, y + 3); y += partes.length * 4.2 + 1; });
 
             // Pie de página
             const n = doc.getNumberOfPages();
