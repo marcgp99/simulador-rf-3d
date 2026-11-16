@@ -7,7 +7,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -19,27 +19,29 @@
     
     <style>
         :root {
-            --fondo: #0B111C;
-            --panel: #111A2B;
-            --panel-alto: #15213A;
-            --campo: #0E1626;
-            --borde: #22304A;
-            --borde-suave: #1C2840;
-            --texto: #E6EDF7;
-            --texto-2: #C3CFE0;
-            --tenue: #8FA0B8;
-            --acento: #34D399;
-            --acento-osc: #062016;
+            --fondo: #0D1117;
+            --panel: #161B22;
+            --panel-alto: #1C2128;
+            --campo: #0D1117;
+            --borde: #30363D;
+            --borde-suave: #21262D;
+            --texto: #E6EDF3;
+            --texto-2: #C9D1D9;
+            --tenue: #8B949E;
+            --acento: #3FB950;
+            --boton: #238636;
+            --boton-borde: #2EA043;
+            --pestana: #F78166;
             --cobertura: #22D3EE;
             --sin: #F87171;
-            --aviso: #FBBF24;
-            --mono: 'IBM Plex Mono', ui-monospace, monospace;
+            --aviso: #D29922;
+            --mono: 'Source Code Pro', ui-monospace, monospace;
         }
-        body { background: var(--fondo); color: var(--texto); font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+        body { background: var(--fondo); color: var(--texto); font-family: 'Source Sans 3', system-ui, sans-serif; font-size: 14px; }
         .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
         #map { height: 100%; width: 100%; z-index: 1; }
 
-        .glass-panel { background: rgba(17, 26, 43, 0.96); border: 1px solid var(--borde); box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.6); }
+        .glass-panel { background: rgba(22, 27, 34, 0.96); border: 1px solid var(--borde); box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.6); }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--borde); border-radius: 3px; }
@@ -47,50 +49,55 @@
 
         /* Panel lateral */
         .tarjeta { background: var(--panel); border: 1px solid var(--borde); border-radius: 6px; padding: 14px; }
-        .titulo-seccion { font-size: 11px; font-weight: 600; color: var(--tenue); letter-spacing: 0.06em; text-transform: uppercase; }
-        .etiqueta { display: block; font-size: 11px; font-weight: 500; color: var(--tenue); margin-bottom: 5px; }
+        .titulo-seccion { font-size: 14px; font-weight: 600; color: var(--texto); }
+        .cabecera-tarjeta { margin: -14px -14px 0; padding: 10px 14px; border-bottom: 1px solid var(--borde); display: flex; align-items: center;
+                            justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 600; color: var(--texto); }
+        .etiqueta { display: block; font-size: 12.5px; font-weight: 500; color: var(--tenue); margin-bottom: 5px; }
         .campo { width: 100%; padding: 8px 10px; background: var(--campo); border: 1px solid var(--borde); border-radius: 4px;
-                 font-size: 13px; color: var(--texto); transition: border-color .15s; }
-        .campo:hover { border-color: #33476A; }
+                 font-size: 14px; color: var(--texto); transition: border-color .15s; }
+        .campo:hover { border-color: #484F58; }
         .campo:focus { outline: none; border-color: var(--acento); }
-        .descripcion { font-size: 12.5px; color: var(--tenue); line-height: 1.5; }
+        .descripcion { font-size: 13.5px; color: var(--tenue); line-height: 1.5; }
         .boton { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 42px; padding: 10px 14px;
-                 border-radius: 4px; font-size: 13px; font-weight: 600; transition: background .15s, opacity .15s; }
+                 border-radius: 6px; font-size: 14px; font-weight: 600; transition: background .15s, opacity .15s; }
         .boton:disabled { opacity: 0.45; cursor: not-allowed; }
-        .boton-primario { background: var(--acento); color: var(--acento-osc); }
-        .boton-primario:hover:not(:disabled) { background: #5EEAB0; }
-        .boton-sec { background: transparent; border: 1px solid var(--borde); color: var(--texto-2); font-weight: 500; min-height: 36px; padding: 7px 10px; font-size: 12px; }
-        .boton-sec:hover:not(:disabled) { background: var(--panel-alto); border-color: #33476A; color: var(--texto); }
+        .boton-primario { background: var(--boton); color: #FFFFFF; border: 1px solid var(--boton-borde); }
+        .boton-primario:hover:not(:disabled) { background: #2EA043; }
+        .boton-sec { background: transparent; border: 1px solid var(--borde); color: var(--texto-2); font-weight: 500; min-height: 34px; padding: 6px 10px; font-size: 13px; }
+        .boton-sec:hover:not(:disabled) { background: var(--panel-alto); border-color: #484F58; color: var(--texto); }
         .boton-sec.activo { border-color: var(--acento); color: var(--acento); }
 
-        .pestanas { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--borde); border-radius: 6px; overflow: hidden; }
-        .pestana { min-height: 42px; padding: 8px 4px; font-size: 12px; font-weight: 500; color: var(--tenue); background: var(--panel);
-                   border-bottom: 2px solid transparent; transition: color .15s, background .15s; }
-        .pestana + .pestana { border-left: 1px solid var(--borde); }
+        .pestanas { display: flex; gap: 2px; border-bottom: 1px solid var(--borde); }
+        .pestana { min-height: 40px; padding: 8px 10px; font-size: 14px; font-weight: 400; color: var(--tenue); background: transparent;
+                   border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color .15s; white-space: nowrap; }
         .pestana:hover { color: var(--texto); }
-        .pestana.activa { background: var(--panel-alto); color: var(--texto); font-weight: 600; border-bottom-color: var(--acento); }
+        .pestana.activa { color: var(--texto); font-weight: 600; border-bottom-color: var(--pestana); }
 
         details.avanzado > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
-                                     font-size: 12px; color: var(--tenue); padding-top: 2px; }
+                                     font-size: 13px; color: var(--tenue); padding-top: 2px; }
         details.avanzado > summary::-webkit-details-marker { display: none; }
         details.avanzado > summary .flecha { transition: transform .15s; }
         details.avanzado[open] > summary .flecha { transform: rotate(90deg); }
 
-        .chip { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 3px; font-size: 11px; font-weight: 500; border: 1px solid; }
-        .chip-ok { color: var(--acento); border-color: #1F5E48; }
-        .chip-ko { color: var(--aviso); border-color: #6B4E12; }
+        .chip { display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid; white-space: nowrap; }
+        .chip-ok { color: var(--acento); border-color: #238636; }
+        .chip-ko { color: var(--aviso); border-color: #9E6A03; }
 
-        .curva { display: grid; grid-template-columns: 18px minmax(0, 1fr) 48px; align-items: center; gap: 6px 8px; font-family: var(--mono); font-size: 11.5px; }
-        .curva .pista { height: 6px; background: var(--borde-suave); border-radius: 1px; }
-        .curva .relleno { height: 6px; background: var(--texto); border-radius: 1px; }
+        .curva { display: grid; grid-template-columns: 26px minmax(0, 1fr) 48px; align-items: center; gap: 6px 8px; font-family: var(--mono); font-size: 11.5px; }
+        .pista { height: 8px; background: var(--borde-suave); border-radius: 4px; }
+        .relleno { height: 8px; background: var(--acento); border-radius: 4px; }
 
         .lista { background: var(--panel); border: 1px solid var(--borde); border-radius: 6px; overflow: hidden; }
-        .item-antena { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--borde-suave); transition: background .15s, opacity .15s; }
-        .item-antena:hover { background: #131E33; }
+        .item-antena { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--borde-suave); transition: background .15s, opacity .15s; }
+        .item-antena:hover { background: #1A1F26; }
         .item-antena.seleccionada { background: var(--panel-alto); }
         .item-antena.apagada { opacity: 0.5; }
-        .numero { flex-shrink: 0; width: 24px; height: 24px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
-                  font: 600 11.5px var(--mono); background: var(--texto); color: var(--fondo); }
+        .numero { flex-shrink: 0; min-width: 26px; height: 26px; padding: 0 5px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 2px;
+                  font: 600 12px var(--mono); background: var(--texto); color: var(--fondo); }
+        .numero svg, .pin-num .cabeza svg { width: 13px; height: 13px; flex-shrink: 0; }
+        .numero.fija { background: #484F58; color: var(--texto); }
+        .numero.luz { background: #E3B341; color: #1F1500; }
+        .numero.solar { background: #388BFD; color: #FFFFFF; }
         .numero.actual { background: transparent; color: var(--texto-2); border: 1.5px dashed var(--tenue); }
         .numero.punto { background: var(--fondo); color: var(--texto); border: 1.5px solid var(--texto); }
         .seleccionada .numero { box-shadow: 0 0 0 2px var(--panel-alto), 0 0 0 4px var(--acento); }
@@ -101,41 +108,47 @@
         .interruptor input { opacity: 0; width: 0; height: 0; }
         .interruptor span { position: absolute; inset: 0; background: var(--borde); border-radius: 999px; cursor: pointer; transition: background .15s; }
         .interruptor span::before { content: ""; position: absolute; width: 12px; height: 12px; left: 3px; top: 3px; background: var(--texto); border-radius: 999px; transition: transform .15s; }
-        .interruptor input:checked + span { background: var(--acento); }
-        .interruptor input:checked + span::before { transform: translateX(14px); background: var(--acento-osc); }
+        .interruptor input:checked + span { background: var(--boton); }
+        .interruptor input:checked + span::before { transform: translateX(14px); background: #FFFFFF; }
         .interruptor input:focus-visible + span { outline: 2px solid var(--acento); outline-offset: 2px; }
 
         /* Mapa */
         .mapboxgl-marker { cursor: pointer; z-index: 20; }
         .pin-num { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); }
-        .pin-num .cabeza { width: 26px; height: 26px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+        .pin-num .cabeza { min-width: 26px; height: 26px; padding: 0 5px; gap: 2px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
                            font: 600 12px var(--mono); background: var(--texto); color: var(--fondo); box-shadow: 0 0 0 2px var(--fondo); transition: box-shadow .15s; }
         .pin-num .punta { width: 2px; height: 10px; background: var(--texto); }
         .pin-num.actual .cabeza { background: #334155; color: var(--texto); box-shadow: 0 0 0 2px var(--fondo); border: 1.5px dashed var(--texto-2); }
         .pin-num.punto .cabeza { background: var(--fondo); color: var(--texto); border: 2px solid var(--texto); }
+        .pin-num.fija .cabeza { background: #484F58; color: var(--texto); border: 1.5px solid var(--texto-2); }
+        .pin-num.luz .cabeza { background: #E3B341; color: #1F1500; }
+        .pin-num.solar .cabeza { background: #388BFD; color: #FFFFFF; }
         .pin-num.sel .cabeza { box-shadow: 0 0 0 2px var(--fondo), 0 0 0 4px var(--acento); }
         .mapboxgl-popup-content { background: var(--panel); color: var(--texto); border: 1px solid var(--borde); border-radius: 6px;
-                                  padding: 10px 12px; font-family: 'IBM Plex Sans', sans-serif; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+                                  padding: 10px 12px; font-family: 'Source Sans 3', sans-serif; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
         .mapboxgl-popup-tip { border-top-color: var(--borde) !important; border-bottom-color: var(--borde) !important; }
         .mapboxgl-popup-close-button { color: var(--tenue); font-size: 16px; padding: 2px 6px; }
 
         .site-marker-container { display: flex; flex-direction: column; align-items: center; pointer-events: none; transform: translateY(5px); }
-        .site-label { background: rgba(17, 26, 43, 0.95); border: 1px solid var(--borde); padding: 3px 8px; border-radius: 4px; margin-bottom: 2px; }
+        .site-label { background: rgba(22, 27, 34, 0.95); border: 1px solid var(--borde); padding: 3px 8px; border-radius: 4px; margin-bottom: 2px; }
         .site-elev { font: 500 12px var(--mono); color: var(--texto); display: flex; align-items: baseline; gap: 4px; }
         .site-pin { display: flex; flex-direction: column; align-items: center; }
         .pin-line { width: 1px; height: 24px; background: var(--texto-2); opacity: 0.7; }
         .pin-dot { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--fondo); background: var(--texto-2); }
-        .site-primary .site-label { border-color: #3A5A86; }
+        .site-primary .site-label { border-color: #484F58; }
 
         .map-controls-container { position: absolute; top: 12px; right: 12px; z-index: 10; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: calc(100% - 280px); }
-        .map-btn { background: rgba(17, 26, 43, 0.95); border: 1px solid var(--borde); color: var(--texto-2); height: 34px; padding: 0 11px; border-radius: 4px;
-                   font-weight: 500; font-size: 12px; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 7px; }
+        .map-btn { background: rgba(22, 27, 34, 0.95); border: 1px solid var(--borde); color: var(--texto-2); height: 34px; padding: 0 11px; border-radius: 6px;
+                   font-weight: 500; font-size: 13px; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 7px; }
         .map-btn svg { width: 15px; height: 15px; }
-        .map-btn:hover { color: var(--texto); border-color: #33476A; }
+        .map-btn:hover { color: var(--texto); border-color: #484F58; }
         .map-btn.active-3d { border-color: var(--acento); color: var(--acento); }
         .map-btn.active-nodos { color: var(--tenue); }
 
         .muestra { width: 16px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+        .fila-zona { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 13.5px; cursor: pointer; }
+        .fila-zona input { accent-color: var(--boton); width: 15px; height: 15px; flex-shrink: 0; }
+        .bloque-interno { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 6px; background: var(--campo); border: 1px solid var(--borde-suave); }
         .muestra-rayada { background: repeating-linear-gradient(45deg, var(--sin) 0 3px, rgba(248,113,113,0.2) 3px 7px); }
 
         @media (max-width: 767px) { .map-controls-container { max-width: calc(100% - 24px); top: auto; bottom: 44px; } }
@@ -160,15 +173,23 @@
 
                 <!-- PROYECTO -->
                 <section class="tarjeta flex flex-col gap-3">
-                    <div class="titulo-seccion">Proyecto</div>
+                    <div class="cabecera-tarjeta">Proyecto</div>
                     <input type="file" id="kml_upload" accept=".kml,.kmz" class="hidden" onchange="cargarKML(event)">
-                    <label for="kml_upload" class="flex items-center gap-3 px-3 py-2.5 rounded border border-dashed cursor-pointer transition-colors hover:!border-[#34D399]" style="border-color:var(--borde); background:var(--campo)">
+                    <label for="kml_upload" class="flex items-center gap-3 px-3 py-2.5 rounded border border-dashed cursor-pointer transition-colors hover:!border-[#3FB950]" style="border-color:var(--borde); background:var(--campo)">
                         <svg aria-hidden="true" class="w-5 h-5 flex-shrink-0" style="color:var(--acento)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
                         <span class="min-w-0">
-                            <span id="kml-nombre" class="block text-[13px] font-semibold truncate">Cargar finca</span>
-                            <span id="kml-detalle" class="mono block text-[11px]" style="color:var(--tenue)">Archivo .kml o .kmz con el perímetro</span>
+                            <span id="kml-nombre" class="block text-[14px] font-semibold truncate">Cargar finca</span>
+                            <span id="kml-detalle" class="block text-[12.5px]" style="color:var(--tenue)">Archivo .kml o .kmz con el perímetro</span>
                         </span>
                     </label>
+                    <div id="bloque-zonas" class="hidden bloque-interno">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[13px] font-semibold">Zonas a cubrir</span>
+                            <span id="n-zonas" class="mono text-[12px]" style="color:var(--tenue)"></span>
+                        </div>
+                        <p class="text-[12.5px]" style="color:var(--tenue)">Solo las zonas marcadas cuentan en los cálculos. También puedes activarlas o desactivarlas haciendo clic sobre ellas en el mapa.</p>
+                        <div id="lista-zonas" class="flex flex-col"></div>
+                    </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="etiqueta" for="sim_profile">Región</label>
@@ -186,13 +207,13 @@
                         </div>
                     </div>
                     <details class="avanzado">
-                        <summary><span>Ajustes avanzados <span id="resumen-ajustes" class="ml-1" style="color:#6F819C"></span></span>
+                        <summary><span>Ajustes avanzados <span id="resumen-ajustes" class="ml-1"></span></span>
                             <svg class="flecha w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </summary>
                         <div class="grid grid-cols-2 gap-3 mt-3">
                             <div>
                                 <label class="etiqueta" for="tx_height">Altura del mástil (m)</label>
-                                <input type="number" id="tx_height" value="3" min="1" max="60" class="campo font-mono">
+                                <input type="number" id="tx_height" value="3" min="1" max="60" class="campo mono">
                             </div>
                             <div>
                                 <label class="etiqueta" for="land_cover">Vegetación en el cálculo</label>
@@ -202,7 +223,6 @@
                                 </select>
                             </div>
                         </div>
-                        <div id="info-enlace" class="mono mt-3 px-3 py-2 rounded text-[11px] leading-relaxed" style="background:var(--campo); border:1px solid var(--borde-suave); color:var(--tenue)"></div>
                     </details>
                 </section>
 
@@ -216,19 +236,35 @@
 
                     <div id="modo-planificar" class="modo-panel tarjeta flex flex-col gap-3">
                         <p class="descripcion"><b style="color:var(--texto)">Cliente nuevo.</b> Calcula el mínimo de antenas necesario para cubrir el <span class="txt-objetivo">80</span>% de la finca y dónde colocarlas.</p>
+                        <div class="bloque-interno">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[13px] font-semibold flex items-center gap-1.5">
+                                    <svg aria-hidden="true" class="w-3.5 h-3.5" style="color:#E3B341" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+                                    Puntos de luz del cliente</span>
+                                <span id="n-luz" class="mono text-[12px]" style="color:var(--tenue)">ninguno</span>
+                            </div>
+                            <p class="text-[12.5px]" style="color:var(--tenue)">Opcional. Lugares donde el cliente tiene corriente para conectar una antena. Si los indicas, el cálculo usa solo estos puntos y, si no bastan, propone puntos con placa solar.</p>
+                            <div class="flex gap-2">
+                                <input type="text" id="luz_input" placeholder="Enlace de Google Maps o «lat, lon»" class="campo !text-[13px]" onkeydown="if(event.key==='Enter')anadirLuzDesdeTexto()">
+                                <button onclick="anadirLuzDesdeTexto()" class="boton boton-sec !w-auto flex-shrink-0">Añadir</button>
+                            </div>
+                            <button id="btn-colocar-luz" onclick="toggleColocarLuz()" class="boton boton-sec">Marcar en el mapa</button>
+                            <div id="lista-luz" class="flex flex-col gap-1"></div>
+                        </div>
                         <button id="btn-objetivo" onclick="optimizarRed('objetivo')" class="accion boton boton-primario">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
-                            Calcular red para <span class="txt-objetivo">80</span>%
+                            <span id="txt-btn-objetivo">Calcular red para <span class="txt-objetivo">80</span>%</span>
                         </button>
                     </div>
 
                     <div id="modo-optimizar" class="modo-panel tarjeta flex flex-col gap-3 hidden">
                         <p class="descripcion"><b style="color:var(--texto)">Cliente actual con problemas de cobertura.</b> Indica dónde están sus antenas hoy (opcional) y el sistema propone dónde reubicarlas.</p>
-                        <div class="flex flex-col gap-2 p-3 rounded" style="background:var(--campo); border:1px solid var(--borde-suave)">
+                        <div class="bloque-interno">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-semibold">Antenas instaladas hoy</span>
-                                <span id="n-actuales" class="mono text-[11px]" style="color:var(--tenue)">ninguna</span>
+                                <span class="text-[13px] font-semibold">Antenas instaladas hoy</span>
+                                <span id="n-actuales" class="mono text-[12px]" style="color:var(--tenue)">ninguna</span>
                             </div>
+                            <p class="text-[12.5px]" style="color:var(--tenue)">Marca como <b style="color:var(--texto-2)">fija</b> la antena que no se puede mover; solo se reubican las demás.</p>
                             <div class="grid grid-cols-2 gap-2">
                                 <button id="btn-colocar-actuales" onclick="toggleColocarActuales()" class="boton boton-sec">Marcar en el mapa</button>
                                 <input type="file" id="kml_actuales" accept=".kml,.kmz" class="hidden" onchange="cargarActualesKML(event)">
@@ -237,22 +273,22 @@
                             <div id="lista-actuales" class="flex flex-col gap-1"></div>
                         </div>
                         <div class="flex items-center justify-between gap-3">
-                            <label for="num_antenas" class="text-xs font-semibold">Antenas contratadas</label>
-                            <input type="number" id="num_antenas" min="1" max="10" value="2" class="campo font-mono w-20 text-center">
+                            <label for="num_antenas" class="text-[13px] font-semibold">Antenas contratadas</label>
+                            <input type="number" id="num_antenas" min="1" max="10" value="2" class="campo mono w-20 text-center">
                         </div>
                         <button id="btn-fijo" onclick="optimizarRed('fijo')" class="accion boton boton-primario">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                            Reubicar <span id="txt-n">2</span> antenas
+                            <span id="txt-btn-fijo">Reubicar <span id="txt-n">2</span> antenas</span>
                         </button>
                     </div>
 
                     <!-- Bloque compartido por Planificar y Optimizar (se mueve al panel activo) -->
                     <div id="bloque-permisos" class="flex items-center justify-between gap-2">
-                        <label for="permitir_fuera" class="flex items-center gap-2 text-xs cursor-pointer select-none" style="color:var(--texto-2)">
+                        <label for="permitir_fuera" class="flex items-center gap-2 text-[13px] cursor-pointer select-none" style="color:var(--texto-2)">
                             <span class="interruptor"><input type="checkbox" id="permitir_fuera" checked><span></span></span>
                             Antenas fuera de la finca
                         </label>
-                        <select id="dist_fuera" title="Distancia máxima fuera del límite" class="campo !w-auto !py-1 !text-xs cursor-pointer disabled:opacity-40">
+                        <select id="dist_fuera" title="Distancia máxima fuera del límite" class="campo !w-auto !py-1 !text-[12.5px] cursor-pointer disabled:opacity-40">
                             <option value="0.25">hasta 250 m</option>
                             <option value="0.5" selected>hasta 500 m</option>
                             <option value="1">hasta 1000 m</option>
@@ -268,8 +304,8 @@
                             </button>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
-                            <div><label class="etiqueta" for="lat">Latitud</label><input type="number" id="lat" class="campo font-mono"></div>
-                            <div><label class="etiqueta" for="lon">Longitud</label><input type="number" id="lon" class="campo font-mono"></div>
+                            <div><label class="etiqueta" for="lat">Latitud</label><input type="number" id="lat" class="campo mono"></div>
+                            <div><label class="etiqueta" for="lon">Longitud</label><input type="number" id="lon" class="campo mono"></div>
                         </div>
                         <button id="btnSimular" onclick="realizarSimulacion()" class="accion boton boton-primario">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
@@ -277,25 +313,25 @@
                         </button>
                     </div>
 
-                    <p id="estado-precalculo" class="mono text-[11px] text-center min-h-[16px]" style="color:#6F819C"></p>
+                    <p id="estado-precalculo" class="text-[12px] text-center min-h-[16px]" style="color:var(--tenue)"></p>
                 </section>
 
                 <!-- RESULTADO DEL OPTIMIZADOR -->
                 <section id="opt-panel" class="hidden tarjeta flex flex-col gap-3">
-                    <div id="opt-resumen" class="flex flex-col gap-3 text-[12.5px] leading-relaxed" style="color:var(--texto-2)"></div>
-                    <button onclick="limpiarResultadoOptimizador()" class="boton boton-sec" style="color:#FCA5A5">Limpiar resultado</button>
+                    <div id="opt-resumen" class="flex flex-col gap-3 text-[13.5px] leading-relaxed" style="color:var(--texto-2)"></div>
+                    <button onclick="limpiarResultadoOptimizador()" class="boton boton-sec" style="color:#FF7B72">Limpiar resultado</button>
                 </section>
 
                 <!-- ANTENAS Y SIMULACIONES -->
                 <section id="historyArea" class="lista flex flex-col">
-                    <div class="flex items-center justify-between px-3.5 py-3">
-                        <div class="titulo-seccion">Antenas <span id="contador-sims" class="mono ml-1" style="text-transform:none; letter-spacing:0; font-weight:400"></span></div>
-                        <button id="btn-descargar-todo" onclick="descargarTodo()" class="hidden text-xs font-medium flex items-center gap-1 hover:underline" style="color:var(--acento)">
+                    <div class="flex items-center justify-between px-3.5 py-2.5">
+                        <div class="titulo-seccion">Antenas <span id="contador-sims" class="mono ml-1 text-[12px]" style="font-weight:400; color:var(--tenue)"></span></div>
+                        <button id="btn-descargar-todo" onclick="descargarTodo()" class="hidden text-[13px] font-medium flex items-center gap-1 hover:underline" style="color:#58A6FF">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                             Descargar todo
                         </button>
                     </div>
-                    <p id="emptyHistoryMsg" class="text-xs text-center py-5" style="color:var(--tenue); border-top:1px solid var(--borde-suave)">Aún no hay simulaciones.</p>
+                    <p id="emptyHistoryMsg" class="text-[13px] text-center py-5" style="color:var(--tenue); border-top:1px solid var(--borde)">Aún no hay simulaciones.</p>
                     <div id="simulationList" class="flex flex-col"></div>
                     <div id="resumen-exterior" class="hidden"></div>
                 </section>
@@ -305,9 +341,9 @@
         <section class="flex-1 relative h-full overflow-hidden min-h-[420px] rounded-md" style="border:1px solid var(--borde); background:#0E1626">
             <!-- Indicador de cobertura de la finca -->
             <div id="kpi-card" class="hidden absolute top-3 left-3 z-10 glass-panel rounded-md px-3.5 py-2.5 min-w-[170px]">
-                <div class="text-[11px]" style="color:var(--tenue)">Cobertura de la finca</div>
+                <div class="text-[12.5px]" style="color:var(--tenue)">Cobertura de la finca</div>
                 <div id="kpi-valor" class="mono text-[26px] font-medium leading-tight">–</div>
-                <div id="kpi-detalle" class="text-[11px]" style="color:var(--tenue)"></div>
+                <div id="kpi-detalle" class="text-[12.5px]" style="color:var(--tenue)"></div>
             </div>
 
             <div class="map-controls-container">
@@ -330,14 +366,10 @@
             </div>
 
             <!-- Leyendas -->
-            <div class="absolute bottom-9 left-3 z-10 flex flex-col gap-2 w-[260px] pointer-events-none">
+            <div class="absolute bottom-9 left-3 z-10 flex flex-col gap-2 w-[290px] pointer-events-none">
                 <div id="leyenda-senal" class="hidden glass-panel rounded-md p-3 pointer-events-auto">
-                    <div class="titulo-seccion mb-2">Leyenda</div>
-                    <div class="flex flex-col gap-1.5 text-[12px]" style="color:var(--texto-2)">
-                        <div class="flex items-center gap-2"><span class="muestra" style="background:var(--cobertura); opacity:.5"></span><span>Con cobertura <span class="mono" id="leyenda-umbral" style="color:var(--tenue)"></span></span></div>
-                        <div class="flex items-center gap-2"><span class="muestra" style="background:var(--cobertura); opacity:.85"></span>Solape de 2 o más antenas</div>
-                        <div class="flex items-center gap-2"><span class="muestra muestra-rayada"></span>Sin cobertura dentro de la finca</div>
-                    </div>
+                    <div class="titulo-seccion mb-2">Nivel de señal</div>
+                    <div id="leyenda-filas" class="flex flex-col gap-1.5 text-[13px]" style="color:var(--texto-2)"></div>
                 </div>
                 <div id="canopy-legend" class="hidden glass-panel rounded-md p-3 pointer-events-auto">
                     <div class="titulo-seccion mb-2">Cubierta arbórea</div>
@@ -352,7 +384,7 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <p id="loader-text" class="text-xs font-medium" style="color:var(--texto)">Procesando...</p>
+                <p id="loader-text" class="text-[13px] font-medium" style="color:var(--texto)">Procesando...</p>
             </div>
 
             <div id="aviso-mapa" class="hidden absolute bottom-9 left-1/2 -translate-x-1/2 z-20 glass-panel px-4 py-2 rounded-md text-xs" style="color:var(--texto); border-color:var(--acento)"></div>
@@ -366,7 +398,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.5.0';
+        const APP_VERSION = '1.6.0';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -447,7 +479,23 @@
 
             mascaraHuecos: { puntosObjetivo: 25000, separacionMinKm: 0.01 },
 
-            cache: { clave: 'rfsim-cache-v2', diasValidez: 7, maxEntradas: 300 },
+            // Escala de señal: niveles a partir de la clave de colores que devuelve CloudRF (dBm reales).
+            // El % de cobertura y el objetivo se siguen midiendo con el umbral (≥ sensibilidad + margen).
+            escalaSenal: {
+                muyBuenaDbm: -110,
+                buenaDbm: -120,
+                colores: {                       // RGBA por código: 3 muy buena, 2 buena, 1 suficiente, 4 sin clave
+                    3: [34, 211, 238, 215],
+                    2: [34, 211, 238, 135],
+                    1: [165, 243, 252, 95],
+                    4: [34, 211, 238, 150]
+                },
+                maxLadoCapa: 1400                // píxeles máximos por lado de la capa combinada
+            },
+
+            puntosLuz: { max: 10 },
+
+            cache: { clave: 'rfsim-cache-v3', diasValidez: 7, maxEntradas: 300 },
 
             cloudrf: { modelo: { pm: 1, pe: 3, cli: 1, rel: 80, ked: 1 }, resolucionM: 10,
                        colores: 'LORA.dBm', anchoBandaMHz: 0.125 }
@@ -596,13 +644,21 @@
                 if (a[0] !== b[0] || a[1] !== b[1]) pts.push([a[0], a[1]]);
                 return pts.length >= 4 ? pts : null;
             };
-            const poligonos = [];
+            const nombreDe = (nodo) => {
+                let p = nodo.parentNode;
+                while (p && p.localName !== 'Placemark') p = p.parentNode;
+                if (!p) return '';
+                const n = Array.from(p.childNodes).find(ch => ch.nodeType === 1 && ch.localName === 'name');
+                return n ? n.textContent.trim() : '';
+            };
+            const poligonos = [], nombres = [];
             porNombre(doc, 'Polygon').forEach(pol => {
                 const ext = porNombre(pol, 'outerBoundaryIs')[0];
                 const exterior = ext ? leerAnillo(ext) : null;
                 if (!exterior) return;
                 const huecos = porNombre(pol, 'innerBoundaryIs').map(leerAnillo).filter(Boolean);
                 poligonos.push([exterior, ...huecos]);
+                nombres.push(nombreDe(pol));
             });
             let avisoLineas = false;
             if (poligonos.length === 0) { // Plan B: líneas cerradas dibujadas como contorno
@@ -611,10 +667,17 @@
                     if (!anillo) return;
                     const orig = porNombre(ls, 'coordinates')[0].textContent.trim().split(/\s+/);
                     const p0 = orig[0].split(',').map(Number), pN = orig[orig.length - 1].split(',').map(Number);
-                    if (distanciaM([p0[0], p0[1]], [pN[0], pN[1]]) < 30) { poligonos.push([anillo]); avisoLineas = true; }
+                    if (distanciaM([p0[0], p0[1]], [pN[0], pN[1]]) < 30) { poligonos.push([anillo]); nombres.push(nombreDe(ls)); avisoLineas = true; }
                 });
             }
-            return { poligonos, avisoLineas };
+            // Nombres únicos y legibles: «Zona N» si no hay nombre; sufijo si se repite
+            const vistos = {};
+            const finales = nombres.map((n, i) => {
+                const base = n || `Zona ${i + 1}`;
+                vistos[base] = (vistos[base] || 0) + 1;
+                return vistos[base] > 1 ? `${base} (${vistos[base]})` : base;
+            });
+            return { poligonos, nombres: finales, avisoLineas };
         }
 
         // Ajuste del modelo local a CloudRF. muestras: [{ margen (dB sin vegetación), veg (0–1), real (bool) }]
@@ -648,10 +711,11 @@
         // modo 'fijo': las nFijo antenas que más cubren. La franja exterior y la redundancia sirven de desempate.
         function resolverCobertura(op) {
             const { sets, pesos, nInterior, nTotal, modo, objetivoPct = 80, maxAntenas = 10, nFijo = 1,
-                    pesoExterior = 0.05, pesoRedundancia = 0.01, reserva = null } = op;
+                    pesoExterior = 0.05, pesoRedundancia = 0.01, reserva = null, base = [] } = op;
             const C = sets.length;
             const wExt = nTotal > nInterior ? pesoExterior : 0;
             const cuenta = new Uint16Array(nTotal);
+            for (const s of base) for (const j of s) cuenta[j]++;   // cobertura ya garantizada (no se puede quitar)
             let sel = [];
             const enSel = new Uint8Array(C);
             const add = c => { for (const j of sets[c]) cuenta[j]++; };
@@ -692,7 +756,8 @@
                 }
             };
 
-            const limite = Math.min(modo === 'fijo' ? nFijo : maxAntenas, C);
+            const basePct = (() => { let s = 0; for (let j = 0; j < nInterior; j++) if (cuenta[j]) s++; return nInterior ? 100 * s / nInterior : 0; })();
+            const limite = Math.max(0, Math.min(modo === 'fijo' ? nFijo : maxAntenas, C));
             while (sel.length < limite) {
                 if (modo === 'objetivo' && pctInterior() >= objetivoPct) break;
                 let c = elegir();
@@ -703,7 +768,7 @@
             mejorar();
 
             if (modo === 'objetivo') { // Intentar quitar antenas manteniendo el objetivo
-                while (pctInterior() >= objetivoPct && sel.length > 1) {
+                while (pctInterior() >= objetivoPct && sel.length > (base.length ? 0 : 1)) {
                     const copia = sel.slice();
                     let peor = 0, menor = Infinity;
                     for (let i = 0; i < sel.length; i++) {
@@ -732,7 +797,7 @@
                 const c = pendientes.splice(bi, 1)[0];
                 add(c); orden.push(c); curva.push(pctInterior());
             }
-            return { seleccion: orden, curva, interiorPct, exteriorPct, objetivoAlcanzado: interiorPct >= objetivoPct };
+            return { seleccion: orden, curva, basePct, interiorPct, exteriorPct, objetivoAlcanzado: interiorPct >= objetivoPct };
         }
 
         function parsearKMLaPuntos(kmlText, DOMParserImpl) {
@@ -747,6 +812,49 @@
                 return coordenadasValidas(lat, lng) ? [lng, lat] : null;
             }).filter(Boolean);
         }
+
+        // Clave de colores de CloudRF → [{r,g,b,dbm}]. Acepta listas anidadas y etiquetas tipo "-110dBm".
+        function construirTablaClave(key) {
+            const plano = [];
+            (function rec(x) { if (Array.isArray(x)) x.forEach(rec); else if (x && typeof x === 'object') plano.push(x); })(key);
+            const tabla = plano.map(e => {
+                const m = String(e.l ?? e.label ?? '').replace(',', '.').match(/-?\d+(?:\.\d+)?/);
+                return { r: Number(e.r), g: Number(e.g), b: Number(e.b), dbm: m ? parseFloat(m[0]) : NaN };
+            }).filter(e => isFinite(e.r) && isFinite(e.g) && isFinite(e.b) && isFinite(e.dbm));
+            return tabla.length ? tabla : null;
+        }
+
+        // 3 = muy buena, 2 = buena, 1 = suficiente (por encima del umbral de la simulación)
+        function nivelDesdeDbm(dbm, muyBuenaDbm = -110, buenaDbm = -120) {
+            return dbm >= muyBuenaDbm ? 3 : (dbm >= buenaDbm ? 2 : 1);
+        }
+
+        // Píxeles RGBA → código de nivel por píxel (0 sin cobertura, 4 con cobertura pero sin clave de colores)
+        function decodificarNiveles(data, n, tabla, muyBuenaDbm = -110, buenaDbm = -120) {
+            const arr = new Uint8Array(n);
+            const memo = new Map();
+            for (let i = 0; i < n; i++) {
+                const o = i * 4;
+                if (data[o + 3] <= 10) continue;
+                if (!tabla) { arr[i] = 4; continue; }
+                const k = (data[o] << 16) | (data[o + 1] << 8) | data[o + 2];
+                let code = memo.get(k);
+                if (code === undefined) {
+                    let mejor = null, dMin = Infinity;
+                    for (const t of tabla) {
+                        const d = (t.r - data[o]) ** 2 + (t.g - data[o + 1]) ** 2 + (t.b - data[o + 2]) ** 2;
+                        if (d < dMin) { dMin = d; mejor = t; }
+                    }
+                    code = nivelDesdeDbm(mejor.dbm, muyBuenaDbm, buenaDbm);
+                    memo.set(k, code);
+                }
+                arr[i] = code;
+            }
+            return { arr, conClave: !!tabla };
+        }
+
+        // Para combinar antenas: gana el nivel más alto; «sin clave» se considera entre suficiente y buena
+        const RANGO_NIVEL = [0, 1, 3, 4, 2];
 
         function hashTexto(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(16); }
         // @@PURE-END
@@ -781,16 +889,24 @@
         let nombreProyecto = '';
         let mapaListo = false;           // el estilo del mapa ya admite capas (no depende de que terminen de cargar las teselas)
         let simSeleccionada = null;
-        const COLOR_COBERTURA = [34, 211, 238];   // un solo color: «llega señal suficiente» (≥ umbral)
-        const OPACIDAD_COBERTURA = 0.45;          // al solaparse dos antenas el color se intensifica
+        let zonas = [];                  // [{nombre, feature, activa, ha}] todas las zonas del KML
+        let geojsonTodas = null;         // todas las zonas (para dibujar); geojsonKMLActual = solo las activas
+        let puntosLuz = [];              // [{lat, lon, marker}] puntos con corriente del cliente (Planificar)
+        let colocandoLuz = false;
+        let urlCobertura = null;
+        const SVG_RAYO = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>';
+        const SVG_SOLAR = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 4h16l-2 10H6z"/><path d="M5 9h14M10 4l-.6 10M14 4l.6 10M12 14v6M8 20h8"/></svg>';
+        const SVG_CANDADO = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>';
 
         document.getElementById('app-version').innerText = 'v' + APP_VERSION;
         document.querySelectorAll('.txt-objetivo').forEach(e => e.innerText = CONFIG.objetivoCoberturaPct);
         document.getElementById('num_antenas').addEventListener('input', () => { numAntenasTocado = true; actualizarTextoN(); });
         function actualizarTextoN() {
             const n = Math.max(1, parseInt(document.getElementById('num_antenas').value) || 1);
-            document.getElementById('txt-n').innerText = n;
-            document.getElementById('btn-fijo').lastChild.textContent = n === 1 ? ' antena' : ' antenas';
+            const fijas = antenasActuales.filter(a => a.fija).length;
+            const mov = Math.max(0, n - fijas);
+            document.getElementById('txt-btn-fijo').innerHTML = `Reubicar <span id="txt-n">${mov}</span> antena${mov === 1 ? '' : 's'}` +
+                (fijas ? ` <span style="font-weight:400; opacity:.85">· ${fijas} fija${fijas > 1 ? 's' : ''}</span>` : '');
         }
 
         // =======================================================================
@@ -807,9 +923,6 @@
         }
 
         function actualizarInfoEnlace() {
-            const p = perfilActivo(), f = formatoActivo();
-            document.getElementById('info-enlace').innerHTML =
-                `Enlace ${p.frecuenciaMHz} MHz, ${CONFIG.sfDiseno}. Umbral de cobertura ${umbralCoberturaDbm()} dBm.<br>Dispositivo a ${f.alturaM} m del suelo, ${CONFIG.dispositivo.potenciaTxDbm} dBm.`;
             const veg = document.getElementById('land_cover').value === '1' ? 'con vegetación' : 'sin vegetación';
             document.getElementById('resumen-ajustes').innerText = `· mástil ${alturaMastil()} m, ${veg}`;
         }
@@ -836,6 +949,7 @@
                 bloque.classList.remove('hidden');
             }
             if (modo !== 'optimizar' && colocandoActuales) toggleColocarActuales();
+            if (modo !== 'planificar' && colocandoLuz) toggleColocarLuz();
             if (modo !== 'punto' && inputMarker) { inputMarker.remove(); inputMarker = null; }
             map.getCanvas().style.cursor = modo === 'punto' ? 'crosshair' : '';
         }
@@ -1004,7 +1118,16 @@
 
         map.on('click', (e) => {
             if (colocandoActuales) return anadirAntenaActual(e.lngLat.lat, e.lngLat.lng);
-            if (modoActual === 'punto') colocarMarcador(e.lngLat.lat, e.lngLat.lng);
+            if (colocandoLuz) return anadirPuntoLuz(e.lngLat.lat, e.lngLat.lng);
+            if (modoActual === 'punto') return colocarMarcador(e.lngLat.lat, e.lngLat.lng);
+            if (zonas.length > 1 && map.getLayer('kml-fill')) {
+                const f = map.queryRenderedFeatures(e.point, { layers: ['kml-fill'] })[0];
+                if (f) toggleZona(f.properties.idx);
+            }
+        });
+        map.on('mousemove', (e) => {
+            if (zonas.length < 2 || colocandoActuales || colocandoLuz || modoActual === 'punto' || !map.getLayer('kml-fill')) return;
+            map.getCanvas().style.cursor = map.queryRenderedFeatures(e.point, { layers: ['kml-fill'] }).length ? 'pointer' : '';
         });
         cambiarModo('planificar');
         actualizarTextoN();
@@ -1035,6 +1158,7 @@
 
         function toggleColocarActuales() {
             colocandoActuales = !colocandoActuales;
+            if (colocandoActuales && colocandoLuz) toggleColocarLuz();
             const b = document.getElementById('btn-colocar-actuales');
             b.classList.toggle('activo', colocandoActuales);
             b.innerText = colocandoActuales ? 'Terminar' : 'Marcar en el mapa';
@@ -1043,15 +1167,33 @@
         }
 
         function anadirAntenaActual(lat, lon) {
-            const marker = new mapboxgl.Marker(elementoPin('A' + (antenasActuales.length + 1), 'actual'), { anchor: 'bottom' }).setLngLat([lon, lat]).addTo(map);
-            antenasActuales.push({ lat, lon, marker });
+            const a = { lat, lon, fija: false, marker: null };
+            a.marker = new mapboxgl.Marker(elementoPin('', 'actual'), { anchor: 'bottom' }).setLngLat([lon, lat]).addTo(map);
+            antenasActuales.push(a);
+            etiquetarActuales();
+            renderActuales();
+        }
+
+        function etiquetarActuales() {
+            antenasActuales.forEach((a, k) => {
+                const el = a.marker.getElement();
+                el.className = 'pin-num ' + (a.fija ? 'fija' : 'actual');
+                el.querySelector('.cabeza').innerHTML = (a.fija ? SVG_CANDADO : '') + 'A' + (k + 1);
+            });
+        }
+
+        function toggleFijaActual(i) {
+            const a = antenasActuales[i];
+            if (!a) return;
+            a.fija = !a.fija;
+            etiquetarActuales();
             renderActuales();
         }
 
         function eliminarAntenaActual(i) {
             antenasActuales[i].marker.remove();
             antenasActuales.splice(i, 1);
-            antenasActuales.forEach((a, k) => a.marker.getElement().querySelector('.cabeza').innerText = 'A' + (k + 1));
+            etiquetarActuales();
             renderActuales();
         }
 
@@ -1062,14 +1204,87 @@
         }
 
         function renderActuales() {
-            const n = antenasActuales.length;
-            document.getElementById('n-actuales').innerText = n ? `${n} marcada${n === 1 ? '' : 's'}` : 'ninguna';
+            const n = antenasActuales.length, fijas = antenasActuales.filter(a => a.fija).length;
+            document.getElementById('n-actuales').innerText = n ? `${n} marcada${n === 1 ? '' : 's'}${fijas ? ` · ${fijas} fija${fijas > 1 ? 's' : ''}` : ''}` : 'ninguna';
             document.getElementById('lista-actuales').innerHTML = antenasActuales.map((a, i) => `
-                <div class="flex items-center justify-between text-[11px] mono" style="color:var(--tenue)">
-                    <span><b style="color:var(--texto)">A${i + 1}</b> ${a.lat.toFixed(5)}, ${a.lon.toFixed(5)}</span>
+                <div class="flex items-center gap-2 text-[12.5px]">
+                    <b class="mono" style="color:var(--texto)">A${i + 1}</b>
+                    <span class="mono flex-1 truncate" style="color:var(--tenue)">${a.lat.toFixed(5)}, ${a.lon.toFixed(5)}</span>
+                    <button onclick="toggleFijaActual(${i})" aria-pressed="${a.fija}" title="${a.fija ? 'No se puede mover' : 'Se puede reubicar'}"
+                        class="boton boton-sec ${a.fija ? 'activo' : ''}" style="width:auto; min-height:28px; padding:2px 8px; font-size:12px; gap:4px">
+                        ${a.fija ? `<span style="width:12px;height:12px;display:inline-flex">${SVG_CANDADO}</span>Fija` : 'Reubicable'}</button>
                     <button onclick="eliminarAntenaActual(${i})" aria-label="Quitar la antena A${i + 1}" title="Quitar" class="icono-accion">✕</button>
                 </div>`).join('');
-            if (n && !numAntenasTocado) { document.getElementById('num_antenas').value = n; actualizarTextoN(); }
+            if (n && !numAntenasTocado) document.getElementById('num_antenas').value = n;
+            actualizarTextoN();
+        }
+
+        // ---------- Puntos de luz del cliente (Planificar red)
+        function toggleColocarLuz() {
+            colocandoLuz = !colocandoLuz;
+            if (colocandoLuz && colocandoActuales) toggleColocarActuales();
+            const b = document.getElementById('btn-colocar-luz');
+            b.classList.toggle('activo', colocandoLuz);
+            b.innerText = colocandoLuz ? 'Terminar' : 'Marcar en el mapa';
+            map.getCanvas().style.cursor = colocandoLuz ? 'crosshair' : (modoActual === 'punto' ? 'crosshair' : '');
+            avisoMapa(colocandoLuz ? 'Haz clic en el mapa en cada punto donde el cliente tiene corriente. Pulsa «Terminar» al acabar.' : null);
+        }
+
+        function anadirLuzDesdeTexto() {
+            const input = document.getElementById('luz_input');
+            const texto = input.value.trim();
+            if (!texto) return;
+            if (/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(texto))
+                return alert("Los enlaces cortos no incluyen coordenadas. Ábrelo en el navegador y copia la URL larga, o pega las coordenadas como «lat, lon».");
+            const r = parsearCoordenadas(texto);
+            if (!r) return alert("No se encontraron coordenadas válidas en el texto.");
+            if (anadirPuntoLuz(r.lat, r.lng)) {
+                input.value = '';
+                map.flyTo({ center: [r.lng, r.lat], zoom: Math.max(map.getZoom(), 13), essential: true });
+            }
+        }
+
+        function anadirPuntoLuz(lat, lon) {
+            if (puntosLuz.length >= CONFIG.puntosLuz.max) { alert(`Como máximo ${CONFIG.puntosLuz.max} puntos de luz por proyecto.`); return false; }
+            const p = { lat, lon, marker: null };
+            p.marker = new mapboxgl.Marker(elementoPin('', 'luz'), { anchor: 'bottom' }).setLngLat([lon, lat]).addTo(map);
+            puntosLuz.push(p);
+            etiquetarLuces();
+            renderLuz();
+            return true;
+        }
+
+        function etiquetarLuces() {
+            puntosLuz.forEach((p, k) => p.marker.getElement().querySelector('.cabeza').innerHTML = SVG_RAYO + (k + 1));
+        }
+
+        function eliminarPuntoLuz(i) {
+            puntosLuz[i].marker.remove();
+            puntosLuz.splice(i, 1);
+            etiquetarLuces();
+            renderLuz();
+        }
+
+        function limpiarPuntosLuz() {
+            puntosLuz.forEach(p => p.marker.remove());
+            puntosLuz = [];
+            if (colocandoLuz) toggleColocarLuz();
+            renderLuz();
+        }
+
+        function renderLuz() {
+            const n = puntosLuz.length;
+            document.getElementById('n-luz').innerText = n ? `${n} punto${n === 1 ? '' : 's'}` : 'ninguno';
+            document.getElementById('lista-luz').innerHTML = puntosLuz.map((p, i) => `
+                <div class="flex items-center gap-2 text-[12.5px]">
+                    <span class="numero luz" style="min-width:24px; height:22px">${SVG_RAYO}${i + 1}</span>
+                    <span class="mono flex-1 truncate" style="color:var(--tenue)">${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}</span>
+                    <button onclick="eliminarPuntoLuz(${i})" aria-label="Quitar el punto de luz ${i + 1}" title="Quitar" class="icono-accion">✕</button>
+                </div>`).join('');
+            const obj = CONFIG.objetivoCoberturaPct;
+            document.getElementById('txt-btn-objetivo').innerHTML = n
+                ? `Calcular red con ${n} punto${n === 1 ? '' : 's'} de luz`
+                : `Calcular red para <span class="txt-objetivo">${obj}</span>%`;
         }
 
         async function cargarActualesKML(event) {
@@ -1191,7 +1406,7 @@
         }
 
         async function procesarKML(kmlText) {
-            const { poligonos, avisoLineas } = parsearKMLaPoligonos(kmlText, DOMParser);
+            const { poligonos, nombres, avisoLineas } = parsearKMLaPoligonos(kmlText, DOMParser);
             if (poligonos.length === 0) return alert("No se encontró ningún polígono en este KML.");
 
             if (map.getSource('kml-source')) {
@@ -1200,37 +1415,88 @@
                 map.removeSource('kml-source');
             }
             limpiarResultadoOptimizador();
-            cumbreMarkers.forEach(m => m.remove()); cumbreMarkers = [];
-
-            geojsonKMLActual = turf.featureCollection(poligonos.map(anillos => turf.polygon(anillos)));
-            versionKML++;
             limpiarAntenasActuales();
-            const areaHa = turf.area(geojsonKMLActual) / 1e4;
-            document.getElementById('kml-nombre').innerText = nombreProyecto || 'Finca cargada';
-            document.getElementById('kml-detalle').innerText = `${areaHa.toLocaleString('es-ES', { maximumFractionDigits: 0 })} ha${poligonos.length > 1 ? `, ${poligonos.length} parcelas` : ''} · pulsa para cambiarla`;
+            limpiarPuntosLuz();
+
+            zonas = poligonos.map((anillos, i) => {
+                const feature = turf.polygon(anillos, { idx: i, activa: true });
+                return { nombre: nombres[i], feature, activa: true, ha: turf.area(feature) / 1e4 };
+            });
+            geojsonTodas = turf.featureCollection(zonas.map(z => z.feature));
             const np = document.getElementById('nombre-proyecto');
             np.innerText = nombreProyecto; np.classList.toggle('hidden', !nombreProyecto);
-            construirMallaFinca();
-            construirMallaMascara();
-            construirPuntosExterior();
+            document.getElementById('kml-nombre').innerText = nombreProyecto || 'Finca cargada';
 
-            map.addSource('kml-source', { type: 'geojson', data: geojsonKMLActual });
-            map.addLayer({ 'id': 'kml-fill', 'type': 'fill', 'source': 'kml-source', 'paint': { 'fill-color': '#ec4899', 'fill-opacity': 0.1 } });
-            map.addLayer({ 'id': 'kml-line', 'type': 'line', 'source': 'kml-source', 'paint': { 'line-color': '#ec4899', 'line-width': 3, 'line-dasharray': [2, 2] } });
-
-            const [w, s, e, n] = turf.bbox(geojsonKMLActual);
+            map.addSource('kml-source', { type: 'geojson', data: geojsonTodas });
+            map.addLayer({ 'id': 'kml-fill', 'type': 'fill', 'source': 'kml-source',
+                           'paint': { 'fill-color': '#ec4899', 'fill-opacity': ['case', ['get', 'activa'], 0.1, 0.03] } });
+            map.addLayer({ 'id': 'kml-line', 'type': 'line', 'source': 'kml-source',
+                           'paint': { 'line-color': ['case', ['get', 'activa'], '#ec4899', '#8B949E'], 'line-opacity': ['case', ['get', 'activa'], 1, 0.6],
+                                      'line-width': ['case', ['get', 'activa'], 3, 1.5], 'line-dasharray': [2, 2] } });
+            const [w, s, e, n] = turf.bbox(geojsonTodas);
             map.fitBounds([[w, s], [e, n]], { padding: 50, duration: 1500 });
             if (avisoLineas) console.warn('KML sin polígonos: se han usado líneas cerradas como contorno.');
 
-            for (const sim of simulaciones) sim.coberturaLocal = calcularPorcentajeLocal(sim);
-            await actualizarInterfazGlobal();
-
+            await aplicarZonas({ inicial: true });
             mostrarLoader('Cargando terreno...');
             try {
                 await asegurarTerrenoFinca();
-                buscarCumbresInteligente();
+                refrescarCumbres();
             } finally { ocultarLoader(); }
-            programarPrecalculo(0); // Trabajo por detrás: visibilidad de todos los candidatos (sin créditos)
+        }
+
+        // Recalcula todo lo que depende de las zonas activas (solo ellas cuentan en los cálculos)
+        async function aplicarZonas({ inicial = false } = {}) {
+            const activas = zonas.filter(z => z.activa);
+            geojsonKMLActual = turf.featureCollection(activas.map(z => turf.polygon(z.feature.geometry.coordinates)));
+            zonas.forEach(z => z.feature.properties.activa = z.activa);
+            map.getSource('kml-source')?.setData(geojsonTodas);
+            versionKML++;
+            const ha = activas.reduce((t, z) => t + z.ha, 0);
+            const fmtHa = v => v.toLocaleString('es-ES', { maximumFractionDigits: 0 });
+            document.getElementById('kml-detalle').innerText = zonas.length > 1
+                ? `${fmtHa(ha)} ha en ${activas.length} de ${zonas.length} zonas · pulsa para cambiar`
+                : `${fmtHa(ha)} ha · pulsa para cambiarla`;
+            renderZonas();
+            construirMallaFinca();
+            construirMallaMascara();
+            construirPuntosExterior();
+            simulaciones.forEach(recalcularDatosSim);
+            if (!inicial) {
+                marcarResultadoObsoleto('Has cambiado las zonas a cubrir: las cifras de este resultado ya no corresponden. Vuelve a calcular.');
+                refrescarCumbres();
+            }
+            await actualizarInterfazGlobal();
+            programarPrecalculo(inicial ? 0 : 400);
+        }
+
+        function renderZonas() {
+            const bloque = document.getElementById('bloque-zonas');
+            bloque.classList.toggle('hidden', zonas.length < 2);
+            if (zonas.length < 2) return;
+            document.getElementById('n-zonas').innerText = `${zonas.filter(z => z.activa).length}/${zonas.length} activas`;
+            document.getElementById('lista-zonas').innerHTML = zonas.map((z, i) => `
+                <label class="fila-zona">
+                    <input type="checkbox" ${z.activa ? 'checked' : ''} onchange="toggleZona(${i})">
+                    <span class="flex-1 truncate" style="color:${z.activa ? 'var(--texto)' : 'var(--tenue)'}">${z.nombre.replace(/[<>&]/g, '')}</span>
+                    <span class="mono text-[12px]" style="color:var(--tenue)">${z.ha.toLocaleString('es-ES', { maximumFractionDigits: 0 })} ha</span>
+                </label>`).join('');
+        }
+
+        async function toggleZona(i) {
+            const z = zonas[i];
+            if (!z) return;
+            if (z.activa && zonas.filter(x => x.activa).length === 1) {
+                renderZonas();
+                return alert('Tiene que quedar al menos una zona activa.');
+            }
+            z.activa = !z.activa;
+            await aplicarZonas();
+        }
+
+        function refrescarCumbres() {
+            cumbreMarkers.forEach(m => m.remove()); cumbreMarkers = [];
+            if (DEM.z !== null) buscarCumbresInteligente();
         }
 
         function puntoCaeEnKML(pt) {
@@ -1586,7 +1852,7 @@
             };
         }
 
-        try { localStorage.removeItem('rfsim-cache-v1'); } catch (e) { /* sin almacenamiento */ }
+        try { ['rfsim-cache-v1', 'rfsim-cache-v2'].forEach(k => localStorage.removeItem(k)); } catch (e) { /* sin almacenamiento */ }
         const cacheSims = {
             leer() { try { return JSON.parse(localStorage.getItem(CONFIG.cache.clave) || '{}'); } catch (e) { return {}; } },
             guardar(obj) {
@@ -1639,7 +1905,9 @@
                 const imageUrl = data.PNG_WGS84 || data.png || data.PNG_Mercator;
                 const proyeccion = (!data.PNG_WGS84 && !data.png && data.PNG_Mercator) ? 'mercator' : 'wgs84';
                 const pixeles = imageUrl && data.bounds ? await cargarPixeles(imageUrl) : null;
-                return { lat, lon, alt, res, radioKm, data, kmz: data.kmz, imageUrl, boundsCloudRF: data.bounds, proyeccion, pixeles, desdeCache };
+                const esc = CONFIG.escalaSenal;
+                const niveles = pixeles ? decodificarNiveles(pixeles.data, pixeles.w * pixeles.h, construirTablaClave(data.key), esc.muyBuenaDbm, esc.buenaDbm) : null;
+                return { lat, lon, alt, res, radioKm, data, kmz: data.kmz, imageUrl, boundsCloudRF: data.bounds, proyeccion, pixeles, niveles, desdeCache };
             };
             const enCache = cacheSims.get(clave);
             if (enCache) {
@@ -1649,52 +1917,36 @@
             }
             const data = await colaCloudRF.ejecutar(() => peticionCloudRF(payload));
             if (contador) contador.sims++;
-            const { kmz, PNG_WGS84, png, PNG_Mercator, bounds } = data;
-            cacheSims.set(clave, { kmz, PNG_WGS84, png, PNG_Mercator, bounds });
+            const { kmz, PNG_WGS84, png, PNG_Mercator, bounds, key } = data;
+            cacheSims.set(clave, { kmz, PNG_WGS84, png, PNG_Mercator, bounds, key });
             return preparar(data, false);
         }
 
         // =======================================================================
         // 🖼️ VISUALIZACIÓN DE SIMULACIONES
         // =======================================================================
-        // La imagen del mapa se genera a partir de los mismos píxeles que se han analizado:
-        // lo que se ve y los porcentajes salen siempre de la misma fuente.
-        function urlDesdePixeles(px) {
-            return new Promise(resolve => {
-                const canvas = document.createElement('canvas');
-                canvas.width = px.w; canvas.height = px.h;
-                const img = new ImageData(px.w, px.h);
-                const [r, g, b] = COLOR_COBERTURA;
-                for (let i = 3; i < px.data.length; i += 4) {
-                    if (px.data[i] > 10) { img.data[i - 3] = r; img.data[i - 2] = g; img.data[i - 1] = b; img.data[i] = 255; }
-                }
-                canvas.getContext('2d').putImageData(img, 0, 0);
-                canvas.toBlob(bl => resolve(bl ? URL.createObjectURL(bl) : null), 'image/png');
-            });
-        }
+        // El mapa muestra UNA capa combinada (actualizarCapaCobertura) generada con los mismos píxeles que se
+        // analizan: lo que se ve, los porcentajes y los niveles de señal salen siempre de la misma fuente.
 
         async function mostrarSimulacion(r, nombre, op = {}) {
             const id = simCounter++;
             const tipo = op.tipo || 'punto';
             const numero = op.numero || 1;
-            const etiqueta = tipo === 'antena' ? String(numero) : (tipo === 'actual' ? 'A' + numero : 'P' + numero);
+            const prefijo = { antena: '', actual: 'A', punto: 'P', fija: 'A', luz: '', solar: '' }[tipo] ?? '';
+            const etiqueta = op.etiqueta ?? (prefijo + numero);
+            const icono = op.icono ?? ({ fija: SVG_CANDADO, luz: SVG_RAYO, solar: SVG_SOLAR }[tipo] || '');
             const visible = op.visible !== false;
-            const urlLocal = r.pixeles ? await urlDesdePixeles(r.pixeles) : null;
-            if (urlLocal && r.boundsCloudRF) {
-                const [n, e, s, w] = r.boundsCloudRF;
-                map.addSource(`sim-source-${id}`, { 'type': 'image', 'url': urlLocal, 'coordinates': [[w, n], [e, n], [e, s], [w, s]] });
-                map.addLayer({ 'id': `sim-layer-${id}`, 'type': 'raster', 'source': `sim-source-${id}`,
-                               'layout': { 'visibility': visible ? 'visible' : 'none' }, 'paint': { 'raster-opacity': OPACIDAD_COBERTURA } },
-                             map.getLayer('huecos-layer') ? 'huecos-layer' : undefined);
-            }
             const sim = {
-                id, name: nombre, tipo, etiqueta, freq: perfilActivo().frecuenciaMHz, alt: r.alt, formato: formatoActivo().nombre.split(' ')[0],
-                radioKm: r.radioKm, kmz: r.kmz, visible, imageUrl: r.imageUrl, boundsCloudRF: r.boundsCloudRF,
-                proyeccion: r.proyeccion, pixeles: r.pixeles, urlLocal, lat: r.lat, lon: r.lon, elev: DEM.valor(r.lon, r.lat)
+                id, name: nombre, tipo, etiqueta, icono, nota: op.nota || '', freq: perfilActivo().frecuenciaMHz, alt: r.alt,
+                formato: formatoActivo().nombre.split(' ')[0], radioKm: r.radioKm, kmz: r.kmz, visible, imageUrl: r.imageUrl,
+                boundsCloudRF: r.boundsCloudRF, proyeccion: r.proyeccion, pixeles: r.pixeles, niveles: r.niveles,
+                lat: r.lat, lon: r.lon, elev: DEM.valor(r.lon, r.lat)
             };
-            sim.coberturaLocal = calcularPorcentajeLocal(sim);
-            if (tipo !== 'actual') { // las antenas actuales ya tienen su pin gris en el mapa
-                const el = elementoPin(etiqueta, tipo === 'punto' ? 'punto' : '');
+            recalcularDatosSim(sim);
+            // Las antenas actuales, fijas y los puntos de luz ya tienen su propio pin en el mapa
+            const conPin = op.pin ?? !['actual', 'fija', 'luz'].includes(tipo);
+            if (conPin) {
+                const el = elementoPin(icono + etiqueta, { punto: 'punto', solar: 'solar' }[tipo] || '');
                 el.addEventListener('click', () => seleccionarSim(id));
                 sim.pinMarker = new mapboxgl.Marker(el, { anchor: 'bottom' })
                     .setLngLat([r.lon, r.lat]).setPopup(new mapboxgl.Popup({ offset: 30 }).setHTML(htmlPopup(sim)));
@@ -1704,12 +1956,21 @@
             return sim;
         }
 
+        function recalcularDatosSim(sim) {
+            sim.coberturaLocal = calcularPorcentajeLocal(sim);
+            sim.calidadLocal = geojsonKMLActual && mallaFinca.length ? calidadUnion([sim], mallaFinca) : null;
+            sim.pinMarker?.getPopup()?.setHTML(htmlPopup(sim));
+        }
+
         function htmlPopup(sim) {
-            const pct = sim.coberturaLocal !== null ? `<span class="mono">${sim.coberturaLocal.toLocaleString('es-ES')} %</span> de la finca` : 'sin finca cargada';
-            return `<div style="font-weight:600; font-size:13px; margin-bottom:2px">${sim.name}</div>
-                <div style="font-size:12px; color:var(--texto-2)">Cubre ${pct}</div>
-                <div class="mono" style="font-size:11px; color:var(--tenue); margin-top:4px">${sim.lat.toFixed(5)}, ${sim.lon.toFixed(5)}</div>
-                <div class="mono" style="font-size:11px; color:var(--tenue)">${sim.elev !== null ? Math.round(sim.elev) + ' m · ' : ''}mástil ${sim.alt} m</div>`;
+            const fmt = v => v.toLocaleString('es-ES', { maximumFractionDigits: 1 });
+            const pct = sim.coberturaLocal !== null ? `<span class="mono">${fmt(sim.coberturaLocal)} %</span> de la finca` : 'sin finca cargada';
+            const cal = sim.calidadLocal !== null && sim.calidadLocal !== undefined
+                ? `<div style="font-size:12.5px; color:var(--texto-2)">Señal buena o muy buena en el <span class="mono">${fmt(sim.calidadLocal)} %</span></div>` : '';
+            return `<div style="font-weight:600; font-size:14px; margin-bottom:2px">${sim.name}</div>
+                <div style="font-size:12.5px; color:var(--texto-2)">Cubre ${pct}</div>${cal}
+                <div class="mono" style="font-size:11.5px; color:var(--tenue); margin-top:4px">${sim.lat.toFixed(5)}, ${sim.lon.toFixed(5)}</div>
+                <div class="mono" style="font-size:11.5px; color:var(--tenue)">${sim.elev !== null ? Math.round(sim.elev) + ' m · ' : ''}mástil ${sim.alt} m</div>`;
         }
 
         function verSimulacion(id) {
@@ -1729,10 +1990,7 @@
         function eliminarSimulacion(id) {
             const sim = simulaciones.find(s => s.id === id);
             if (!sim) return;
-            if (map.getLayer(`sim-layer-${id}`)) map.removeLayer(`sim-layer-${id}`);
-            if (map.getSource(`sim-source-${id}`)) map.removeSource(`sim-source-${id}`);
-            sim.pinMarker?.remove(); sim.labelMarker?.remove();
-            if (sim.urlLocal) URL.revokeObjectURL(sim.urlLocal);
+            sim.pinMarker?.remove();
             simulaciones = simulaciones.filter(s => s.id !== id);
         }
 
@@ -1791,6 +2049,32 @@
             return px.data[(y * px.w + x) * 4 + 3] > 10;
         }
 
+        function indicePixel(sim, lng, lat) {
+            const px = sim.pixeles;
+            if (!px || !sim.boundsCloudRF) return -1;
+            const [n, e, s, w] = sim.boundsCloudRF;
+            if (lat < s || lat > n || lng < w || lng > e) return -1;
+            const fx = (lng - w) / (e - w);
+            const fy = sim.proyeccion === 'mercator' ? (mercY(n) - mercY(lat)) / (mercY(n) - mercY(s)) : (n - lat) / (n - s);
+            return Math.min(px.h - 1, Math.floor(fy * px.h)) * px.w + Math.min(px.w - 1, Math.floor(fx * px.w));
+        }
+        function nivelEn(sim, lng, lat) {
+            const i = indicePixel(sim, lng, lat);
+            if (i < 0) return 0;
+            return sim.niveles ? sim.niveles.arr[i] : (sim.pixeles.data[i * 4 + 3] > 10 ? 4 : 0);
+        }
+        // % de los puntos con señal buena o muy buena (null si alguna simulación no trae clave de colores)
+        function calidadUnion(sims, puntos) {
+            if (!puntos.length || !sims.length || sims.some(s => !s.niveles || !s.niveles.conClave)) return null;
+            let c = 0;
+            for (const [lng, lat] of puntos) {
+                let mejor = 0;
+                for (const s of sims) { const v = nivelEn(s, lng, lat); if (v > mejor) mejor = v; if (mejor === 3) break; }
+                if (mejor >= 2) c++;
+            }
+            return parseFloat((c / puntos.length * 100).toFixed(1));
+        }
+
         function pctUnion(sims, puntos) {
             if (!puntos.length) return null;
             let c = 0;
@@ -1816,21 +2100,7 @@
             return { franjaPct: franja.length ? cubiertosFranja / franja.length * 100 : null, alcance };
         }
 
-        function pintarResumenExterior(sims) {
-            const caja = document.getElementById('resumen-exterior');
-            const a = geojsonKMLActual ? analisisExterior(sims) : null;
-            if (!a) { caja.classList.add('hidden'); return; }
-            const nombres = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
-            const lim = CONFIG.exterior.alcanceAnalisisKm;
-            const celdas = a.alcance.map((km, i) =>
-                `<div class="text-center"><div class="text-slate-500 text-[9px]">${nombres[i]}</div><div class="font-semibold">${km >= lim - 0.05 ? '>' + lim : km.toFixed(1)}</div></div>`).join('');
-            caja.innerHTML = `
-                <div class="font-semibold text-slate-200 mb-1">Cobertura fuera de la finca</div>
-                <div class="mb-2">Franja de ${CONFIG.exterior.franjaKm} km: <span class="font-bold text-sky-300">${a.franjaPct === null ? '–' : a.franjaPct.toFixed(0) + '%'}</span> cubierta</div>
-                <div class="text-slate-400 text-[10px] mb-1">Alcance máximo desde el límite (km)</div>
-                <div class="grid grid-cols-8 gap-1 font-mono text-[10px]">${celdas}</div>`;
-            caja.classList.remove('hidden');
-        }
+        function pintarResumenExterior() { /* resumen de cobertura exterior retirado a petición del usuario */ }
 
         async function actualizarInterfazGlobal() {
             const activas = simulaciones.filter(s => s.visible && s.pixeles);
@@ -1838,25 +2108,103 @@
             if (!geojsonKMLActual || !simulaciones.length) kpi.classList.add('hidden');
             else {
                 const pct = activas.length ? pctUnion(activas, mallaFinca) : 0;
+                const cal = activas.length ? calidadUnion(activas, mallaFinca) : null;
                 const ok = pct >= CONFIG.objetivoCoberturaPct;
                 const v = document.getElementById('kpi-valor');
                 v.innerText = pct.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
                 v.style.color = ok ? 'var(--acento)' : 'var(--aviso)';
-                document.getElementById('kpi-detalle').innerText =
-                    `objetivo ${CONFIG.objetivoCoberturaPct}% · ${activas.length} cobertura${activas.length === 1 ? '' : 's'} activa${activas.length === 1 ? '' : 's'}`;
+                document.getElementById('kpi-detalle').innerText = `objetivo ${CONFIG.objetivoCoberturaPct} %` +
+                    (cal !== null ? ` · señal buena ${cal.toLocaleString('es-ES', { maximumFractionDigits: 0 })} %` : '');
                 kpi.classList.remove('hidden');
             }
             renderizarHistorial();
-            pintarResumenExterior(activas);
             actualizarLeyenda(activas);
+            await actualizarCapaCobertura(activas);
             await actualizarMascaraHuecos(activas);
+        }
+
+        // Capa única con el mejor nivel de señal de todas las coberturas visibles. Las filas se muestrean
+        // uniformes en Mercator porque así estira Mapbox las imágenes: la capa cae exactamente en su sitio.
+        async function actualizarCapaCobertura(activas) {
+            const quitar = () => {
+                if (map.getLayer('cobertura-layer')) map.removeLayer('cobertura-layer');
+                if (map.getSource('cobertura-source')) map.removeSource('cobertura-source');
+                if (urlCobertura) { URL.revokeObjectURL(urlCobertura); urlCobertura = null; }
+            };
+            const sims = activas.filter(s => s.pixeles && s.boundsCloudRF);
+            if (!mapaListo || !sims.length) return quitar();
+            let N = -90, S = 90, E = -180, O = 180, dLat = Infinity, dLng = Infinity;
+            const P = sims.map(s => {
+                const [n, e, so, w] = s.boundsCloudRF;
+                N = Math.max(N, n); S = Math.min(S, so); E = Math.max(E, e); O = Math.min(O, w);
+                dLat = Math.min(dLat, (n - so) / s.pixeles.h); dLng = Math.min(dLng, (e - w) / s.pixeles.w);
+                const niv = s.niveles ? s.niveles.arr : null, data = s.pixeles.data;
+                return { n, e, s: so, w, ancho: s.pixeles.w, alto: s.pixeles.h, niv, data, merc: s.proyeccion === 'mercator', yn: mercY(n), ys: mercY(so), yi: -1 };
+            });
+            let cols = Math.ceil((E - O) / dLng), rows = Math.ceil((N - S) / dLat);
+            const factor = Math.max(1, Math.max(cols, rows) / CONFIG.escalaSenal.maxLadoCapa);
+            cols = Math.max(1, Math.ceil(cols / factor)); rows = Math.max(1, Math.ceil(rows / factor));
+            const yN = mercY(N), yS = mercY(S), colores = CONFIG.escalaSenal.colores;
+            const canvas = document.createElement('canvas');
+            canvas.width = cols; canvas.height = rows;
+            const ctx = canvas.getContext('2d');
+            const img = ctx.createImageData(cols, rows), D = img.data;
+            for (let r = 0; r < rows; r++) {
+                const ym = yN + (yS - yN) * (r + 0.5) / rows;
+                const lat = (2 * Math.atan(Math.exp(ym)) - Math.PI / 2) / GRAD;
+                for (const p of P) {
+                    const fy = p.merc ? (p.yn - ym) / (p.yn - p.ys) : (p.n - lat) / (p.n - p.s);
+                    p.yi = fy < 0 || fy > 1 ? -1 : Math.min(p.alto - 1, Math.floor(fy * p.alto));
+                }
+                for (let c = 0; c < cols; c++) {
+                    const lng = O + (E - O) * (c + 0.5) / cols;
+                    let mejor = 0, rango = 0;
+                    for (const p of P) {
+                        if (p.yi < 0 || lng < p.w || lng > p.e) continue;
+                        const i = p.yi * p.ancho + Math.min(p.ancho - 1, Math.floor((lng - p.w) / (p.e - p.w) * p.ancho));
+                        const code = p.niv ? p.niv[i] : (p.data[i * 4 + 3] > 10 ? 4 : 0);
+                        if (RANGO_NIVEL[code] > rango) { rango = RANGO_NIVEL[code]; mejor = code; }
+                    }
+                    if (!mejor) continue;
+                    const col = colores[mejor], o = (r * cols + c) * 4;
+                    D[o] = col[0]; D[o + 1] = col[1]; D[o + 2] = col[2]; D[o + 3] = col[3];
+                }
+            }
+            ctx.putImageData(img, 0, 0);
+            const url = await new Promise(res => canvas.toBlob(b => res(b ? URL.createObjectURL(b) : null), 'image/png'));
+            if (!url) return quitar();
+            const coords = [[O, N], [E, N], [E, S], [O, S]];
+            if (map.getSource('cobertura-source')) map.getSource('cobertura-source').updateImage({ url, coordinates: coords });
+            else {
+                map.addSource('cobertura-source', { type: 'image', url, coordinates: coords });
+                const debajoDe = ['kml-fill', 'huecos-layer'].find(id => map.getLayer(id));
+                map.addLayer({ id: 'cobertura-layer', type: 'raster', source: 'cobertura-source', paint: { 'raster-opacity': 1, 'raster-resampling': 'nearest', 'raster-fade-duration': 0 } }, debajoDe);
+            }
+            if (urlCobertura) URL.revokeObjectURL(urlCobertura);
+            urlCobertura = url;
         }
 
 
         function actualizarLeyenda(activas) {
             const caja = document.getElementById('leyenda-senal');
             if (!activas.length) return caja.classList.add('hidden');
-            document.getElementById('leyenda-umbral').innerText = `(≥ ${umbralCoberturaDbm()} dBm, ${CONFIG.sfDiseno})`;
+            const esc = CONFIG.escalaSenal, u = umbralCoberturaDbm();
+            const rgba = c => `rgba(${c[0]},${c[1]},${c[2]},${(c[3] / 255).toFixed(2)})`;
+            const menos = v => String(v).replace('-', '−');
+            const filas = [
+                [esc.colores[3], 'Muy buena', `≥ ${menos(esc.muyBuenaDbm)}`],
+                [esc.colores[2], 'Buena', `${menos(esc.muyBuenaDbm)} a ${menos(esc.buenaDbm)}`],
+                [esc.colores[1], 'Suficiente', `${menos(esc.buenaDbm)} a ${menos(u)}`]
+            ];
+            const sinClave = activas.some(s => !s.niveles || !s.niveles.conClave);
+            let html = filas.map(([c, nombre, rango]) => `
+                <div class="flex items-center gap-2"><span class="muestra" style="background:${rgba(c)}"></span>
+                    <span class="flex-1">${nombre}</span><span class="mono text-[11.5px]" style="color:var(--tenue)">${rango} dBm</span></div>`).join('');
+            if (sinClave) html += `
+                <div class="flex items-center gap-2"><span class="muestra" style="background:${rgba(esc.colores[4])}"></span>
+                    <span class="flex-1">Con cobertura (nivel no disponible)</span></div>`;
+            html += `<div class="flex items-center gap-2"><span class="muestra muestra-rayada"></span><span>Sin cobertura dentro de la finca</span></div>`;
+            document.getElementById('leyenda-filas').innerHTML = html;
             caja.classList.remove('hidden');
         }
 
@@ -1870,7 +2218,7 @@
                 const zip = new JSZip();
                 const marcas = simulaciones.map(s => `
     <Placemark><name>${esc(s.name)}</name>
-      <description>${esc(`${s.coberturaLocal !== null ? 'Cubre el ' + s.coberturaLocal + '% de la finca. ' : ''}Mástil ${s.alt} m.${s.elev !== null ? ' Altitud ' + Math.round(s.elev) + ' m.' : ''}`)}</description>
+      <description>${esc(`${({ fija: 'Antena fija. ', luz: 'Punto de luz del cliente. ', solar: 'Punto nuevo sin corriente (placa solar). ', actual: 'Antena actual. ' })[s.tipo] || ''}${s.nota && !['sin corriente', 'hoy'].includes(s.nota) ? s.nota.charAt(0).toUpperCase() + s.nota.slice(1) + '. ' : ''}${s.coberturaLocal !== null ? 'Cubre el ' + s.coberturaLocal + '% de la finca. ' : ''}${s.calidadLocal !== null && s.calidadLocal !== undefined ? 'Señal buena o muy buena en el ' + s.calidadLocal + '%. ' : ''}Mástil ${s.alt} m.${s.elev !== null ? ' Altitud ' + Math.round(s.elev) + ' m.' : ''}`)}</description>
       <Point><coordinates>${s.lon},${s.lat},0</coordinates></Point></Placemark>`).join('');
                 zip.file(`${base}_antenas.kml`, `<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${esc(nombreProyecto || 'Proyecto')}</name>${marcas}\n</Document></kml>`);
                 const fallidos = [];
@@ -1896,26 +2244,29 @@
             const activasN = simulaciones.filter(x => x.visible).length;
             document.getElementById('contador-sims').innerText = simulaciones.length ? `${activasN}/${simulaciones.length} visibles` : '';
             document.getElementById('btn-descargar-todo').classList.toggle('hidden', !simulaciones.length);
-            const rango = { antena: 0, actual: 1, punto: 2 };
-            const orden = [...simulaciones].sort((a, b) => (rango[a.tipo] - rango[b.tipo]) || (a.id - b.id));
+            const rango = { fija: 0, luz: 0, antena: 0, solar: 0, actual: 1, punto: 2 };
+            const orden = [...simulaciones].sort((a, b) => ((rango[a.tipo] ?? 3) - (rango[b.tipo] ?? 3)) || (a.id - b.id));
             const ico = {
                 ver: '<svg aria-hidden="true" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>',
                 kmz: '<svg aria-hidden="true" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"/></svg>',
                 borrar: '<svg aria-hidden="true" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>'
             };
+            const fmt = v => v.toLocaleString('es-ES', { maximumFractionDigits: 1 });
             lista.innerHTML = orden.map(sim => {
-                const pct = sim.coberturaLocal !== null && sim.coberturaLocal !== undefined ? `${sim.coberturaLocal.toLocaleString('es-ES')} %` : '–';
-                const datos = [pct, sim.elev !== null ? `${Math.round(sim.elev)} m` : null, `mástil ${sim.alt} m`].filter(Boolean).join(' · ');
+                const pct = sim.coberturaLocal !== null && sim.coberturaLocal !== undefined ? `${fmt(sim.coberturaLocal)} %` : '–';
+                const cal = sim.calidadLocal !== null && sim.calidadLocal !== undefined ? `buena ${fmt(sim.calidadLocal)} %` : null;
+                const datos = [pct, cal, sim.elev !== null ? `${Math.round(sim.elev)} m` : null].filter(Boolean).join(' · ');
                 const claseNum = sim.tipo === 'antena' ? '' : sim.tipo;
+                const nota = sim.nota ? ` <span style="color:var(--tenue); font-weight:400">· ${sim.nota}</span>` : '';
                 return `
                 <div class="item-antena ${sim.visible ? '' : 'apagada'} ${sim.id === simSeleccionada ? 'seleccionada' : ''}" data-id="${sim.id}">
                     <label class="interruptor" title="${sim.visible ? 'Ocultar' : 'Mostrar'} cobertura">
                         <input type="checkbox" ${sim.visible ? 'checked' : ''} onchange="toggleCapa(${sim.id}, this.checked)" aria-label="Mostrar la cobertura de ${sim.name}"><span></span>
                     </label>
-                    <div class="numero ${claseNum}">${sim.etiqueta}</div>
+                    <div class="numero ${claseNum}">${sim.icono || ''}${sim.etiqueta}</div>
                     <div class="flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold truncate">${sim.name}${sim.tipo === 'actual' ? ' <span style="color:var(--tenue); font-weight:400">· hoy</span>' : ''}</div>
-                        <div class="mono text-[11px] truncate" style="color:var(--tenue)" title="${sim.lat.toFixed(5)}, ${sim.lon.toFixed(5)}">${datos}</div>
+                        <div class="text-[14px] font-semibold truncate">${sim.name}${nota}</div>
+                        <div class="mono text-[11.5px] truncate" style="color:var(--tenue)" title="${sim.lat.toFixed(5)}, ${sim.lon.toFixed(5)} · mástil ${sim.alt} m">${datos}</div>
                     </div>
                     <button class="icono-accion" aria-label="Ver ${sim.name} en el mapa" title="Ver en el mapa" onclick="verSimulacion(${sim.id})">${ico.ver}</button>
                     <a class="icono-accion" href="${sim.kmz}" target="_blank" aria-label="Descargar KMZ de ${sim.name}" title="Descargar KMZ">${ico.kmz}</a>
@@ -1928,7 +2279,6 @@
             const sim = simulaciones.find(s => s.id === id);
             if (!sim) return;
             sim.visible = isVisible;
-            if (map.getLayer(`sim-layer-${id}`)) map.setLayoutProperty(`sim-layer-${id}`, 'visibility', isVisible ? 'visible' : 'none');
             if (sim.pinMarker) { if (isVisible) sim.pinMarker.addTo(map); else sim.pinMarker.remove(); }
             await actualizarInterfazGlobal();
         }
@@ -1958,7 +2308,13 @@
         function baseResolver(ctx) {
             const cfg = CONFIG.optimizador;
             return { nInterior: ctx.M.nInterior, nTotal: ctx.M.J, modo: ctx.modo, objetivoPct: CONFIG.objetivoCoberturaPct,
-                     maxAntenas: cfg.maxAntenas, nFijo: ctx.nFijo, pesoExterior: cfg.pesoExteriorDesempate, pesoRedundancia: cfg.pesoRedundancia };
+                     maxAntenas: Math.max(0, cfg.maxAntenas - ctx.base.length), nFijo: ctx.nFijo, base: ctx.base.map(b => b.set),
+                     pesoExterior: cfg.pesoExteriorDesempate, pesoRedundancia: cfg.pesoRedundancia };
+        }
+
+        // Simulaciones de una solución: lo que ya está garantizado (fijas / luces) + los emplazamientos elegidos
+        function simsSeleccion(ctx, sel) {
+            return [...ctx.base.map(b => b.sim), ...sel.map(ci => ctx.sims10.get(ci)).filter(Boolean)];
         }
 
         async function simularCandidato(ctx, ci, res) {
@@ -1984,10 +2340,18 @@
         function setsHibridos(ctx) { return ctx.sets.map((s, ci) => ctx.sims10.has(ci) ? conjuntoRealCtx(ctx, ci) : s); }
 
         function coberturaRealDestinos(ctx, seleccion) {
-            const sims = seleccion.map(ci => ctx.sims10.get(ci)).filter(Boolean);
+            const sims = simsSeleccion(ctx, seleccion);
             const cub = new Uint8Array(ctx.M.J);
             for (let j = 0; j < ctx.M.J; j++) if (sims.some(s => hayCobertura(s, ...ctx.M.destinos[j].coords))) cub[j] = 1;
             return cub;
+        }
+
+        function marcarResultadoObsoleto(texto) {
+            if (!ultimoResultado) return;
+            ultimoResultado.aviso = texto;
+            ultimoResultado.recs = [];
+            pilaDeshacer = [];
+            pintarResumenOptimizador(ultimoResultado, null);
         }
 
         function bloquearOptimizador(si) {
@@ -2000,7 +2364,11 @@
             if (optimizadorEnCurso) return;
             const cfg = CONFIG.optimizador;
             const objetivo = CONFIG.objetivoCoberturaPct;
-            const nFijo = opciones.nFijo || Math.min(cfg.maxAntenas, Math.max(1, parseInt(document.getElementById('num_antenas').value) || 1));
+            const nContratadas = opciones.nContratadas || Math.min(cfg.maxAntenas, Math.max(1, parseInt(document.getElementById('num_antenas').value) || 1));
+            const fijas = modo === 'fijo' ? antenasActuales.filter(a => a.fija) : [];
+            if (modo === 'fijo' && nContratadas <= fijas.length)
+                return alert('Todas las antenas contratadas están marcadas como fijas: no queda ninguna para reubicar. Sube el número de antenas contratadas o marca alguna como reubicable.');
+            const luces = modo === 'objetivo' ? puntosLuz.slice(0, CONFIG.puntosLuz.max) : [];
             const anterior = opciones.encadenar ? ultimoResultado : null;
 
             bloquearOptimizador(true);
@@ -2013,67 +2381,133 @@
                 if (!M) throw new Error('No se pudo preparar el análisis del terreno.');
                 const permisos = permisosActuales();
                 const pesos = pesosEfectivos(M, permisos);
-                if (!pesos.some(p => p > 0)) throw new Error('No hay emplazamientos permitidos con la configuración actual.');
-                const ctx = { modo, nFijo, M, permisos, pesos, hTx: M.hTx, perfil: document.getElementById('sim_profile').value,
-                              sims30: new Map(), sims10: new Map(), reales: new Map(), contador: { sims: 0, cache: 0 }, cal: null, sets: null, segundos: 0 };
+                if (!pesos.some(p => p > 0) && !luces.length) throw new Error('No hay emplazamientos permitidos con la configuración actual.');
+                const ctx = { modo, nContratadas, nFijo: nContratadas - fijas.length, M, permisos, pesos, hTx: M.hTx,
+                              perfil: document.getElementById('sim_profile').value, sims30: new Map(), sims10: new Map(), reales: new Map(),
+                              contador: { sims: 0, cache: 0 }, cal: null, sets: null, segundos: 0, base: [], luz: null, actual: null };
+                const simular1 = (lat, lon) => simularCloudRF({ lat, lon, alt: ctx.hTx, contador: ctx.contador });
 
-                // Situación actual del cliente (solo Optimizar, si ha marcado sus antenas)
-                const promesaActual = (modo === 'fijo' && antenasActuales.length)
-                    ? Promise.allSettled(antenasActuales.map(a => simularCloudRF({ lat: a.lat, lon: a.lon, alt: ctx.hTx, contador: ctx.contador })))
-                    : null;
-
-                // 2. Calibración
-                ctx.cal = { offsetDb: 0, coefVegDb: CONFIG.vegetacion.coefInicialDb, precision: null, n: 0 };
-                ctx.sets = conjuntosCalibrados(M, ctx.cal);
-                textoLoader('Calibrando con CloudRF…');
-                const calibradores = elegirCalibradores(M, ctx.sets, cfg.simsCalibracion, pesos);
-                await Promise.allSettled(calibradores.map(ci => simularCandidato(ctx, ci, cfg.resolucionCalibracionM)));
-                if (!ctx.sims30.size) throw new Error('CloudRF no respondió a las simulaciones de calibración.');
-                recalibrar(ctx);
-
-                // 3. Búsqueda local calibrada (sin créditos)
-                textoLoader('Buscando la mejor combinación…');
-                await ceder();
-                const sol = resolverCobertura({ ...baseResolver(ctx), sets: ctx.sets, pesos, reserva: reservaRedundancia(M, pesos) });
-                let seleccion = sol.seleccion.slice();
-
-                // 4. Validación real a 10 m
-                await Promise.allSettled(seleccion.map(ci => simularCandidato(ctx, ci, CONFIG.cloudrf.resolucionM)));
-                seleccion = seleccion.filter(ci => ctx.sims10.has(ci));
-                if (!seleccion.length) throw new Error('CloudRF no respondió a las simulaciones de validación.');
-                const pctInteriorReal = sel => { const cub = coberturaRealDestinos(ctx, sel); let c = 0; for (let j = 0; j < M.nInterior; j++) c += cub[j]; return 100 * c / M.nInterior; };
-                const evaluarReal = () => {
-                    const pool = [...ctx.sims10.keys()].filter(ci => pesos[ci] > 0);
-                    const r = resolverCobertura({ ...baseResolver(ctx), sets: pool.map(ci => conjuntoRealCtx(ctx, ci)), pesos: pool.map(ci => pesos[ci]) });
-                    return { seleccion: r.seleccion.map(i => pool[i]), interiorPct: r.interiorPct };
-                };
-                let real = modo === 'fijo' ? { seleccion, interiorPct: pctInteriorReal(seleccion) } : evaluarReal();
-
-                // 5. Corrección dirigida a las zonas sin cobertura real
-                for (let ronda = 0; ronda < cfg.rondasCorreccion; ronda++) {
-                    if (modo === 'objetivo' && real.interiorPct >= objetivo) break;
-                    if (modo === 'fijo' && ronda >= 1) break;
-                    recalibrar(ctx);
-                    const cub = coberturaRealDestinos(ctx, real.seleccion);
-                    const huecos = new Set();
-                    for (let j = 0; j < M.nInterior; j++) if (!cub[j]) huecos.add(j);
-                    if (!huecos.size) break;
-                    const nuevos = elegirParaHuecos(ctx.sets, huecos, ctx.sims10, cfg.simsPorRonda, pesos);
-                    if (!nuevos.length) break;
-                    textoLoader(`Corrigiendo zonas sin cobertura (ronda ${ronda + 1})…`);
-                    await Promise.allSettled(nuevos.map(ci => simularCandidato(ctx, ci, CONFIG.cloudrf.resolucionM)));
-                    const propuesta = evaluarReal();
-                    if (modo === 'objetivo' || propuesta.interiorPct > real.interiorPct) real = propuesta;
+                // Antenas fijas (Optimizar): se simulan tal cual y su cobertura se da por hecha
+                if (fijas.length) {
+                    textoLoader('Simulando las antenas fijas…');
+                    const rs = await Promise.allSettled(fijas.map(a => simular1(a.lat, a.lon)));
+                    rs.forEach((r, k) => {
+                        if (r.status !== 'fulfilled') throw new Error('CloudRF no respondió para una de las antenas fijas.');
+                        const i = antenasActuales.indexOf(fijas[k]);
+                        ctx.base.push({ tipo: 'fija', sim: r.value, set: conjuntoReal(M, r.value), nombre: `Fija A${i + 1}`, etiqueta: `A${i + 1}` });
+                    });
                 }
-                recalibrar(ctx);
+                // Situación actual completa del cliente, para comparar
+                const promesaActual = (modo === 'fijo' && antenasActuales.length)
+                    ? Promise.allSettled(antenasActuales.map(a => simular1(a.lat, a.lon))) : null;
+
+                // Puntos de luz (Planificar): mínima combinación que llega al objetivo; si no basta, los que aportan
+                let saltarCandidatos = false;
+                if (luces.length) {
+                    textoLoader(`Simulando ${luces.length} punto${luces.length === 1 ? '' : 's'} de luz…`);
+                    const rs = await Promise.allSettled(luces.map(l => simular1(l.lat, l.lon)));
+                    const datos = rs.map((r, i) => r.status === 'fulfilled' ? { i, sim: r.value, set: conjuntoReal(M, r.value) } : { i, sim: null, error: true });
+                    const validos = datos.filter(d => d.sim);
+                    if (!validos.length) throw new Error('CloudRF no respondió a las simulaciones de los puntos de luz.');
+                    // La decisión se toma en la malla gruesa y se comprueba en la fina (la que da el % final):
+                    // si la gruesa sobreestimó, se sube el listón y se repite
+                    let listón = objetivo, r, elegidos, fino = 0;
+                    for (let intento = 0; intento < 4; intento++) {
+                        r = resolverCobertura({ sets: validos.map(d => d.set), pesos: null, nInterior: M.nInterior, nTotal: M.J, modo: 'objetivo',
+                                                objetivoPct: Math.min(100, listón), maxAntenas: validos.length, pesoExterior: 0, pesoRedundancia: 0 });
+                        elegidos = r.seleccion.map(k => validos[k]);
+                        fino = pctUnion(elegidos.map(d => d.sim), mallaFinca) ?? 0;
+                        if (!r.objetivoAlcanzado || fino >= objetivo || listón >= 100) break;
+                        listón += Math.max(0.5, r.interiorPct - fino) + 0.5;
+                    }
+                    elegidos.forEach(d => ctx.base.push({ tipo: 'luz', sim: d.sim, set: d.set, nombre: `Luz ${d.i + 1}`, etiqueta: String(d.i + 1) }));
+                    ctx.luz = {
+                        total: luces.length, alcanzado: fino >= objetivo,
+                        ranking: datos.map(d => ({ i: d.i, sim: d.sim, error: !!d.error, usado: elegidos.includes(d),
+                                                   pct: d.sim ? pctUnion([d.sim], mallaFinca) : null }))
+                                      .sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1))
+                    };
+                    saltarCandidatos = ctx.luz.alcanzado || !pesos.some(p => p > 0) || ctx.base.length >= cfg.maxAntenas;
+                }
+
+                let seleccionFinal = [];
+                if (!saltarCandidatos) {
+                    // 2. Calibración
+                    ctx.cal = { offsetDb: 0, coefVegDb: CONFIG.vegetacion.coefInicialDb, precision: null, n: 0 };
+                    ctx.sets = conjuntosCalibrados(M, ctx.cal);
+                    textoLoader('Calibrando con CloudRF…');
+                    const calibradores = elegirCalibradores(M, ctx.sets, cfg.simsCalibracion, pesos);
+                    await Promise.allSettled(calibradores.map(ci => simularCandidato(ctx, ci, cfg.resolucionCalibracionM)));
+                    if (!ctx.sims30.size) throw new Error('CloudRF no respondió a las simulaciones de calibración.');
+                    recalibrar(ctx);
+
+                    // 3. Búsqueda local calibrada (sin créditos), contando con la cobertura base
+                    textoLoader(ctx.luz ? 'Buscando puntos solares que completen la cobertura…' : 'Buscando la mejor combinación…');
+                    await ceder();
+                    const sol = resolverCobertura({ ...baseResolver(ctx), sets: ctx.sets, pesos, reserva: reservaRedundancia(M, pesos) });
+                    let seleccion = sol.seleccion.slice();
+
+                    // 4. Validación real a 10 m
+                    await Promise.allSettled(seleccion.map(ci => simularCandidato(ctx, ci, CONFIG.cloudrf.resolucionM)));
+                    const pedidas = seleccion.length;
+                    seleccion = seleccion.filter(ci => ctx.sims10.has(ci));
+                    if (pedidas && !seleccion.length) throw new Error('CloudRF no respondió a las simulaciones de validación.');
+                    const pctInteriorReal = sel => { const cub = coberturaRealDestinos(ctx, sel); let c = 0; for (let j = 0; j < M.nInterior; j++) c += cub[j]; return 100 * c / M.nInterior; };
+                    const evaluarReal = (objetivoPct = objetivo) => {
+                        const pool = [...ctx.sims10.keys()].filter(ci => pesos[ci] > 0);
+                        const r = resolverCobertura({ ...baseResolver(ctx), objetivoPct: Math.min(100, objetivoPct), sets: pool.map(ci => conjuntoRealCtx(ctx, ci)), pesos: pool.map(ci => pesos[ci]) });
+                        return { seleccion: r.seleccion.map(i => pool[i]), interiorPct: r.interiorPct };
+                    };
+                    const simularHuecos = async (sel, texto) => {
+                        recalibrar(ctx);
+                        const cub = coberturaRealDestinos(ctx, sel);
+                        const huecos = new Set();
+                        for (let j = 0; j < M.nInterior; j++) if (!cub[j]) huecos.add(j);
+                        const nuevos = huecos.size ? elegirParaHuecos(ctx.sets, huecos, ctx.sims10, cfg.simsPorRonda, pesos) : [];
+                        if (!nuevos.length) return false;
+                        textoLoader(texto);
+                        await Promise.allSettled(nuevos.map(ci => simularCandidato(ctx, ci, CONFIG.cloudrf.resolucionM)));
+                        return true;
+                    };
+                    let real = modo === 'fijo' || !ctx.sims10.size ? { seleccion, interiorPct: pctInteriorReal(seleccion) } : evaluarReal();
+
+                    // 5. Corrección dirigida a las zonas sin cobertura real
+                    for (let ronda = 0; ronda < cfg.rondasCorreccion; ronda++) {
+                        if (modo === 'objetivo' && real.interiorPct >= objetivo) break;
+                        if (modo === 'fijo' && ronda >= 1) break;
+                        if (!await simularHuecos(real.seleccion, `Corrigiendo zonas sin cobertura (ronda ${ronda + 1})…`)) break;
+                        const propuesta = evaluarReal();
+                        if (modo === 'objetivo' || propuesta.interiorPct > real.interiorPct) real = propuesta;
+                    }
+
+                    // 6. Comprobación en la malla fina (la que da el % final). La malla gruesa tiene un error de
+                    //    muestreo de ~2 puntos: si se quedó corta, se sube el listón y se completa
+                    if (modo === 'objetivo') {
+                        let listón = objetivo;
+                        for (let intento = 0; intento < cfg.rondasCorreccion + 1; intento++) {
+                            const fino = pctUnion(simsSeleccion(ctx, real.seleccion), mallaFinca) ?? 0;
+                            if (fino >= objetivo || listón >= 100) break;
+                            listón = Math.max(listón, real.interiorPct) + Math.max(0.5, real.interiorPct - fino) + 0.5;
+                            let propuesta = evaluarReal(listón);
+                            if (propuesta.interiorPct < Math.min(100, listón)) {
+                                if (await simularHuecos(propuesta.seleccion, 'Ajustando la cobertura final…')) propuesta = evaluarReal(listón);
+                            }
+                            if (pctUnion(simsSeleccion(ctx, propuesta.seleccion), mallaFinca) > fino) real = propuesta;
+                            else break;
+                        }
+                    }
+                    recalibrar(ctx);
+                    seleccionFinal = real.seleccion;
+                }
                 if (promesaActual) {
-                    const sims = (await promesaActual).filter(x => x.status === 'fulfilled').map(x => x.value);
-                    if (sims.length) ctx.actual = { sims, n: antenasActuales.length, pct: pctUnion(sims, mallaFinca) };
+                    const rs = await promesaActual;
+                    const sims = rs.map((x, i) => x.status === 'fulfilled' ? { sim: x.value, i, fija: antenasActuales[i]?.fija } : null).filter(Boolean);
+                    if (sims.length) ctx.actual = { sims, n: antenasActuales.length, pct: pctUnion(sims.map(x => x.sim), mallaFinca) };
                 }
                 ctx.segundos = (Date.now() - t0) / 1000;
 
                 const cambio = opciones.cambio ? { ...opciones.cambio, antes: anterior ? resumenCorto(anterior) : null } : null;
-                await presentarResultado(ctx, real.seleccion, cambio);
+                await presentarResultado(ctx, seleccionFinal, cambio);
             } catch (e) {
                 console.error(e);
                 alert('El optimizador no pudo terminar: ' + e.message);
@@ -2108,37 +2542,50 @@
             return (sel) => orden.find(ci => !sel.includes(ci) && sel.every(s => distanciaM(M.candidatos[ci].coords, M.candidatos[s].coords) >= 400)) ?? -1;
         }
 
-        function resumenCorto(res) { return { n: res.seleccion.length, pct: res.pct, ext: res.exteriorPct }; }
+        function resumenCorto(res) { return { n: res.seleccion.length + res.ctx.base.length, pct: res.pct, ext: res.exteriorPct }; }
 
         // Muestra la solución: simulaciones en el mapa (ordenadas por aporte), curva, exterior y recomendaciones
         async function presentarResultado(ctx, seleccion, cambio = null) {
-            const coberturas = seleccion.map(ci => {
-                const s = ctx.sims10.get(ci), v = new Uint8Array(mallaFinca.length);
-                mallaFinca.forEach(([lng, lat], k) => { if (hayCobertura(s, lng, lat)) v[k] = 1; });
-                return v;
-            });
-            const union = new Uint8Array(mallaFinca.length), restantes = seleccion.map((_, i) => i), orden = [], curva = [];
+            const objetivo = CONFIG.objetivoCoberturaPct;
+            const vector = s => { const v = new Uint8Array(mallaFinca.length); mallaFinca.forEach(([lng, lat], k) => { if (hayCobertura(s, lng, lat)) v[k] = 1; }); return v; };
+            const union = new Uint8Array(mallaFinca.length);
             let cubiertos = 0;
+            const sumar = v => { for (let k = 0; k < v.length; k++) if (v[k] && !union[k]) { union[k] = 1; cubiertos++; } };
+            const pctActual = () => mallaFinca.length ? 100 * cubiertos / mallaFinca.length : 0;
+            const curva = [], etiquetasCurva = [];
+            ctx.base.forEach(b => { sumar(vector(b.sim)); curva.push(pctActual()); etiquetasCurva.push(b.tipo === 'luz' ? `L${b.etiqueta}` : b.etiqueta); });
+            // Emplazamientos elegidos, ordenados por lo que aportan
+            const coberturas = seleccion.map(ci => vector(ctx.sims10.get(ci)));
+            const restantes = seleccion.map((_, i) => i), orden = [];
             while (restantes.length) {
                 let bi = 0, bg = -1;
                 restantes.forEach((i, pos) => { let g = 0; const v = coberturas[i]; for (let k = 0; k < v.length; k++) if (v[k] && !union[k]) g++; if (g > bg) { bg = g; bi = pos; } });
                 const i = restantes.splice(bi, 1)[0];
-                const v = coberturas[i];
-                for (let k = 0; k < v.length; k++) if (v[k] && !union[k]) { union[k] = 1; cubiertos++; }
+                sumar(coberturas[i]);
                 orden.push(seleccion[i]);
-                curva.push(mallaFinca.length ? 100 * cubiertos / mallaFinca.length : 0);
+                curva.push(pctActual());
+                etiquetasCurva.push(ctx.luz ? `S${orden.length}` : String(orden.length));
             }
-            const finales = orden.map(ci => ctx.sims10.get(ci));
 
             if (ultimoResultado) ultimoResultado.ids.forEach(eliminarSimulacion);
             const ids = [];
-            for (let i = 0; i < finales.length; i++) ids.push((await mostrarSimulacion(finales[i], `Antena ${i + 1}`, { tipo: 'antena', numero: i + 1 })).id);
-            if (ctx.actual) for (let i = 0; i < ctx.actual.sims.length; i++)
-                ids.push((await mostrarSimulacion(ctx.actual.sims[i], `Actual ${i + 1}`, { tipo: 'actual', numero: i + 1, visible: false })).id);
+            for (const b of ctx.base) ids.push((await mostrarSimulacion(b.sim, b.nombre, { tipo: b.tipo, etiqueta: b.etiqueta })).id);
+            for (let k = 0; k < orden.length; k++) {
+                const r = ctx.sims10.get(orden[k]);
+                ids.push((await mostrarSimulacion(r, ctx.luz ? `Punto solar ${k + 1}` : `Antena ${k + 1}`,
+                    ctx.luz ? { tipo: 'solar', etiqueta: String(k + 1), nota: 'sin corriente' } : { tipo: 'antena', numero: k + 1 })).id);
+            }
+            if (ctx.luz) for (const x of ctx.luz.ranking.filter(x => !x.usado && x.sim))
+                ids.push((await mostrarSimulacion(x.sim, `Luz ${x.i + 1}`, { tipo: 'luz', etiqueta: String(x.i + 1), visible: false, nota: 'no usada' })).id);
+            if (ctx.actual) for (const x of ctx.actual.sims.filter(x => !x.fija))
+                ids.push((await mostrarSimulacion(x.sim, `Actual A${x.i + 1}`, { tipo: 'actual', etiqueta: `A${x.i + 1}`, visible: false, nota: 'hoy' })).id);
             if (nodosVisibles) toggleNodos(); // las cumbres se ocultan para limpiar el mapa
-            const exterior = analisisExterior(finales);
-            ultimoResultado = { ctx, seleccion: orden, ids, curva, pct: curva[curva.length - 1] ?? 0,
-                                exteriorPct: exterior && exterior.franjaPct !== null ? exterior.franjaPct : null, aviso: null };
+
+            const finales = simsSeleccion(ctx, orden);
+            const pct = curva.length ? curva[curva.length - 1] : 0;
+            ultimoResultado = { ctx, seleccion: orden, ids, curva, etiquetasCurva, pct,
+                                calidad: calidadUnion(finales, mallaFinca), exteriorPct: null, aviso: null,
+                                aLaBaja: !!(cambio && cambio.aLaBaja) && pct < objetivo };
             ultimoResultado.recs = calcularRecomendaciones(ultimoResultado);
             await actualizarInterfazGlobal();
             pintarResumenOptimizador(ultimoResultado, cambio);
@@ -2147,55 +2594,50 @@
         // Recomendaciones evaluadas con el modelo local (sin créditos). Solo se devuelven las que merecen la pena.
         function calcularRecomendaciones(res) {
             const { ctx } = res, M = ctx.M, R = CONFIG.recomendaciones, objetivo = CONFIG.objetivoCoberturaPct;
-            const ok = res.pct >= objetivo, N = res.seleccion.length, recs = [];
-            const sets = setsHibridos(ctx);
-            const cub = coberturaRealDestinos(ctx, res.seleccion);
-            let intDest = 0, extDest = 0;
-            for (let j = 0; j < M.J; j++) if (cub[j]) { if (j < M.nInterior) intDest++; else extDest++; }
-            const nRing = M.J - M.nInterior;
-            const pctIntDest = 100 * intDest / M.nInterior, pctExtDest = nRing ? 100 * extDest / nRing : 0;
-
-            // Antenas contratadas: el número es fijo, no se propone añadir ni quitar
-            if (ctx.modo === 'objetivo' && N < CONFIG.optimizador.maxAntenas) {
-                let mejor = 0;
-                sets.forEach((s, ci) => {
-                    if (ctx.pesos[ci] <= 0 || res.seleccion.includes(ci)) return;
-                    let g = 0; for (const j of s) if (j < M.nInterior && !cub[j]) g++;
-                    if (g > mejor) mejor = g;
-                });
-                const gan = 100 * mejor / M.nInterior;
-                if (gan >= R.minGananciaAnadirPts || (!ok && gan >= R.minMejoraRealPts))
-                    recs.push({ id: 'anadir', boton: 'Añadir antena',
-                                texto: `Una antena más subiría la cobertura de ${res.pct.toFixed(0)}% a ~${Math.min(100, res.pct + gan).toFixed(0)}% (estimación).` });
+            const ok = res.pct >= objetivo, N = res.seleccion.length, total = N + ctx.base.length, recs = [];
+            const unidad = ctx.luz ? 'punto solar' : 'antena';
+            const fmt = v => v.toLocaleString('es-ES', { maximumFractionDigits: 0 });
+            if (ctx.sets && ctx.pesos.some(p => p > 0)) {
+                const sets = setsHibridos(ctx);
+                const cub = coberturaRealDestinos(ctx, res.seleccion);
+                // Añadir: solo en Planificar (en Optimizar el número de antenas es el contratado)
+                if (ctx.modo === 'objetivo' && total < CONFIG.optimizador.maxAntenas) {
+                    let mejor = 0;
+                    sets.forEach((s, ci) => {
+                        if (ctx.pesos[ci] <= 0 || res.seleccion.includes(ci)) return;
+                        let g = 0; for (const j of s) if (j < M.nInterior && !cub[j]) g++;
+                        if (g > mejor) mejor = g;
+                    });
+                    const gan = 100 * mejor / M.nInterior;
+                    if (gan >= R.minGananciaAnadirPts || (!ok && gan >= R.minMejoraRealPts))
+                        recs.push({ id: 'anadir', boton: ctx.luz ? 'Añadir punto solar' : 'Añadir antena',
+                                    texto: `${ctx.luz ? 'Un punto solar más' : 'Una antena más'} subiría la cobertura del ${fmt(res.pct)} % a ~${fmt(Math.min(100, res.pct + gan))} % (estimación).` });
+                }
+                // Quitar: siempre disponible en Planificar; si baja del objetivo queda como propuesta a la baja
+                if (ctx.modo === 'objetivo' && N >= 1 && total >= 2) {
+                    const r = resolverCobertura({ ...baseResolver(ctx), modo: 'fijo', nFijo: N - 1, sets, pesos: ctx.pesos });
+                    const basta = r.interiorPct >= objetivo + R.margenUnaMenosPts;
+                    recs.push({ id: 'menos', boton: `Probar con ${ctx.luz ? 'un punto solar' : 'una antena'} menos`, seleccion: r.seleccion,
+                                texto: basta
+                                    ? `Con ${total - 1} ${total - 1 === 1 ? 'antena' : 'antenas'} se estima ~${fmt(r.interiorPct)} %: podría bastar con ${ctx.luz ? 'un punto solar' : 'una antena'} menos.`
+                                    : `Con ${total - 1} ${total - 1 === 1 ? 'antena' : 'antenas'} se estima ~${fmt(r.interiorPct)} %, por debajo del ${objetivo} %. Útil para presentar una propuesta a la baja.` });
+                }
             }
-            if (ctx.modo === 'objetivo' && ok && N >= 2) {
-                const r = resolverCobertura({ ...baseResolver(ctx), modo: 'fijo', nFijo: N - 1, sets, pesos: ctx.pesos });
-                if (r.interiorPct >= objetivo + R.margenUnaMenosPts)
-                    recs.push({ id: 'menos', boton: 'Probar con una menos', seleccion: r.seleccion,
-                                texto: `Con ${N - 1} antena${N - 1 === 1 ? '' : 's'} recolocadas se estima ~${r.interiorPct.toFixed(0)}%: podría bastar con una menos.` });
-            }
-            if (res.exteriorPct !== null && res.exteriorPct < R.exteriorBajoPct) {
-                const r = resolverCobertura({ ...baseResolver(ctx), modo: 'fijo', nFijo: N, sets, pesos: ctx.pesos, pesoExterior: 1 });
-                const interiorMin = ok ? objetivo : pctIntDest - 1;
-                if (r.interiorPct >= interiorMin && r.exteriorPct >= pctExtDest + R.minMejoraExteriorPts)
-                    recs.push({ id: 'exterior', boton: 'Mejorar exterior', seleccion: r.seleccion,
-                                texto: `La franja exterior de ${CONFIG.exterior.franjaKm} km solo está cubierta al ${res.exteriorPct.toFixed(0)}%. Recolocando las antenas se estima +${(r.exteriorPct - pctExtDest).toFixed(0)} puntos fuera sin perder cobertura dentro.` });
-            }
-            if (ctx.modo === 'objetivo' && !ok) {
+            if (ctx.modo === 'objetivo' && !ok && !res.aLaBaja) {
                 const sig = (R.alturasMastil[ctx.perfil] || []).find(a => a > ctx.hTx);
                 if (sig) recs.push({ id: 'mastil', boton: `Repetir con mástil de ${sig} m`, altura: sig,
-                                     texto: `No se alcanza el ${objetivo}% con mástil de ${ctx.hTx} m.` });
+                                     texto: `No se alcanza el ${objetivo} % con mástil de ${ctx.hTx} m.` });
             }
             const fuera = res.seleccion.filter(ci => !M.candidatos[ci].esInterno).length;
             if (ctx.permisos.permitirFuera && fuera > 0)
                 recs.push({ id: 'dentro', boton: 'Calcular solo dentro',
-                            texto: `${fuera} antena${fuera > 1 ? 's están' : ' está'} fuera de la finca. Si el cliente no lo permite:` });
+                            texto: `${fuera} ${fuera > 1 ? unidad + (ctx.luz ? 'es están' : 's están') : unidad + ' está'} fuera de la finca. Si el cliente no lo permite:` });
             return recs;
         }
 
         function guardarEstado() {
             const r = ultimoResultado;
-            return { ctx: r.ctx, seleccion: r.seleccion.slice(), resumen: resumenCorto(r),
+            return { ctx: r.ctx, seleccion: r.seleccion.slice(), resumen: resumenCorto(r), aLaBaja: r.aLaBaja,
                      txHeight: document.getElementById('tx_height').value,
                      permitir: document.getElementById('permitir_fuera').checked,
                      dist: document.getElementById('dist_fuera').value };
@@ -2224,8 +2666,9 @@
                 const estado = guardarEstado();
                 if (id === 'mastil') document.getElementById('tx_height').value = rec.altura;
                 else { document.getElementById('permitir_fuera').checked = false; sincronizarPermisos(); }
+                actualizarInfoEnlace();
                 apilarDeshacer(estado);
-                await optimizarRed(ctx.modo, { encadenar: true, nFijo: ctx.nFijo, cambio: { titulo: rec.boton },
+                await optimizarRed(ctx.modo, { encadenar: true, nContratadas: ctx.nContratadas, cambio: { titulo: rec.boton },
                                                alFallar: () => restaurarEntradas(pilaDeshacer.pop()) });
                 return;
             }
@@ -2244,39 +2687,33 @@
                         return { ci, g: g * ctx.pesos[ci] };
                     }).filter(x => x && x.g > 0).sort((a, b) => b.g - a.g).slice(0, R.simsAnadir).map(x => x.ci);
                     await Promise.allSettled(candidatas.map(ci => simularCandidato(ctx, ci, CONFIG.cloudrf.resolucionM)));
-                    let mejor = null, mejorPct = -1;
+                    let mejor = null, mejorV = -1;
                     for (const ci of candidatas.filter(ci => ctx.sims10.has(ci))) {
-                        const p = pctUnion([...res.seleccion, ci].map(c => ctx.sims10.get(c)), mallaFinca);
-                        if (p * ctx.pesos[ci] > mejorPct * (mejor === null ? 1 : ctx.pesos[mejor])) { mejorPct = p; mejor = ci; }
+                        const v = pctUnion(simsSeleccion(ctx, [...res.seleccion, ci]), mallaFinca) * ctx.pesos[ci];
+                        if (v > mejorV) { mejorV = v; mejor = ci; }
                     }
                     if (mejor !== null) nueva = [...res.seleccion, mejor];
-                } else {
+                } else if (id === 'menos') {
                     await Promise.allSettled(rec.seleccion.map(ci => simularCandidato(ctx, ci, CONFIG.cloudrf.resolucionM)));
                     nueva = rec.seleccion.filter(ci => ctx.sims10.has(ci));
                     if (nueva.length !== rec.seleccion.length) nueva = null;
                 }
                 recalibrar(ctx);
 
-                let aceptar = false, motivo = 'CloudRF no respondió.';
+                let aceptar = false, motivo = 'CloudRF no respondió.', aLaBaja = res.aLaBaja;
                 if (nueva) {
-                    const sims = nueva.map(ci => ctx.sims10.get(ci));
-                    const pct = pctUnion(sims, mallaFinca);
-                    const ext = analisisExterior(sims)?.franjaPct ?? null;
+                    const pct = pctUnion(simsSeleccion(ctx, nueva), mallaFinca);
                     if (id === 'anadir') {
                         aceptar = pct - res.pct >= R.minMejoraRealPts;
-                        motivo = `con una antena más la cobertura real sería ${pct.toFixed(1)}% (+${(pct - res.pct).toFixed(1)} puntos).`;
-                    } else if (id === 'menos') {
-                        aceptar = pct >= objetivo;
-                        motivo = `con ${nueva.length} antenas la cobertura real sería ${pct.toFixed(1)}%, por debajo del ${objetivo}%.`;
-                    } else if (id === 'exterior') {
-                        const okInt = res.pct >= objetivo ? pct >= objetivo : pct >= res.pct - 0.5;
-                        aceptar = okInt && ext !== null && res.exteriorPct !== null && ext - res.exteriorPct >= R.minMejoraExteriorRealPts;
-                        motivo = `la recolocación daría ${pct.toFixed(1)}% dentro y ${ext === null ? '–' : ext.toFixed(0) + '%'} en la franja exterior.`;
+                        motivo = `con ${ctx.luz ? 'un punto solar' : 'una antena'} más la cobertura real sería ${pct.toLocaleString('es-ES')} % (+${(pct - res.pct).toFixed(1).replace('.', ',')} puntos).`;
+                    } else {
+                        aceptar = true;   // quitar se aplica siempre: si baja del objetivo es una propuesta a la baja
+                        aLaBaja = pct < objetivo;
                     }
                 }
                 if (aceptar) {
                     apilarDeshacer(guardarEstado());
-                    await presentarResultado(ctx, nueva, { titulo: rec.boton, antes: resumenCorto(res) });
+                    await presentarResultado(ctx, nueva, { titulo: rec.boton, antes: resumenCorto(res), aLaBaja });
                 } else {
                     res.recs = res.recs.filter(r => r.id !== id);
                     res.aviso = `Comprobado con CloudRF: ${motivo} No se aplica el cambio.`;
@@ -2295,62 +2732,91 @@
             if (optimizadorEnCurso || !pilaDeshacer.length) return;
             const estado = pilaDeshacer.pop();
             restaurarEntradas(estado);
+            actualizarInfoEnlace();
             bloquearOptimizador(true);
-            try { await presentarResultado(estado.ctx, estado.seleccion, { titulo: 'Cambio deshecho', antes: resumenCorto(ultimoResultado) }); }
+            try { await presentarResultado(estado.ctx, estado.seleccion, { titulo: 'Cambio deshecho', antes: resumenCorto(ultimoResultado), aLaBaja: estado.aLaBaja }); }
             finally { bloquearOptimizador(false); }
         }
 
         function pintarResumenOptimizador(r, cambio) {
             const ctx = r.ctx, objetivo = CONFIG.objetivoCoberturaPct;
-            const ok = r.pct >= objetivo, n = r.seleccion.length;
-            const pctTxt = x => x === null || x === undefined ? '–' : x.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
+            const ok = r.pct >= objetivo, nSel = r.seleccion.length, n = nSel + ctx.base.length;
+            const fmt1 = x => x === null || x === undefined ? '–' : x.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
+            const fmt0 = x => x.toLocaleString('es-ES', { maximumFractionDigits: 0 });
             const plural = (k, a, b) => k === 1 ? a : b;
+            const titulo = ctx.modo === 'fijo' ? 'Optimizar red' : (ctx.luz ? 'Planificar red con puntos de luz' : 'Planificar red');
+            const chip = ok ? `<span class="chip chip-ok">Objetivo ${objetivo} % alcanzado</span>`
+                       : r.aLaBaja ? `<span class="chip chip-ko">Propuesta a la baja</span>`
+                       : `<span class="chip chip-ko">Objetivo ${objetivo} % no alcanzado</span>`;
+            const nFijas = ctx.base.filter(b => b.tipo === 'fija').length, nLuz = ctx.base.filter(b => b.tipo === 'luz').length;
+            const detalleN = ctx.luz ? `${nLuz} de luz${nSel ? ` · ${nSel} solar${nSel > 1 ? 'es' : ''}` : ''}` : (nFijas ? `${nFijas} fija${nFijas > 1 ? 's' : ''}` : '');
             const p = [];
-            p.push(`<div class="flex items-center justify-between gap-2">
-                        <span class="titulo-seccion">${ctx.modo === 'fijo' ? 'Optimizar red · resultado' : 'Planificar red · resultado'}</span>
-                        <span class="chip ${ok ? 'chip-ok' : 'chip-ko'}">Objetivo ${objetivo} % ${ok ? 'alcanzado' : 'no alcanzado'}</span>
-                    </div>`);
+            p.push(`<div class="cabecera-tarjeta"><span>${titulo}</span>${chip}</div>`);
             p.push(`<div class="flex items-end justify-between pb-3" style="border-bottom:1px solid var(--borde)">
-                        <div><div class="mono" style="font-size:38px; font-weight:500; line-height:1; letter-spacing:-0.02em; color:var(--texto)">${r.pct.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<span style="font-size:20px; color:var(--tenue)"> %</span></div>
-                             <div style="font-size:12px; color:var(--tenue); margin-top:6px">de la finca con cobertura</div></div>
-                        <div style="text-align:right"><div class="mono" style="font-size:28px; font-weight:500; line-height:1; color:var(--texto)">${n}</div>
-                             <div style="font-size:12px; color:var(--tenue); margin-top:6px">${plural(n, 'antena', 'antenas')}</div></div>
+                        <div><div style="font-size:40px; font-weight:700; line-height:1; color:var(--texto)">${r.pct.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<span style="font-size:22px; color:var(--tenue)"> %</span></div>
+                             <div style="font-size:13px; color:var(--tenue); margin-top:6px">de la finca con cobertura</div></div>
+                        <div style="text-align:right"><div style="font-size:30px; font-weight:700; line-height:1; color:var(--texto)">${n}</div>
+                             <div style="font-size:13px; color:var(--tenue); margin-top:6px">${plural(n, 'antena', 'antenas')}${detalleN ? `<br>${detalleN}` : ''}</div></div>
                     </div>`);
+            if (r.calidad !== null && r.calidad !== undefined)
+                p.push(`<div>Señal buena o muy buena en el <b class="mono" style="color:var(--texto)">${fmt1(r.calidad)}</b> de la finca.</div>`);
+            if (r.aLaBaja)
+                p.push(`<div style="color:#E3B341">Propuesta a la baja: ${n} ${plural(n, 'antena cubre', 'antenas cubren')} el ${fmt1(r.pct)} de la finca, por debajo del objetivo del ${objetivo} %.</div>`);
             if (ctx.actual) {
                 const d = r.pct - ctx.actual.pct;
-                p.push(`<div class="p-2.5 rounded" style="background:var(--campo); border:1px solid var(--borde-suave)">
-                            <div class="flex justify-between"><span>Hoy (${ctx.actual.n} ${plural(ctx.actual.n, 'antena', 'antenas')})</span><span class="mono" style="color:var(--texto)">${pctTxt(ctx.actual.pct)}</span></div>
-                            <div class="flex justify-between"><span>Reubicando</span><span class="mono" style="color:var(--texto)">${pctTxt(r.pct)} <span style="color:${d >= 0 ? 'var(--acento)' : 'var(--aviso)'}">(${d >= 0 ? '+' : ''}${d.toLocaleString('es-ES', { maximumFractionDigits: 1 })})</span></span></div>
-                            <div style="font-size:11px; color:var(--tenue); margin-top:4px">La cobertura de hoy está en la lista como «Actual»: actívala para comparar.</div>
+                p.push(`<div class="bloque-interno">
+                            <div class="flex justify-between"><span>Hoy (${ctx.actual.n} ${plural(ctx.actual.n, 'antena', 'antenas')})</span><span class="mono" style="color:var(--texto)">${fmt1(ctx.actual.pct)}</span></div>
+                            <div class="flex justify-between"><span>Propuesta</span><span class="mono" style="color:var(--texto)">${fmt1(r.pct)} <span style="color:${d >= 0 ? 'var(--acento)' : 'var(--aviso)'}">(${d >= 0 ? '+' : ''}${d.toLocaleString('es-ES', { maximumFractionDigits: 1 })})</span></span></div>
+                            <div style="font-size:12px; color:var(--tenue)">La cobertura de hoy está en la lista como «Actual»: actívala para comparar.</div>
+                        </div>`);
+            }
+            if (ctx.luz) {
+                const filas = ctx.luz.ranking.map(x => `
+                    <span class="numero luz" style="min-width:24px; height:22px">${SVG_RAYO}${x.i + 1}</span>
+                    <div class="pista"><div class="relleno" style="width:${Math.max(1, x.pct ?? 0)}%; background:#E3B341"></div></div>
+                    <span class="mono" style="text-align:right; color:var(--texto)">${x.pct === null ? '–' : fmt0(x.pct) + ' %'}</span>
+                    <span style="font-size:12px; color:${x.usado ? 'var(--acento)' : 'var(--tenue)'}">${x.error ? 'sin respuesta' : (x.usado ? 'se usa' : 'no necesario')}</span>`).join('');
+                const basePct = nLuz ? r.curva[nLuz - 1] : 0;
+                let explica;
+                if (ctx.luz.alcanzado) explica = nLuz < ctx.luz.total
+                    ? `Basta con ${nLuz} de los ${ctx.luz.total} puntos de luz para llegar al ${objetivo} %.`
+                    : `Hacen falta los ${nLuz} puntos de luz para llegar al ${objetivo} %.`;
+                else explica = nSel
+                    ? `Con los puntos de luz se llega al ${fmt1(basePct)}. Se ${nSel === 1 ? 'propone 1 punto nuevo' : `proponen ${nSel} puntos nuevos`} con placa solar (sin corriente) para completar la cobertura.`
+                    : `Con los puntos de luz se llega al ${fmt1(basePct)} y no se han encontrado puntos solares que mejoren la cobertura.`;
+                p.push(`<div class="flex flex-col gap-1.5">
+                            <div style="font-size:13px; color:var(--tenue)">Puntos de luz ordenados por cobertura</div>
+                            <div style="display:grid; grid-template-columns:auto minmax(0,1fr) 44px 92px; gap:6px 8px; align-items:center">${filas}</div>
+                            <div>${explica}</div>
                         </div>`);
             }
             if (r.curva.length > 1) {
-                const filas = r.curva.map((v, i) => `<span style="color:var(--tenue)">${i + 1}</span><div class="pista"><div class="relleno" style="width:${Math.max(1, v)}%"></div></div><span style="text-align:right; color:var(--texto)">${v.toFixed(0)} %</span>`).join('');
-                p.push(`<div class="flex flex-col gap-1.5"><div style="font-size:11.5px; color:var(--tenue)">Cobertura acumulada por antena</div><div class="curva">${filas}</div></div>`);
+                const filas = r.curva.map((v, i) => `<span style="color:var(--tenue)">${r.etiquetasCurva[i]}</span><div class="pista"><div class="relleno" style="width:${Math.max(1, v)}%"></div></div><span style="text-align:right; color:var(--texto)">${v.toFixed(0)} %</span>`).join('');
+                p.push(`<div class="flex flex-col gap-1.5"><div style="font-size:13px; color:var(--tenue)">Cobertura acumulada por antena</div><div class="curva">${filas}</div></div>`);
             }
             if (cambio) {
                 const a = cambio.antes;
-                p.push(`<div class="p-2.5 rounded" style="border:1px solid #1F5E48; color:var(--texto)">
-                            <b>${cambio.titulo}</b>${a ? `<span class="mono" style="color:var(--texto-2)"> · ${a.n} → ${n} ${plural(n, 'antena', 'antenas')} · ${pctTxt(a.pct)} → ${pctTxt(r.pct)}</span>` : ''}</div>`);
+                p.push(`<div class="bloque-interno" style="border-color:#238636; color:var(--texto)">
+                            <b>${cambio.titulo}</b>${a ? `<span class="mono" style="color:var(--texto-2)"> · ${a.n} → ${n} ${plural(n, 'antena', 'antenas')} · ${fmt1(a.pct)} → ${fmt1(r.pct)}</span>` : ''}</div>`);
             }
-            if (r.aviso) p.push(`<div class="p-2.5 rounded" style="border:1px solid #6B4E12; color:#FDE68A">${r.aviso}</div>`);
-            if (ctx.modo === 'objetivo' && !ok)
-                p.push(`<div style="color:#FDE68A">Las zonas rayadas en rojo quedan sin cobertura con un máximo de ${CONFIG.optimizador.maxAntenas} antenas.</div>`);
+            if (r.aviso) p.push(`<div class="bloque-interno" style="border-color:#9E6A03; color:#E3B341">${r.aviso}</div>`);
+            if (ctx.modo === 'objetivo' && !ok && !r.aLaBaja)
+                p.push(`<div style="color:#E3B341">Las zonas rayadas en rojo quedan sin cobertura con un máximo de ${CONFIG.optimizador.maxAntenas} antenas.</div>`);
             if (r.recs.length) {
                 p.push(`<div class="titulo-seccion" style="margin-top:2px">Recomendaciones</div>`);
                 r.recs.forEach(rec => p.push(`
-                    <div class="p-3 rounded flex flex-col gap-2" style="background:var(--campo); border:1px solid var(--borde-suave)">
+                    <div class="bloque-interno">
                         <div>${rec.texto}</div>
-                        <button onclick="aplicarRecomendacion('${rec.id}')" class="btn-recomendacion boton boton-sec" style="color:var(--acento); border-color:#1F5E48">${rec.boton}</button>
+                        <button onclick="aplicarRecomendacion('${rec.id}')" class="btn-recomendacion boton boton-sec">${rec.boton}</button>
                     </div>`));
             }
             if (pilaDeshacer.length) p.push(`<button onclick="deshacerCambio()" class="btn-recomendacion boton boton-sec">Deshacer último cambio</button>`);
             const permiso = ctx.permisos.permitirFuera ? `antenas hasta ${ctx.permisos.distFueraKm * 1000} m fuera de la finca` : 'solo antenas dentro de la finca';
+            const cal = ctx.cal ? `calibración: desfase ${ctx.cal.offsetDb >= 0 ? '+' : ''}${ctx.cal.offsetDb} dB · vegetación ${ctx.cal.coefVegDb} dB · acierto ${ctx.cal.precision === null ? '–' : (ctx.cal.precision * 100).toFixed(0) + ' %'}<br>` : '';
             p.push(`<details class="avanzado">
                         <summary><span>Detalles técnicos</span><svg aria-hidden="true" class="flecha w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></summary>
-                        <div class="mono mt-2" style="font-size:11px; color:var(--tenue); line-height:1.6">
-                            ${permiso}, mástil ${ctx.hTx} m<br>
-                            calibración: desfase ${ctx.cal.offsetDb >= 0 ? '+' : ''}${ctx.cal.offsetDb} dB · vegetación ${ctx.cal.coefVegDb} dB · acierto ${ctx.cal.precision === null ? '–' : (ctx.cal.precision * 100).toFixed(0) + ' %'}<br>
+                        <div class="mono mt-2" style="font-size:11.5px; color:var(--tenue); line-height:1.6">
+                            ${permiso}, mástil ${ctx.hTx} m<br>${cal}
                             CloudRF: ${ctx.contador.sims} nuevas · ${ctx.contador.cache} en caché · ${Math.round(ctx.segundos)} s
                         </div>
                     </details>`);
