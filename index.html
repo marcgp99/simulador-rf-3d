@@ -90,6 +90,7 @@
         .c4g.usable { color: #79C0FF; border-color: #1F6FEB; }
         .c4g.marginal { color: var(--aviso); border-color: #9E6A03; }
         .c4g.sin { color: #FF7B72; border-color: #8E1519; }
+        .c4g.posible { color: var(--aviso); border-color: #9E6A03; border-style: dashed; }
         .c4g.nd { color: var(--tenue); border-color: var(--borde); border-style: dashed; font-weight: 500; }
         .enlace { color: #58A6FF; font-weight: 500; } .enlace:hover { text-decoration: underline; }
 
@@ -107,7 +108,6 @@
         .numero svg, .pin-num .cabeza svg { width: 13px; height: 13px; flex-shrink: 0; }
         .numero.fija { background: #484F58; color: var(--texto); }
         .numero.luz { background: #E3B341; color: #1F1500; }
-        .numero.solar { background: #388BFD; color: #FFFFFF; }
         .numero.actual { background: transparent; color: var(--texto-2); border: 1.5px dashed var(--tenue); }
         .numero.punto { background: var(--fondo); color: var(--texto); border: 1.5px solid var(--texto); }
         .seleccionada .numero { box-shadow: 0 0 0 2px var(--panel-alto), 0 0 0 4px var(--acento); }
@@ -132,7 +132,6 @@
         .pin-num.punto .cabeza { background: var(--fondo); color: var(--texto); border: 2px solid var(--texto); }
         .pin-num.fija .cabeza { background: #484F58; color: var(--texto); border: 1.5px solid var(--texto-2); }
         .pin-num.luz .cabeza { background: #E3B341; color: #1F1500; }
-        .pin-num.solar .cabeza { background: #388BFD; color: #FFFFFF; }
         .pin-num.sel .cabeza { box-shadow: 0 0 0 2px var(--fondo), 0 0 0 4px var(--acento); }
         .mapboxgl-popup-content { background: var(--panel); color: var(--texto); border: 1px solid var(--borde); border-radius: 6px;
                                   padding: 10px 12px; font-family: 'Source Sans 3', sans-serif; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
@@ -251,10 +250,10 @@
                             <div class="flex items-center justify-between">
                                 <span class="text-[13px] font-semibold flex items-center gap-1.5">
                                     <svg aria-hidden="true" class="w-3.5 h-3.5" style="color:#E3B341" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
-                                    Puntos de luz del cliente</span>
+                                    Puntos de instalación del cliente</span>
                                 <span id="n-luz" class="mono text-[12px]" style="color:var(--tenue)">ninguno</span>
                             </div>
-                            <p class="text-[12.5px]" style="color:var(--tenue)">Opcional. Lugares donde el cliente tiene corriente para conectar una antena. Si los indicas, el cálculo usa solo estos puntos y, si no bastan, propone puntos con placa solar.</p>
+                            <p class="text-[12.5px]" style="color:var(--tenue)">Opcional. Lugares donde el cliente puede instalar una antena. Si los indicas, el cálculo usa solo estos puntos y, si no bastan, propone antenas adicionales.</p>
                             <div class="flex gap-2">
                                 <input type="text" id="luz_input" placeholder="Enlace de Google Maps o «lat, lon»" class="campo !text-[13px]" onkeydown="if(event.key==='Enter')anadirLuzDesdeTexto()">
                                 <button onclick="anadirLuzDesdeTexto()" class="boton boton-sec !w-auto flex-shrink-0">Añadir</button>
@@ -309,7 +308,7 @@
                       <label for="exigir_4g" class="flex items-center gap-2 text-[13px] cursor-pointer select-none" style="color:var(--texto-2)"
                              title="Descarta los emplazamientos donde ningún operador da 4G usable. Solo con datos oficiales (España y México).">
                           <span class="interruptor"><input type="checkbox" id="exigir_4g" checked><span></span></span>
-                          Exigir 4G en el emplazamiento
+                          Verificar 4G en la zona
                       </label>
                     </div>
 
@@ -371,7 +370,7 @@
                 </button>
                 <button id="btn-4g" onclick="toggleCapa4G()" class="map-btn hidden">
                     <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 10v11M8.5 21h7M9 14l3-4 3 4"/><path d="M7.8 5.8a6 6 0 000 8.4M16.2 5.8a6 6 0 010 8.4M5 3a10 10 0 000 14M19 3a10 10 0 010 14"/></svg>
-                    <span id="text-4g">Antenas 4G</span>
+                    <span id="text-4g">Cobertura 4G</span>
                 </button>
                 <button id="btn-canopy" onclick="toggleCanopy()" class="map-btn">
                     <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
@@ -421,7 +420,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.7.0';
+        const APP_VERSION = '1.8.0';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -533,8 +532,13 @@
                 fMHzDefecto: { ES: 800, OC: 700 },
                 umbrales: { buena: -100, usable: -110, marginal: -115 },   // RSRP (dBm)
                 pesos: { usable: 0.95, bonoOperador: 0.03 },               // buena señal y más operadores puntúan más
-                pesoSinCuatroG: 0.6,          // sin «Exigir 4G»: penalización de un emplazamiento sin 4G usable
+                pesoSinCuatroG: 0.6,          // sin «Verificar 4G en la zona»: penalización de un emplazamiento sin 4G usable
                 minNoOficial: 0.85,           // fuente colaborativa: nunca descarta, como mucho penaliza
+                // España: cobertura 4G declarada por los operadores al Ministerio (malla de 50 m, datos a 30/06/2024)
+                es: { base: 'https://services-eu1.arcgis.com/3LqdsBPalJaUFvo1/arcgis/rest/services/',
+                      servicios: ['InfoCob4G_2026', 'InfoCob4G_2025', 'InfoCob4G_2024'],   // el más reciente que exista
+                      franjaKm: 3, maxPoligonos: 24000, simplificarGrados: 0.00004,
+                      cifs: { A78923125: 'Movistar', A80907397: 'Vodafone', A82009812: 'Orange', A82528548: 'Yoigo', B84919760: 'Digi' } },
                 opencellid: { url: 'https://data.source.coop/smartmaps/opencellid/cellid.pmtiles', capa: 'a', zoom: 14, radioKm: 12, maxTeselas: 700 },
                 mx: { capa: 'cobertura', zoom: 13, archivos: {
                     Telcel:   { buena: 'Radiomovil_Dipsa_4G_Garantizada_2do_Trimestre', usable: 'Radiomovil_Dipsa_4G_Diferenciada_2do_Trimestre' },
@@ -1021,7 +1025,7 @@
         }
 
         // Calidad 4G: por RSRP estimado (dBm) o por la clase de la CRT (México)
-        const ORDEN_CLASE_4G = { buena: 3, usable: 2, marginal: 1, sin: 0 };
+        const ORDEN_CLASE_4G = { buena: 3, usable: 2, posible: 1, marginal: 1, sin: 0 };
         function clase4G(rsrp, u = { buena: -100, usable: -110, marginal: -115 }) {
             if (rsrp === null || rsrp === undefined || !isFinite(rsrp)) return 'sin';
             return rsrp >= u.buena ? 'buena' : (rsrp >= u.usable ? 'usable' : (rsrp >= u.marginal ? 'marginal' : 'sin'));
@@ -1035,6 +1039,13 @@
             const base = usables.some(o => o.clase === 'buena') ? 1 : cfg.usable;
             return base * (1 + cfg.bonoOperador * (usables.length - 1));
         }
+        // España: cobertura declarada al Ministerio + señal estimada desde las torres.
+        // Declarada → al menos usable (buena si la estimación lo es). No declarada → «posible» si la estimación
+        // es buena o usable (comprobar en campo), si no, sin 4G.
+        function combinar4G(claseEstimada, declarada) {
+            if (declarada) return claseEstimada === 'buena' ? 'buena' : 'usable';
+            return claseEstimada === 'buena' || claseEstimada === 'usable' ? 'posible' : 'sin';
+        }
         // Resumen de una ficha 4G para la interfaz: ok (algún operador usable), satelite, nd (sin datos)
         function resumen4G(info, oficial = true) {
             if (!info) return null;
@@ -1042,6 +1053,7 @@
             if (info.sinDatos) return { nivel: 'nd', texto: '4G sin datos · comprobar en campo' };
             const usables = info.operadores.filter(o => o.clase === 'buena' || o.clase === 'usable');
             if (usables.length) return { nivel: 'ok', texto: usables.map(o => o.op).join(' · '), usables };
+            if (info.operadores.some(o => o.clase === 'posible')) return { nivel: 'posible', texto: '4G no declarado · posible, comprobar en campo' };
             return oficial ? { nivel: 'satelite', texto: 'Sin 4G usable · requiere satélite' }
                            : { nivel: 'nd', texto: '4G no confirmado · comprobar en campo' };
         }
@@ -1129,11 +1141,10 @@
         let simSeleccionada = null;
         let zonas = [];                  // [{nombre, feature, activa, ha}] todas las zonas del KML
         let geojsonTodas = null;         // todas las zonas (para dibujar); geojsonKMLActual = solo las activas
-        let puntosLuz = [];              // [{lat, lon, marker}] puntos con corriente del cliente (Planificar)
+        let puntosLuz = [];              // [{lat, lon, marker}] puntos de instalación del cliente (Planificar)
         let colocandoLuz = false;
         let urlCobertura = null;
         const SVG_RAYO = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>';
-        const SVG_SOLAR = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 4h16l-2 10H6z"/><path d="M5 9h14M10 4l-.6 10M14 4l.6 10M12 14v6M8 20h8"/></svg>';
         const SVG_CANDADO = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>';
 
         document.getElementById('app-version').innerText = 'v' + APP_VERSION;
@@ -1300,11 +1311,11 @@
             MX: { fuente: 'mapas de cobertura de la CRT', oficial: true, operadores: ['Telcel', 'Movistar', 'AT&T', 'Altán'] },
             OC: { fuente: 'OpenCelliD (colaborativo, datos de junio de 2024)', oficial: false, operadores: [] }
         };
-        const NOMBRE_CLASE_4G = { buena: 'buena', usable: 'usable', marginal: 'marginal', sin: 'sin 4G' };
+        const NOMBRE_CLASE_4G = { buena: 'buena', usable: 'usable', posible: 'posible (no declarada)', marginal: 'marginal', sin: 'sin 4G' };
         let red4g = null;
         let promesaRed4g = null;
         let capa4GVisible = false;
-        let operadorCapa4G = null;
+        let operadorCapa4G = 'Todos';
 
         async function enParalelo(lista, n, fn) {
             let i = 0;
@@ -1340,18 +1351,85 @@
             const F = FUENTES_4G[pais];
             const valido = turf.bbox(turf.buffer(turf.bboxPolygon(bb), cfg.margenValidoKm, { units: 'kilometers' }));
             const r = { version, pais, estado: 'ok', fuente: F.fuente, oficial: F.oficial, operadores: F.operadores.slice(),
-                        sitios: [], zonas: [], valido, cache: new Map(), sinDatos: false, avisos: [] };
+                        sitios: [], zonas: [], cobertura: null, valido, cache: new Map(), sinDatos: false, avisos: [] };
             if (pais === 'MX') { await cargarZonasMX(r); return r; }
             const radio = pais === 'ES' ? cfg.radioBusquedaKm : cfg.opencellid.radioKm;
             const zona = turf.bbox(turf.buffer(turf.bboxPolygon(bb), radio, { units: 'kilometers' }));
             const terreno = DEM_4G.asegurarArea(zona).catch(() => null);
-            if (pais === 'ES') await cargarSitiosES(r, zona); else await cargarSitiosOC(r, zona);
+            if (pais === 'ES') {
+                const cobertura = cargarCoberturaES(r).catch(e => {
+                    console.warn('Cobertura oficial 4G:', e);
+                    r.avisos.push('No se pudo cargar el mapa oficial de cobertura: se usa solo la estimación desde las antenas.');
+                });
+                await Promise.all([cargarSitiosES(r, zona), cobertura]);
+            } else await cargarSitiosOC(r, zona);
             await terreno;
             if (pais === 'OC') {
                 r.operadores = [...new Set(r.sitios.map(s => s.op))];
                 r.sinDatos = !r.sitios.length;
             }
             return r;
+        }
+
+        // España: polígonos de cobertura 4G declarada (cada uno con la lista de operadores que lo cubren)
+        async function cargarCoberturaES(r) {
+            const cfg = CONFIG.red4g.es;
+            const bb = turf.bbox(turf.buffer(turf.bboxPolygon(turf.bbox(geojsonKMLActual)), cfg.franjaKm, { units: 'kilometers' }));
+            const pedir = async (url, intentos = 3) => {
+                for (let i = 0; ; i++) {
+                    try { const x = await fetch(url); if (!x.ok) throw new Error('HTTP ' + x.status); const j = await x.json(); if (j.error) throw new Error(j.error.message); return j; }
+                    catch (e) { if (i + 1 >= intentos) throw e; await esperar(500 * (i + 1)); }
+                }
+            };
+            let base = null;
+            for (const s of cfg.servicios) {
+                try {
+                    const m = await pedir(`${cfg.base}${s}/FeatureServer/0?f=json`, 1);
+                    if ((m.fields || []).some(x => x.name === 'COBERTURA')) { base = `${cfg.base}${s}/FeatureServer/0/query`; r.servicioCobertura = s; break; }
+                } catch (e) { /* probamos el siguiente */ }
+            }
+            if (!base) throw new Error('servicio de cobertura no disponible');
+            const comun = { geometry: bb.map(v => v.toFixed(5)).join(','), geometryType: 'esriGeometryEnvelope', inSR: '4326',
+                            spatialRel: 'esriSpatialRelIntersects', where: "COBERTURA <> ''" };
+            const n = (await pedir(base + '?' + new URLSearchParams({ ...comun, returnCountOnly: 'true', f: 'json' }))).count || 0;
+            if (n > cfg.maxPoligonos) throw new Error('zona demasiado grande para el mapa oficial');
+            const paginas = [];
+            for (let o = 0; o < n; o += 2000) paginas.push(o);
+            const zonas = [], desconocidos = new Set();
+            await enParalelo(paginas, 4, async off => {
+                const gj = await pedir(base + '?' + new URLSearchParams({ ...comun, outFields: 'COBERTURA', returnGeometry: 'true', outSR: '4326',
+                    geometryPrecision: '5', maxAllowableOffset: String(cfg.simplificarGrados), orderByFields: 'OBJECTID',
+                    resultOffset: String(off), resultRecordCount: '2000', f: 'geojson' }));
+                for (const ft of gj.features || []) {
+                    const ops = [...new Set(String(ft.properties?.COBERTURA || '').split(';').map(c => c.trim()).filter(Boolean)
+                        .map(c => { if (!cfg.cifs[c]) desconocidos.add(c); return cfg.cifs[c] || null; }).filter(Boolean))];
+                    const g = ft.geometry;
+                    if (!ops.length || !g) continue;
+                    const poligonos = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
+                    for (const anillos of poligonos) {
+                        let bw = 180, bs = 90, be = -180, bn = -90;
+                        for (const a of anillos) for (const [x, y] of a) { if (x < bw) bw = x; if (x > be) be = x; if (y < bs) bs = y; if (y > bn) bn = y; }
+                        zonas.push({ ops, anillos, bbox: [bw, bs, be, bn] });
+                    }
+                }
+            });
+            r.cobertura = zonas;
+            r.coberturaBbox = bb;
+            // Operadores que aparecen en la cobertura oficial y no estaban en la lista (p. ej. Digi)
+            new Set(zonas.flatMap(z => z.ops)).forEach(op => { if (!r.operadores.includes(op)) r.operadores.push(op); });
+            if (desconocidos.size) console.info('CIF sin nombre en la cobertura 4G:', [...desconocidos]);
+        }
+
+        function operadoresDeclarados(r, lng, lat) {
+            const dec = new Set();
+            if (!r.cobertura) return null;
+            for (const z of r.cobertura) {
+                const [bw, bs, be, bn] = z.bbox;
+                if (lng < bw || lng > be || lat < bs || lat > bn) continue;
+                if (z.ops.every(o => dec.has(o))) continue;
+                if (puntoEnAnillos(lng, lat, z.anillos)) z.ops.forEach(o => dec.add(o));
+            }
+            return dec;
         }
 
         async function cargarSitiosES(r, zona) {
@@ -1504,8 +1582,9 @@
             } else if (r.sinDatos) info = { sinDatos: true, operadores: [] };
             else {
                 const cfg = CONFIG.red4g, radioM = (r.pais === 'ES' ? cfg.radioBusquedaKm : cfg.opencellid.radioKm) * 1000;
+                const declarados = r.pais === 'ES' ? operadoresDeclarados(r, lng, lat) : null;
                 info = { operadores: r.operadores.map(op => {
-                    const cerca = r.sitios.filter(x => x.op === op && x.lte)
+                    const cerca = r.sitios.filter(x => x.op === op && x.lte !== false)
                         .map(x => ({ x, d: distanciaM([lng, lat], [x.lon, x.lat]) })).filter(o => o.d <= radioM)
                         .sort((a, b) => a.d - b.d).slice(0, cfg.sitiosPorOperador);
                     let mejor = { op, rsrp: null, distKm: null, sitio: null };
@@ -1515,6 +1594,7 @@
                     }
                     mejor.clase = clase4G(mejor.rsrp, cfg.umbrales);
                     if (mejor.rsrp !== null) mejor.rsrp = Math.round(mejor.rsrp);
+                    if (declarados) { mejor.claseEstimada = mejor.clase; mejor.declarada = declarados.has(op); mejor.clase = combinar4G(mejor.clase, mejor.declarada); }
                     return mejor;
                 }) };
             }
@@ -1532,6 +1612,8 @@
             if (o.rsrp !== null && o.rsrp !== undefined) p.push(`${o.rsrp} dBm estimados`);
             if (o.distKm !== null && o.distKm !== undefined) p.push(`torre a ${o.distKm.toLocaleString('es-ES', { maximumFractionDigits: 1 })} km`);
             if (o.sitio && o.sitio.bandas && o.sitio.bandas.length) p.push(`bandas ${o.sitio.bandas.join(', ')} MHz`);
+            if (o.declarada === true) p.push('cobertura declarada al Ministerio');
+            if (o.declarada === false) p.push('sin cobertura declarada al Ministerio');
             if (red4g && red4g.pais === 'MX') p.push(o.clase === 'buena' ? 'cobertura garantizada (CRT)' : o.clase === 'usable' ? 'cobertura diferenciada (CRT)' : 'sin cobertura declarada');
             return p.join(' · ');
         }
@@ -1541,6 +1623,7 @@
             const oficial = !red4g || red4g.oficial;
             const res = resumen4G(info, oficial);
             if (res.nivel === 'nd') return `<span class="c4g nd">${res.texto}</span>`;
+            if (res.nivel === 'posible' && !completo) return `<span class="c4g posible">${res.texto}</span>`;
             const lista = completo ? info.operadores : (res.nivel === 'ok' ? res.usables : []);
             if (!lista.length) return `<span class="c4g sin">${res.texto}</span>`;
             const dbm = v => String(v).replace('-', '−');
@@ -1549,7 +1632,7 @@
         function htmlPopup4G(info) {
             if (!info) return '';
             const nota = red4g && !red4g.oficial ? ' (no oficial)' : '';
-            const extra = red4g && red4g.pais !== 'MX' && !info.sinDatos && !info.fuera ? ' <span style="color:var(--tenue); font-weight:400">· dBm estimados</span>' : '';
+            const extra = red4g && red4g.pais !== 'MX' && !info.sinDatos && !info.fuera ? ` <span style="color:var(--tenue); font-weight:400">· ${red4g.cobertura ? 'oficial + ' : ''}dBm estimados</span>` : '';
             return `<div style="margin-top:6px; padding-top:6px; border-top:1px solid var(--borde)">
                         <div style="font-size:12px; color:var(--tenue); margin-bottom:3px">4G de los operadores${nota}${extra}</div>
                         <div class="flex flex-wrap gap-1">${chips4G(info, true)}</div></div>`;
@@ -1565,19 +1648,23 @@
             if (!r) texto = `<span>4G · cargando datos de los operadores…</span>`;
             else if (r.estado === 'error') texto = `<span style="color:var(--aviso)">4G · no se pudieron cargar los datos (${escHtml(r.error)}).</span> <button class="enlace" onclick="reintentarRed4G()">Reintentar</button>`;
             else if (r.pais === 'MX') {
-                texto = `<span>4G · ${escHtml(r.fuente)} (oficial) · ${r.operadores.filter(o => !r.sinLeer.includes(o)).join(', ')}</span>`;
+                texto = `<span>4G · cobertura oficial (CRT) de ${r.operadores.filter(o => !r.sinLeer.includes(o)).join(', ')}</span>`;
             } else if (r.sinDatos) {
                 texto = `<span style="color:var(--aviso)">4G · sin antenas registradas a menos de ${CONFIG.red4g.opencellid.radioKm} km en ${escHtml(r.fuente)}: comprobar en campo.</span>`;
             } else {
                 const radio = r.pais === 'ES' ? CONFIG.red4g.radioBusquedaKm : CONFIG.red4g.opencellid.radioKm;
-                const n = r.sitios.filter(s => s.lte).length;
-                texto = `<span>4G · ${n} antena${n === 1 ? '' : 's'} a menos de ${radio} km · ${escHtml(r.fuente)}${r.oficial ? '' : ': puede faltar alguna'}</span>`;
+                const n = r.sitios.filter(s => s.lte !== false).length;
+                const ops = r.cobertura ? [...new Set(r.cobertura.flatMap(z => z.ops))] : [];
+                texto = r.cobertura
+                    ? `<span>4G · cobertura oficial de ${ops.length ? ops.join(', ') : 'ningún operador'} · ${n} antena${n === 1 ? '' : 's'} a menos de ${radio} km</span>`
+                    : `<span>4G · ${n} antena${n === 1 ? '' : 's'} a menos de ${radio} km · ${escHtml(r.fuente)}${r.oficial ? '' : ': puede faltar alguna'}</span>`;
             }
             if (r && r.avisos && r.avisos.length) texto += `<span style="color:var(--aviso)"> ${r.avisos.map(escHtml).join(' ')}</span>`;
             caja.innerHTML = texto;
-            const conCapa = r && r.estado === 'ok' && (r.pais === 'MX' ? r.zonas.length : r.sitios.length);
+            const conCapa = r && r.estado === 'ok' && (r.zonas.length || r.sitios.length || (r.cobertura && r.cobertura.length));
             btn.classList.toggle('hidden', !conCapa);
-            document.getElementById('text-4g').innerText = (capa4GVisible ? 'Ocultar ' : '') + (r && r.pais === 'MX' ? 'Cobertura 4G' : 'Antenas 4G');
+            const nombre = r && (r.pais === 'MX' || r.cobertura) ? 'cobertura 4G' : 'antenas 4G';
+            document.getElementById('text-4g').innerText = capa4GVisible ? 'Ocultar ' + nombre : nombre.charAt(0).toUpperCase() + nombre.slice(1);
         }
 
         function alCargarRed4G() {
@@ -1601,48 +1688,81 @@
             document.getElementById('leyenda-4g').classList.add('hidden');
         }
 
+        // Cobertura (oficial) y antenas juntas, con selector de operador o «Todos»
         function pintarCapa4G() {
             quitarCapa4G();
             const r = red4g;
             if (!capa4GVisible || !mapaListo || !r || r.estado !== 'ok' || r.version !== versionKML) return;
             const leyenda = document.getElementById('leyenda-4g');
-            if (r.pais === 'MX') {
-                const ops = r.operadores.filter(o => !r.sinLeer.includes(o));
-                if (!ops.includes(operadorCapa4G)) operadorCapa4G = ops[0];
-                const fc = { type: 'FeatureCollection', features: r.zonas.filter(z => z.op === operadorCapa4G).map(z => ({
-                    type: 'Feature', properties: { clase: z.clase }, geometry: { type: 'Polygon', coordinates: z.anillos } })) };
-                map.addSource('red4g-poligonos', { type: 'geojson', data: fc });
-                const debajoDe = ['kml-fill', 'cobertura-layer'].find(id => map.getLayer(id));
-                map.addLayer({ id: 'red4g-zonas', type: 'fill', source: 'red4g-poligonos',
-                               paint: { 'fill-color': ['match', ['get', 'clase'], 'buena', '#3FB950', '#E3B341'], 'fill-opacity': ['match', ['get', 'clase'], 'buena', 0.22, 0.16] } }, debajoDe);
-                leyenda.innerHTML = `<div class="flex items-center justify-between gap-2 mb-2"><span class="titulo-seccion">Cobertura 4G</span>
-                        <select class="campo !w-auto !py-0.5 !text-[12.5px]" onchange="operadorCapa4G=this.value; pintarCapa4G()" aria-label="Operador">
-                            ${ops.map(o => `<option ${o === operadorCapa4G ? 'selected' : ''}>${escHtml(o)}</option>`).join('')}</select></div>
-                    <div class="flex flex-col gap-1.5 text-[13px]" style="color:var(--texto-2)">
-                        <div class="flex items-center gap-2"><span class="muestra" style="background:rgba(63,185,80,.55)"></span>Garantizada</div>
-                        <div class="flex items-center gap-2"><span class="muestra" style="background:rgba(227,179,65,.45)"></span>Diferenciada (señal variable)</div></div>
-                    <p class="text-[11px] mt-2" style="color:var(--tenue)">Fuente: ${escHtml(r.fuente)}. Solo se carga alrededor de la finca.</p>`;
-            } else {
-                // Un punto por ubicación; si varios operadores comparten torre, se agrupan
-                const puntos = [];
-                r.sitios.filter(s => s.lte).forEach(s => {
-                    const p = puntos.find(x => distanciaM([x.lon, x.lat], [s.lon, s.lat]) < 80);
-                    if (p) { if (!p.ops.includes(s.op)) p.ops.push(s.op); p.sitios.push(s); } else puntos.push({ lon: s.lon, lat: s.lat, ops: [s.op], sitios: [s] });
-                });
-                const fc = { type: 'FeatureCollection', features: puntos.map((p, i) => ({ type: 'Feature', id: i,
-                    properties: { ops: p.ops.join(' · '), i }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) };
-                map.addSource('red4g-sitios', { type: 'geojson', data: fc });
+            const conCobertura = r.pais === 'MX' ? r.zonas.length > 0 : !!(r.cobertura && r.cobertura.length);
+            const opsCapa = r.pais === 'MX' ? r.operadores.filter(o => !r.sinLeer.includes(o))
+                : [...new Set([...(r.cobertura || []).flatMap(z => z.ops), ...r.sitios.filter(s => s.lte !== false).map(s => s.op)])];
+            const orden = [...FUENTES_4G[r.pais].operadores, ...opsCapa.filter(o => !FUENTES_4G[r.pais].operadores.includes(o))].filter(o => opsCapa.includes(o));
+            if (operadorCapa4G !== 'Todos' && !orden.includes(operadorCapa4G)) operadorCapa4G = 'Todos';
+            const sel = operadorCapa4G;
+            const debajoDe = ['cobertura-layer', 'kml-fill'].find(id => map.getLayer(id));
+
+            // 1. Cobertura
+            if (conCobertura) {
+                let features;
+                if (r.pais === 'MX') {
+                    features = r.zonas.filter(z => sel === 'Todos' || z.op === sel).map(z => ({ type: 'Feature',
+                        properties: { clase: z.clase, n: 1 }, geometry: { type: 'Polygon', coordinates: z.anillos } }));
+                } else {
+                    features = r.cobertura.filter(z => sel === 'Todos' || z.ops.includes(sel)).map(z => ({ type: 'Feature',
+                        properties: { clase: 'buena', n: z.ops.length }, geometry: { type: 'Polygon', coordinates: z.anillos } }));
+                }
+                map.addSource('red4g-poligonos', { type: 'geojson', data: { type: 'FeatureCollection', features }, tolerance: 0.2 });
+                let color, opacidad;
+                if (r.pais === 'MX') {
+                    color = ['match', ['get', 'clase'], 'buena', '#3FB950', '#E3B341'];
+                    opacidad = sel === 'Todos' ? 0.12 : ['match', ['get', 'clase'], 'buena', 0.24, 0.18];
+                } else if (sel === 'Todos') {
+                    color = ['step', ['get', 'n'], '#E3B341', 2, '#3FB950'];
+                    opacidad = ['step', ['get', 'n'], 0.22, 2, 0.2, 3, 0.36];
+                } else { color = '#3FB950'; opacidad = 0.28; }
+                map.addLayer({ id: 'red4g-zonas', type: 'fill', source: 'red4g-poligonos', paint: { 'fill-color': color, 'fill-opacity': opacidad, 'fill-antialias': false } }, debajoDe);
+            }
+
+            // 2. Antenas (un punto por ubicación; si varios operadores comparten torre, se agrupan)
+            const puntos = [];
+            r.sitios.filter(s => s.lte !== false && (sel === 'Todos' || s.op === sel)).forEach(s => {
+                const p = puntos.find(x => distanciaM([x.lon, x.lat], [s.lon, s.lat]) < 80);
+                if (p) { if (!p.ops.includes(s.op)) p.ops.push(s.op); p.sitios.push(s); } else puntos.push({ lon: s.lon, lat: s.lat, ops: [s.op], sitios: [s] });
+            });
+            capa4GPuntos = puntos;
+            if (puntos.length) {
+                map.addSource('red4g-sitios', { type: 'geojson', data: { type: 'FeatureCollection', features: puntos.map((p, i) => ({ type: 'Feature',
+                    properties: { ops: p.ops.join(' · '), i }, geometry: { type: 'Point', coordinates: [p.lon, p.lat] } })) } });
                 map.addLayer({ id: 'red4g-circulo', type: 'circle', source: 'red4g-sitios',
                                paint: { 'circle-radius': 5.5, 'circle-color': '#E6EDF3', 'circle-stroke-color': '#0D1117', 'circle-stroke-width': 2 } });
                 map.addLayer({ id: 'red4g-texto', type: 'symbol', source: 'red4g-sitios',
                                layout: { 'text-field': ['get', 'ops'], 'text-size': 11.5, 'text-offset': [0, 0.9], 'text-anchor': 'top',
                                          'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'], 'text-max-width': 14 },
                                paint: { 'text-color': '#E6EDF3', 'text-halo-color': '#0D1117', 'text-halo-width': 1.4 } });
-                capa4GPuntos = puntos;
-                leyenda.innerHTML = `<div class="titulo-seccion mb-2">Antenas 4G</div>
-                    <div class="flex items-center gap-2 text-[13px]" style="color:var(--texto-2)"><span style="width:11px;height:11px;border-radius:50%;background:#E6EDF3;border:2px solid #0D1117;box-shadow:0 0 0 1px #8B949E"></span>Emplazamiento y operadores</div>
-                    <p class="text-[11px] mt-2" style="color:var(--tenue)">Fuente: ${escHtml(r.fuente)}${r.oficial ? '' : '. Puede faltar alguna antena'}. Pulsa una antena para ver el detalle.</p>`;
             }
+
+            // 3. Leyenda
+            const muestra = (c, a) => `<span class="muestra" style="background:${c}; opacity:${a}"></span>`;
+            let filas = '';
+            if (conCobertura && r.pais === 'MX') filas = `
+                <div class="flex items-center gap-2">${muestra('#3FB950', 0.75)}Garantizada</div>
+                <div class="flex items-center gap-2">${muestra('#E3B341', 0.65)}Diferenciada (señal variable)</div>`;
+            else if (conCobertura && sel === 'Todos') filas = `
+                <div class="flex items-center gap-2">${muestra('#3FB950', 0.9)}3 o más operadores</div>
+                <div class="flex items-center gap-2">${muestra('#3FB950', 0.55)}2 operadores</div>
+                <div class="flex items-center gap-2">${muestra('#E3B341', 0.6)}1 operador</div>`;
+            else if (conCobertura) filas = `<div class="flex items-center gap-2">${muestra('#3FB950', 0.75)}Con cobertura 4G de ${escHtml(sel)}</div>`;
+            if (puntos.length) filas += `<div class="flex items-center gap-2"><span style="width:11px;height:11px;border-radius:50%;background:#E6EDF3;border:2px solid #0D1117;box-shadow:0 0 0 1px #8B949E; flex-shrink:0"></span>Antena 4G</div>`;
+            const fuente = r.pais === 'MX' ? 'cobertura declarada por cada operador a la CRT'
+                : r.cobertura ? 'cobertura 4G declarada por los operadores al Ministerio (junio de 2024) y antenas de InfoAntenas'
+                : escHtml(r.fuente) + (r.oficial ? '' : '. Puede faltar alguna antena');
+            const zona = conCobertura ? ` Se muestra la finca y ${r.pais === 'MX' ? CONFIG.red4g.margenValidoKm : CONFIG.red4g.es.franjaKm} km alrededor.` : '';
+            leyenda.innerHTML = `<div class="flex items-center justify-between gap-2 mb-2"><span class="titulo-seccion">${conCobertura ? 'Cobertura 4G' : 'Antenas 4G'}</span>
+                    ${orden.length > 1 ? `<select class="campo !w-auto !py-0.5 !text-[12.5px]" onchange="operadorCapa4G=this.value; pintarCapa4G()" aria-label="Operador">
+                        ${['Todos', ...orden].map(o => `<option ${o === sel ? 'selected' : ''}>${escHtml(o)}</option>`).join('')}</select>` : ''}</div>
+                <div class="flex flex-col gap-1.5 text-[13px]" style="color:var(--texto-2)">${filas}</div>
+                <p class="text-[11px] mt-2" style="color:var(--tenue)">Fuente: ${fuente}.${zona}</p>`;
             leyenda.classList.remove('hidden');
         }
         let capa4GPuntos = [];
@@ -1690,16 +1810,19 @@
                     <span class="numero ${s.tipo === 'antena' ? '' : s.tipo}" style="min-width:24px; height:22px">${s.icono || ''}${s.etiqueta}</span>
                     <div class="flex flex-wrap gap-1 min-w-0" style="padding-top:1px">${chips4G(s.red4g, true)}</div></div>`).join('');
             const sat = sims.filter(s => resumen4G(s.red4g, red4g.oficial)?.nivel === 'satelite');
+            const pos = sims.filter(s => resumen4G(s.red4g, red4g.oficial)?.nivel === 'posible');
             const c = res.ctx.red4g || {};
             const notas = [];
             if (sat.length) notas.push(`<div style="color:#E3B341">${sat.map(s => s.etiqueta).join(', ')}: sin 4G usable de ningún operador. ${sat.length === 1 ? 'Requiere' : 'Requieren'} enlace por satélite.</div>`);
             if (c.exigido && c.descartados) {
                 notas.push(`<div>Se han descartado ${c.descartados} de ${c.permitidos} emplazamientos posibles por no tener 4G usable.</div>`);
                 if (res.pct < CONFIG.objetivoCoberturaPct)
-                    notas.push(`<div style="color:#E3B341">Exigir 4G impide llegar al ${CONFIG.objetivoCoberturaPct} %. Desactiva «Exigir 4G en el emplazamiento» para ver la propuesta con antenas que necesitarían enlace por satélite.</div>`);
+                    notas.push(`<div style="color:#E3B341">Verificar el 4G impide llegar al ${CONFIG.objetivoCoberturaPct} %. Desactiva «Verificar 4G en la zona» para ver la propuesta con antenas que necesitarían enlace por satélite.</div>`);
             }
-            if (c.relajado) notas.push(`<div style="color:#E3B341">Ningún emplazamiento posible tiene 4G usable: se ha calculado sin exigirlo.</div>`);
+            if (pos.length) notas.push(`<div style="color:#E3B341">${pos.map(s => s.etiqueta).join(', ')}: ningún operador declara cobertura, aunque la señal estimada es suficiente. Comprobar en campo.</div>`);
+            if (c.relajado) notas.push(`<div style="color:#E3B341">Ningún emplazamiento posible tiene 4G usable: se ha calculado sin tener en cuenta el 4G.</div>`);
             const fuente = red4g.pais === 'MX' ? 'Cobertura declarada por cada operador a la CRT.'
+                : red4g.cobertura ? 'Cobertura declarada por los operadores al Ministerio (junio de 2024), con la señal estimada desde las torres de InfoAntenas y el terreno real (mástil incluido). Confirmar en campo antes de instalar.'
                 : `Señal estimada desde las torres de ${escHtml(red4g.fuente)} con el terreno real (mástil incluido). ${red4g.oficial ? 'Confirmar en campo antes de instalar.' : 'Datos colaborativos: puede faltar alguna antena.'}`;
             caja.innerHTML = `<div class="flex flex-col gap-1.5">
                     <div style="font-size:13px; color:var(--tenue)">Conectividad 4G de cada antena</div>
@@ -1881,7 +2004,7 @@
             actualizarTextoN();
         }
 
-        // ---------- Puntos de luz del cliente (Planificar red)
+        // ---------- Puntos de instalación del cliente (Planificar red)
         function toggleColocarLuz() {
             colocandoLuz = !colocandoLuz;
             if (colocandoLuz && colocandoActuales) toggleColocarActuales();
@@ -1889,7 +2012,7 @@
             b.classList.toggle('activo', colocandoLuz);
             b.innerText = colocandoLuz ? 'Terminar' : 'Marcar en el mapa';
             map.getCanvas().style.cursor = colocandoLuz ? 'crosshair' : (modoActual === 'punto' ? 'crosshair' : '');
-            avisoMapa(colocandoLuz ? 'Haz clic en el mapa en cada punto donde el cliente tiene corriente. Pulsa «Terminar» al acabar.' : null);
+            avisoMapa(colocandoLuz ? 'Haz clic en el mapa en cada punto de instalación del cliente. Pulsa «Terminar» al acabar.' : null);
         }
 
         function anadirLuzDesdeTexto() {
@@ -1907,7 +2030,7 @@
         }
 
         function anadirPuntoLuz(lat, lon) {
-            if (puntosLuz.length >= CONFIG.puntosLuz.max) { alert(`Como máximo ${CONFIG.puntosLuz.max} puntos de luz por proyecto.`); return false; }
+            if (puntosLuz.length >= CONFIG.puntosLuz.max) { alert(`Como máximo ${CONFIG.puntosLuz.max} puntos de instalación por proyecto.`); return false; }
             const p = { lat, lon, marker: null };
             p.marker = new mapboxgl.Marker(elementoPin('', 'luz'), { anchor: 'bottom' }).setLngLat([lon, lat]).addTo(map);
             puntosLuz.push(p);
@@ -1941,11 +2064,11 @@
                 <div class="flex items-center gap-2 text-[12.5px]">
                     <span class="numero luz" style="min-width:24px; height:22px">${SVG_RAYO}${i + 1}</span>
                     <span class="mono flex-1 truncate" style="color:var(--tenue)">${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}</span>
-                    <button onclick="eliminarPuntoLuz(${i})" aria-label="Quitar el punto de luz ${i + 1}" title="Quitar" class="icono-accion">✕</button>
+                    <button onclick="eliminarPuntoLuz(${i})" aria-label="Quitar el punto de instalación ${i + 1}" title="Quitar" class="icono-accion">✕</button>
                 </div>`).join('');
             const obj = CONFIG.objetivoCoberturaPct;
             document.getElementById('txt-btn-objetivo').innerHTML = n
-                ? `Calcular red con ${n} punto${n === 1 ? '' : 's'} de luz`
+                ? `Calcular red con ${n} punto${n === 1 ? '' : 's'} de instalación`
                 : `Calcular red para <span class="txt-objetivo">${obj}</span>%`;
         }
 
@@ -2596,9 +2719,9 @@
             const id = simCounter++;
             const tipo = op.tipo || 'punto';
             const numero = op.numero || 1;
-            const prefijo = { antena: '', actual: 'A', punto: 'P', fija: 'A', luz: '', solar: '' }[tipo] ?? '';
+            const prefijo = { antena: '', actual: 'A', punto: 'P', fija: 'A', luz: '' }[tipo] ?? '';
             const etiqueta = op.etiqueta ?? (prefijo + numero);
-            const icono = op.icono ?? ({ fija: SVG_CANDADO, luz: SVG_RAYO, solar: SVG_SOLAR }[tipo] || '');
+            const icono = op.icono ?? ({ fija: SVG_CANDADO, luz: SVG_RAYO }[tipo] || '');
             const visible = op.visible !== false;
             const sim = {
                 id, name: nombre, tipo, etiqueta, icono, nota: op.nota || '', freq: perfilActivo().frecuenciaMHz, alt: r.alt,
@@ -2608,10 +2731,10 @@
             };
             info4GSim(sim);
             recalcularDatosSim(sim);
-            // Las antenas actuales, fijas y los puntos de luz ya tienen su propio pin en el mapa
+            // Las antenas actuales, fijas y los puntos de instalación ya tienen su propio pin en el mapa
             const conPin = op.pin ?? !['actual', 'fija', 'luz'].includes(tipo);
             if (conPin) {
-                const el = elementoPin(icono + etiqueta, { punto: 'punto', solar: 'solar' }[tipo] || '');
+                const el = elementoPin(icono + etiqueta, { punto: 'punto' }[tipo] || '');
                 el.addEventListener('click', () => seleccionarSim(id));
                 sim.pinMarker = new mapboxgl.Marker(el, { anchor: 'bottom' })
                     .setLngLat([r.lon, r.lat]).setPopup(new mapboxgl.Popup({ offset: 30 }).setHTML(htmlPopup(sim)));
@@ -2883,7 +3006,7 @@
                 const zip = new JSZip();
                 const marcas = simulaciones.map(s => `
     <Placemark><name>${esc(s.name)}</name>
-      <description>${esc(`${({ fija: 'Antena fija. ', luz: 'Punto de luz del cliente. ', solar: 'Punto nuevo sin corriente (placa solar). ', actual: 'Antena actual. ' })[s.tipo] || ''}${s.nota && !['sin corriente', 'hoy'].includes(s.nota) ? s.nota.charAt(0).toUpperCase() + s.nota.slice(1) + '. ' : ''}${s.coberturaLocal !== null ? 'Cubre el ' + s.coberturaLocal + '% de la finca. ' : ''}${s.calidadLocal !== null && s.calidadLocal !== undefined ? 'Señal buena o muy buena en el ' + s.calidadLocal + '%. ' : ''}Mástil ${s.alt} m.${s.elev !== null ? ' Altitud ' + Math.round(s.elev) + ' m.' : ''}`)}</description>
+      <description>${esc(`${({ fija: 'Antena fija. ', luz: 'Punto de instalación del cliente. ', actual: 'Antena actual. ' })[s.tipo] || ''}${s.nota && !['sin corriente', 'hoy'].includes(s.nota) ? s.nota.charAt(0).toUpperCase() + s.nota.slice(1) + '. ' : ''}${s.coberturaLocal !== null ? 'Cubre el ' + s.coberturaLocal + '% de la finca. ' : ''}${s.calidadLocal !== null && s.calidadLocal !== undefined ? 'Señal buena o muy buena en el ' + s.calidadLocal + '%. ' : ''}Mástil ${s.alt} m.${s.elev !== null ? ' Altitud ' + Math.round(s.elev) + ' m.' : ''}`)}</description>
       <Point><coordinates>${s.lon},${s.lat},0</coordinates></Point></Placemark>`).join('');
                 zip.file(`${base}_antenas.kml`, `<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${esc(nombreProyecto || 'Proyecto')}</name>${marcas}\n</Document></kml>`);
                 const fallidos = [];
@@ -2909,7 +3032,7 @@
             const activasN = simulaciones.filter(x => x.visible).length;
             document.getElementById('contador-sims').innerText = simulaciones.length ? `${activasN}/${simulaciones.length} visibles` : '';
             document.getElementById('btn-descargar-todo').classList.toggle('hidden', !simulaciones.length);
-            const rango = { fija: 0, luz: 0, antena: 0, solar: 0, actual: 1, punto: 2 };
+            const rango = { fija: 0, luz: 0, antena: 0, actual: 1, punto: 2 };
             const orden = [...simulaciones].sort((a, b) => ((rango[a.tipo] ?? 3) - (rango[b.tipo] ?? 3)) || (a.id - b.id));
             const ico = {
                 ver: '<svg aria-hidden="true" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>',
@@ -3071,11 +3194,11 @@
                 // Puntos de luz (Planificar): mínima combinación que llega al objetivo; si no basta, los que aportan
                 let saltarCandidatos = false;
                 if (luces.length) {
-                    textoLoader(`Simulando ${luces.length} punto${luces.length === 1 ? '' : 's'} de luz…`);
+                    textoLoader(`Simulando ${luces.length} punto${luces.length === 1 ? '' : 's'} de instalación…`);
                     const rs = await Promise.allSettled(luces.map(l => simular1(l.lat, l.lon)));
                     const datos = rs.map((r, i) => r.status === 'fulfilled' ? { i, sim: r.value, set: conjuntoReal(M, r.value) } : { i, sim: null, error: true });
                     const validos = datos.filter(d => d.sim);
-                    if (!validos.length) throw new Error('CloudRF no respondió a las simulaciones de los puntos de luz.');
+                    if (!validos.length) throw new Error('CloudRF no respondió a las simulaciones de los puntos de instalación.');
                     // La decisión se toma en la malla gruesa y se comprueba en la fina (la que da el % final):
                     // si la gruesa sobreestimó, se sube el listón y se repite
                     let listón = objetivo, r, elegidos, fino = 0;
@@ -3087,7 +3210,7 @@
                         if (!r.objetivoAlcanzado || fino >= objetivo || listón >= 100) break;
                         listón += Math.max(0.5, r.interiorPct - fino) + 0.5;
                     }
-                    elegidos.forEach(d => ctx.base.push({ tipo: 'luz', sim: d.sim, set: d.set, nombre: `Luz ${d.i + 1}`, etiqueta: String(d.i + 1) }));
+                    elegidos.forEach(d => ctx.base.push({ tipo: 'luz', sim: d.sim, set: d.set, nombre: `Instalación ${d.i + 1}`, etiqueta: String(d.i + 1) }));
                     ctx.luz = {
                         total: luces.length, alcanzado: fino >= objetivo,
                         ranking: datos.map(d => ({ i: d.i, sim: d.sim, error: !!d.error, usado: elegidos.includes(d),
@@ -3109,7 +3232,7 @@
                     recalibrar(ctx);
 
                     // 3. Búsqueda local calibrada (sin créditos), contando con la cobertura base
-                    textoLoader(ctx.luz ? 'Buscando puntos solares que completen la cobertura…' : 'Buscando la mejor combinación…');
+                    textoLoader(ctx.luz ? 'Buscando antenas adicionales que completen la cobertura…' : 'Buscando la mejor combinación…');
                     await ceder();
                     const sol = resolverCobertura({ ...baseResolver(ctx), sets: ctx.sets, pesos, reserva: reservaRedundancia(M, pesos) });
                     let seleccion = sol.seleccion.slice();
@@ -3220,7 +3343,7 @@
             const sumar = v => { for (let k = 0; k < v.length; k++) if (v[k] && !union[k]) { union[k] = 1; cubiertos++; } };
             const pctActual = () => mallaFinca.length ? 100 * cubiertos / mallaFinca.length : 0;
             const curva = [], etiquetasCurva = [];
-            ctx.base.forEach(b => { sumar(vector(b.sim)); curva.push(pctActual()); etiquetasCurva.push(b.tipo === 'luz' ? `L${b.etiqueta}` : b.etiqueta); });
+            ctx.base.forEach(b => { sumar(vector(b.sim)); curva.push(pctActual()); etiquetasCurva.push(b.tipo === 'luz' ? `I${b.etiqueta}` : b.etiqueta); });
             // Emplazamientos elegidos, ordenados por lo que aportan
             const coberturas = seleccion.map(ci => vector(ctx.sims10.get(ci)));
             const restantes = seleccion.map((_, i) => i), orden = [];
@@ -3231,7 +3354,7 @@
                 sumar(coberturas[i]);
                 orden.push(seleccion[i]);
                 curva.push(pctActual());
-                etiquetasCurva.push(ctx.luz ? `S${orden.length}` : String(orden.length));
+                etiquetasCurva.push(String(orden.length));
             }
 
             if (ultimoResultado) ultimoResultado.ids.forEach(eliminarSimulacion);
@@ -3239,11 +3362,10 @@
             for (const b of ctx.base) ids.push((await mostrarSimulacion(b.sim, b.nombre, { tipo: b.tipo, etiqueta: b.etiqueta })).id);
             for (let k = 0; k < orden.length; k++) {
                 const r = ctx.sims10.get(orden[k]);
-                ids.push((await mostrarSimulacion(r, ctx.luz ? `Punto solar ${k + 1}` : `Antena ${k + 1}`,
-                    ctx.luz ? { tipo: 'solar', etiqueta: String(k + 1), nota: 'sin corriente' } : { tipo: 'antena', numero: k + 1 })).id);
+                ids.push((await mostrarSimulacion(r, `Antena ${k + 1}`, { tipo: 'antena', numero: k + 1 })).id);
             }
             if (ctx.luz) for (const x of ctx.luz.ranking.filter(x => !x.usado && x.sim))
-                ids.push((await mostrarSimulacion(x.sim, `Luz ${x.i + 1}`, { tipo: 'luz', etiqueta: String(x.i + 1), visible: false, nota: 'no usada' })).id);
+                ids.push((await mostrarSimulacion(x.sim, `Instalación ${x.i + 1}`, { tipo: 'luz', etiqueta: String(x.i + 1), visible: false, nota: 'no usada' })).id);
             if (ctx.actual) for (const x of ctx.actual.sims.filter(x => !x.fija))
                 ids.push((await mostrarSimulacion(x.sim, `Actual A${x.i + 1}`, { tipo: 'actual', etiqueta: `A${x.i + 1}`, visible: false, nota: 'hoy' })).id);
             if (nodosVisibles) toggleNodos(); // las cumbres se ocultan para limpiar el mapa
@@ -3262,7 +3384,7 @@
         function calcularRecomendaciones(res) {
             const { ctx } = res, M = ctx.M, R = CONFIG.recomendaciones, objetivo = CONFIG.objetivoCoberturaPct;
             const ok = res.pct >= objetivo, N = res.seleccion.length, total = N + ctx.base.length, recs = [];
-            const unidad = ctx.luz ? 'punto solar' : 'antena';
+            const unidad = 'antena';
             const fmt = v => v.toLocaleString('es-ES', { maximumFractionDigits: 0 });
             if (ctx.sets && ctx.pesos.some(p => p > 0)) {
                 const sets = setsHibridos(ctx);
@@ -3277,16 +3399,16 @@
                     });
                     const gan = 100 * mejor / M.nInterior;
                     if (gan >= R.minGananciaAnadirPts || (!ok && gan >= R.minMejoraRealPts))
-                        recs.push({ id: 'anadir', boton: ctx.luz ? 'Añadir punto solar' : 'Añadir antena',
-                                    texto: `${ctx.luz ? 'Un punto solar más' : 'Una antena más'} subiría la cobertura del ${fmt(res.pct)} % a ~${fmt(Math.min(100, res.pct + gan))} % (estimación).` });
+                        recs.push({ id: 'anadir', boton: 'Añadir antena',
+                                    texto: `Una antena más subiría la cobertura del ${fmt(res.pct)} % a ~${fmt(Math.min(100, res.pct + gan))} % (estimación).` });
                 }
                 // Quitar: siempre disponible en Planificar; si baja del objetivo queda como propuesta a la baja
                 if (ctx.modo === 'objetivo' && N >= 1 && total >= 2) {
                     const r = resolverCobertura({ ...baseResolver(ctx), modo: 'fijo', nFijo: N - 1, sets, pesos: ctx.pesos });
                     const basta = r.interiorPct >= objetivo + R.margenUnaMenosPts;
-                    recs.push({ id: 'menos', boton: `Probar con ${ctx.luz ? 'un punto solar' : 'una antena'} menos`, seleccion: r.seleccion,
+                    recs.push({ id: 'menos', boton: 'Probar con una antena menos', seleccion: r.seleccion,
                                 texto: basta
-                                    ? `Con ${total - 1} ${total - 1 === 1 ? 'antena' : 'antenas'} se estima ~${fmt(r.interiorPct)} %: podría bastar con ${ctx.luz ? 'un punto solar' : 'una antena'} menos.`
+                                    ? `Con ${total - 1} ${total - 1 === 1 ? 'antena' : 'antenas'} se estima ~${fmt(r.interiorPct)} %: podría bastar con una antena menos.`
                                     : `Con ${total - 1} ${total - 1 === 1 ? 'antena' : 'antenas'} se estima ~${fmt(r.interiorPct)} %, por debajo del ${objetivo} %. Útil para presentar una propuesta a la baja.` });
                 }
             }
@@ -3298,7 +3420,7 @@
             const fuera = res.seleccion.filter(ci => !M.candidatos[ci].esInterno).length;
             if (ctx.permisos.permitirFuera && fuera > 0)
                 recs.push({ id: 'dentro', boton: 'Calcular solo dentro',
-                            texto: `${fuera} ${fuera > 1 ? unidad + (ctx.luz ? 'es están' : 's están') : unidad + ' está'} fuera de la finca. Si el cliente no lo permite:` });
+                            texto: `${fuera} ${fuera > 1 ? unidad + 's están' : unidad + ' está'} fuera de la finca. Si el cliente no lo permite:` });
             return recs;
         }
 
@@ -3372,7 +3494,7 @@
                     const pct = pctUnion(simsSeleccion(ctx, nueva), mallaFinca);
                     if (id === 'anadir') {
                         aceptar = pct - res.pct >= R.minMejoraRealPts;
-                        motivo = `con ${ctx.luz ? 'un punto solar' : 'una antena'} más la cobertura real sería ${pct.toLocaleString('es-ES')} % (+${(pct - res.pct).toFixed(1).replace('.', ',')} puntos).`;
+                        motivo = `con una antena más la cobertura real sería ${pct.toLocaleString('es-ES')} % (+${(pct - res.pct).toFixed(1).replace('.', ',')} puntos).`;
                     } else {
                         aceptar = true;   // quitar se aplica siempre: si baja del objetivo es una propuesta a la baja
                         aLaBaja = pct < objetivo;
@@ -3411,12 +3533,12 @@
             const fmt1 = x => x === null || x === undefined ? '–' : x.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
             const fmt0 = x => x.toLocaleString('es-ES', { maximumFractionDigits: 0 });
             const plural = (k, a, b) => k === 1 ? a : b;
-            const titulo = ctx.modo === 'fijo' ? 'Optimizar red' : (ctx.luz ? 'Planificar red con puntos de luz' : 'Planificar red');
+            const titulo = ctx.modo === 'fijo' ? 'Optimizar red' : (ctx.luz ? 'Planificar red con puntos de instalación' : 'Planificar red');
             const chip = ok ? `<span class="chip chip-ok">Objetivo ${objetivo} % alcanzado</span>`
                        : r.aLaBaja ? `<span class="chip chip-ko">Propuesta a la baja</span>`
                        : `<span class="chip chip-ko">Objetivo ${objetivo} % no alcanzado</span>`;
             const nFijas = ctx.base.filter(b => b.tipo === 'fija').length, nLuz = ctx.base.filter(b => b.tipo === 'luz').length;
-            const detalleN = ctx.luz ? `${nLuz} de luz${nSel ? ` · ${nSel} solar${nSel > 1 ? 'es' : ''}` : ''}` : (nFijas ? `${nFijas} fija${nFijas > 1 ? 's' : ''}` : '');
+            const detalleN = ctx.luz ? `${nLuz} en instalación${nSel ? ` · ${nSel} adicional${nSel > 1 ? 'es' : ''}` : ''}` : (nFijas ? `${nFijas} fija${nFijas > 1 ? 's' : ''}` : '');
             const p = [];
             p.push(`<div class="cabecera-tarjeta"><span>${titulo}</span>${chip}</div>`);
             p.push(`<div class="flex items-end justify-between pb-3" style="border-bottom:1px solid var(--borde)">
@@ -3446,13 +3568,13 @@
                 const basePct = nLuz ? r.curva[nLuz - 1] : 0;
                 let explica;
                 if (ctx.luz.alcanzado) explica = nLuz < ctx.luz.total
-                    ? `Basta con ${nLuz} de los ${ctx.luz.total} puntos de luz para llegar al ${objetivo} %.`
-                    : `Hacen falta los ${nLuz} puntos de luz para llegar al ${objetivo} %.`;
+                    ? `Basta con ${nLuz} de los ${ctx.luz.total} puntos de instalación para llegar al ${objetivo} %.`
+                    : `Hacen falta los ${nLuz} puntos de instalación para llegar al ${objetivo} %.`;
                 else explica = nSel
-                    ? `Con los puntos de luz se llega al ${fmt1(basePct)}. Se ${nSel === 1 ? 'propone 1 punto nuevo' : `proponen ${nSel} puntos nuevos`} con placa solar (sin corriente) para completar la cobertura.`
-                    : `Con los puntos de luz se llega al ${fmt1(basePct)} y no se han encontrado puntos solares que mejoren la cobertura.`;
+                    ? `Con los puntos de instalación se llega al ${fmt1(basePct)}. Se ${nSel === 1 ? 'propone 1 antena adicional' : `proponen ${nSel} antenas adicionales`} para completar la cobertura.`
+                    : `Con los puntos de instalación se llega al ${fmt1(basePct)} y no se han encontrado antenas adicionales que mejoren la cobertura.`;
                 p.push(`<div class="flex flex-col gap-1.5">
-                            <div style="font-size:13px; color:var(--tenue)">Puntos de luz ordenados por cobertura</div>
+                            <div style="font-size:13px; color:var(--tenue)">Puntos de instalación ordenados por cobertura</div>
                             <div style="display:grid; grid-template-columns:auto minmax(0,1fr) 44px 92px; gap:6px 8px; align-items:center">${filas}</div>
                             <div>${explica}</div>
                         </div>`);
