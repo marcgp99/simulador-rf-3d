@@ -453,7 +453,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.12.1';
+        const APP_VERSION = '1.12.2';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -1978,17 +1978,18 @@
             const notas = [];
             if (sat.length) notas.push(`<div style="color:#E3B341">${sat.map(s => s.etiqueta).join(', ')}: sin ${red} usable de ningún operador. ${sat.length === 1 ? 'Requiere' : 'Requieren'} enlace por satélite.</div>`);
             if (solo3.length) notas.push(`<div style="color:#E3B341">${solo3.map(s => s.etiqueta).join(', ')}: solo 3G (red en proceso de apagado en la región).</div>`);
+            // Solo avisos que piden una acción (los descartes y la fuente no se muestran en el panel)
             if (c.exigido && c.descartados) {
-                notas.push(`<div>Se han descartado ${c.descartados} de ${c.permitidos} emplazamientos posibles por no tener ${red} usable.</div>`);
                 if (res.pct < CONFIG.objetivoCoberturaPct)
                     notas.push(`<div style="color:#E3B341">Exigir cobertura móvil impide llegar al ${CONFIG.objetivoCoberturaPct} %. Desactiva «Cobertura móvil en la zona» para ver la propuesta con antenas que necesitarían enlace por satélite.</div>`);
             }
             if (pos.length) notas.push(`<div style="color:#E3B341">${pos.map(s => s.etiqueta).join(', ')}: ningún operador declara cobertura, aunque la señal estimada es suficiente. Comprobar en campo.</div>`);
             if (c.faltan && c.faltan.length) notas.push(`<div style="color:#E3B341">Faltan datos de ${c.faltan.join(', ')}: no se ha descartado ningún emplazamiento por cobertura móvil.</div>`);
             if (c.relajado) notas.push(`<div style="color:#E3B341">Ningún emplazamiento posible tiene ${red} usable: se ha calculado sin tenerla en cuenta.</div>`);
-            const fuente = red4g.pais === 'MX' ? 'Cobertura 4G y 3G declarada por cada operador a la CRT.'
-                : red4g.cobertura ? 'Cobertura declarada por los operadores al Ministerio (junio de 2024), con la señal estimada desde las torres de InfoAntenas y el terreno real (mástil incluido). Confirmar en campo antes de instalar.'
-                : `Señal estimada desde las torres de ${escHtml(red4g.fuente)} con el terreno real (mástil incluido). ${red4g.oficial ? 'Confirmar en campo antes de instalar.' : 'Datos colaborativos: puede faltar alguna antena.'}`;
+            const fuente = red4g.pais === 'MX' ? 'Fuente: CRT (cobertura declarada por los operadores).'
+                : red4g.cobertura ? 'Fuente: Ministerio (2024) e InfoAntenas, con el terreno real.'
+                : red4g.oficial ? 'Fuente: InfoAntenas, con el terreno real.'
+                : 'Fuente: OpenCelliD (colaborativo, puede faltar alguna antena), con el terreno real.';
             caja.innerHTML = `<div class="flex flex-col gap-1.5">
                     <div class="flex flex-col gap-0.5" style="font-size:13px; color:var(--tenue)">
                         <span>Cobertura móvil de cada antena</span>
@@ -1996,12 +1997,11 @@
                             <span class="ley-c4g"><i class="buena"></i>Buena</span><span class="ley-c4g"><i class="usable"></i>Usable</span>
                             <span>· número: señal estimada (dBm)</span>
                             <span class="cursor-help" style="color:var(--texto-2)" title="Solo se muestran los operadores que cubren el punto.
+Verde: señal buena. Azul: usable, con menos margen.
 El número es la señal estimada en el mástil (dBm): cuanto más cerca de 0, mejor.
-−70 a −90: excelente · −90 a −100: buena · −100 a −110: usable.
-Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">ⓘ</span>
+${escHtml(fuente)}">ⓘ</span>
                         </span></div>
-                    <div class="flex flex-col gap-1.5">${filas}</div>${notas.join('')}
-                    <div style="font-size:12px; color:var(--tenue)">${fuente}</div></div>`;
+                    <div class="flex flex-col gap-1.5">${filas}</div>${notas.join('')}</div>`;
         }
 
         function muestrearPerfil(a, b, dM) {
