@@ -92,6 +92,18 @@
         .c4g.sin { color: #FF7B72; border-color: #8E1519; }
         .c4g.posible { color: var(--aviso); border-color: #9E6A03; border-style: dashed; }
         .c4g.nd { color: var(--tenue); border-color: var(--borde); border-style: dashed; font-weight: 500; }
+        .c4g .tec { font-size: 10px; font-weight: 600; opacity: .8; }
+        .c4g .tec.t3g { padding: 0 3px; border-radius: 3px; background: rgba(227,179,65,.18); color: #E3B341; opacity: 1; }
+        .segmento { display: inline-flex; border: 1px solid var(--borde); border-radius: 6px; overflow: hidden; }
+        .segmento button { font-size: 12px; font-weight: 600; padding: 1px 9px; color: var(--tenue); }
+        .segmento button.activo { background: var(--superficie-2, #21262D); color: var(--texto); }
+        .menu-capas { position: absolute; top: 44px; right: 0; min-width: 210px; padding: 6px; display: flex; flex-direction: column; gap: 2px; z-index: 20; }
+        .menu-capas.hidden { display: none; }
+        .fila-capa { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 6px; font-size: 13.5px; color: var(--texto-2); cursor: pointer; user-select: none; }
+        .fila-capa:hover { background: rgba(255,255,255,.05); color: var(--texto); }
+        .fila-capa.hidden { display: none; }
+        .fila-capa input { accent-color: #3FB950; width: 15px; height: 15px; }
+        .aviso-suave { color: var(--aviso) !important; font-weight: 400; }
         .enlace { color: #58A6FF; font-weight: 500; } .enlace:hover { text-decoration: underline; }
 
         .curva { display: grid; grid-template-columns: 26px minmax(0, 1fr) 48px; align-items: center; gap: 6px 8px; font-family: var(--mono); font-size: 11.5px; }
@@ -221,7 +233,7 @@
                             </select>
                         </div>
                     </div>
-                    <details class="avanzado">
+                    <details class="avanzado" data-recordar="ajustes">
                         <summary><span>Ajustes avanzados <span id="resumen-ajustes" class="ml-1"></span></span>
                             <svg class="flecha w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </summary>
@@ -237,6 +249,13 @@
                                     <option value="0">No</option>
                                 </select>
                             </div>
+                            <div class="col-span-2">
+                                <label class="etiqueta" for="conexion_gw">Conexión de la gateway</label>
+                                <select id="conexion_gw" onchange="cambiarConexion()" class="campo cursor-pointer" title="Red móvil por la que la gateway envía los datos. 3G solo cuenta en Latinoamérica.">
+                                    <option value="4g" selected>4G</option>
+                                    <option value="4g3g">4G + 3G (Latinoamérica)</option>
+                                </select>
+                            </div>
                         </div>
                     </details>
                 </section>
@@ -250,8 +269,12 @@
                     </div>
 
                     <div id="modo-planificar" class="modo-panel tarjeta flex flex-col gap-3">
-                        <p class="descripcion"><b style="color:var(--texto)">Cliente nuevo.</b> Calcula el mínimo de antenas necesario para cubrir el <span class="txt-objetivo">80</span>% de la finca y dónde colocarlas.</p>
-                        <div class="bloque-interno">
+                        <p class="descripcion">Mínimo de antenas para cubrir el <span class="txt-objetivo">80</span> % de la finca.</p>
+                        <details class="avanzado" data-recordar="planificar">
+                            <summary><span>Opciones avanzadas <span id="resumen-avz-planificar" class="ml-1" style="color:var(--acento)"></span></span>
+                                <svg class="flecha w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </summary>
+                        <div class="bloque-interno mt-3">
                             <div class="flex items-center justify-between">
                                 <span class="text-[13px] font-semibold flex items-center gap-1.5">
                                     <svg aria-hidden="true" class="w-3.5 h-3.5" style="color:#E3B341" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
@@ -266,6 +289,7 @@
                             <button id="btn-colocar-luz" onclick="toggleColocarLuz()" class="boton boton-sec">Marcar en el mapa</button>
                             <div id="lista-luz" class="flex flex-col gap-1"></div>
                         </div>
+                        </details>
                         <button id="btn-objetivo" onclick="optimizarRed('objetivo')" class="accion boton boton-primario">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
                             <span id="txt-btn-objetivo">Calcular red para <span class="txt-objetivo">80</span>%</span>
@@ -273,10 +297,18 @@
                     </div>
 
                     <div id="modo-optimizar" class="modo-panel tarjeta flex flex-col gap-3 hidden">
-                        <p class="descripcion"><b style="color:var(--texto)">Cliente actual con problemas de cobertura.</b> Indica dónde están sus antenas hoy (opcional) y el sistema propone dónde reubicarlas.</p>
-                        <div class="bloque-interno">
+                        <p class="descripcion">Reubica las antenas del cliente para mejorar la cobertura.</p>
+                        <div class="flex items-center justify-between gap-3">
+                            <label for="num_antenas" class="text-[13px] font-semibold">Antenas contratadas</label>
+                            <input type="number" id="num_antenas" min="1" max="10" value="2" class="campo mono w-20 text-center">
+                        </div>
+                        <details class="avanzado" data-recordar="optimizar">
+                            <summary><span>Opciones avanzadas <span id="resumen-avz-optimizar" class="ml-1 aviso-suave" title="Sin antenas instaladas no habrá comparación con la red de hoy.">· sin antenas instaladas</span></span>
+                                <svg class="flecha w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </summary>
+                        <div class="bloque-interno mt-3">
                             <div class="flex items-center justify-between">
-                                <span class="text-[13px] font-semibold">Antenas instaladas hoy</span>
+                                <span class="text-[13px] font-semibold">Antenas instaladas</span>
                                 <span id="n-actuales" class="mono text-[12px]" style="color:var(--tenue)">ninguna</span>
                             </div>
                             <p class="text-[12.5px]" style="color:var(--tenue)">Marca como <b style="color:var(--texto-2)">fija</b> la antena que no se puede mover; solo se reubican las demás.</p>
@@ -287,10 +319,7 @@
                             </div>
                             <div id="lista-actuales" class="flex flex-col gap-1"></div>
                         </div>
-                        <div class="flex items-center justify-between gap-3">
-                            <label for="num_antenas" class="text-[13px] font-semibold">Antenas contratadas</label>
-                            <input type="number" id="num_antenas" min="1" max="10" value="2" class="campo mono w-20 text-center">
-                        </div>
+                        </details>
                         <button id="btn-fijo" onclick="optimizarRed('fijo')" class="accion boton boton-primario">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                             <span id="txt-btn-fijo">Reubicar <span id="txt-n">2</span> antenas</span>
@@ -311,9 +340,9 @@
                         </select>
                       </div>
                       <label for="exigir_4g" class="flex items-center gap-2 text-[13px] cursor-pointer select-none" style="color:var(--texto-2)"
-                             title="Descarta los emplazamientos donde ningún operador da 4G usable. Solo con datos oficiales (España y México).">
+                             title="Descarta los emplazamientos sin red móvil usable para la gateway (4G, o 3G si la conexión lo admite). Solo con datos oficiales (España y México).">
                           <span class="interruptor"><input type="checkbox" id="exigir_4g" checked><span></span></span>
-                          Verificar 4G en la zona
+                          4G en la zona
                       </label>
                     </div>
 
@@ -378,26 +407,21 @@
             </div>
 
             <div class="map-controls-container">
-                <button id="btn-huecos" onclick="toggleHuecos()" class="map-btn hidden">
-                    <span class="muestra muestra-rayada" style="width:12px;height:12px"></span>
-                    <span id="text-huecos">Ocultar zonas sin cobertura</span>
+                <button id="btn-capas" onclick="toggleMenuCapas()" class="map-btn" aria-haspopup="true" aria-expanded="false" aria-controls="menu-capas">
+                    <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>
+                    <span>Capas <span id="n-capas"></span></span>
                 </button>
-                <button id="btn-4g" onclick="toggleCapa4G()" class="map-btn hidden">
-                    <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 10v11M8.5 21h7M9 14l3-4 3 4"/><path d="M7.8 5.8a6 6 0 000 8.4M16.2 5.8a6 6 0 010 8.4M5 3a10 10 0 000 14M19 3a10 10 0 010 14"/></svg>
-                    <span id="text-4g">Cobertura 4G</span>
-                </button>
-                <button id="btn-canopy" onclick="toggleCanopy()" class="map-btn">
-                    <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
-                    <span id="text-canopy">Cubierta Arbórea</span>
-                </button>
-                <button id="btn-nodos" onclick="toggleNodos()" class="map-btn">
-                    <svg aria-hidden="true" id="icon-nodos" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                    <span id="text-nodos">Ocultar Cumbres</span>
-                </button>
-                <button id="btn-3d" onclick="toggle3D()" class="map-btn" >
-                    <svg aria-hidden="true" id="icon-3d" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span id="text-3d">Modo 3D</span>
-                </button>
+                <div id="menu-capas" class="hidden glass-panel rounded-md menu-capas" role="menu">
+                    <label class="fila-capa hidden" id="fila-huecos"><input type="checkbox" id="chk-huecos" checked onchange="toggleHuecos()"><span class="muestra muestra-rayada" style="width:12px;height:12px"></span>Zonas sin cobertura</label>
+                    <label class="fila-capa hidden" id="fila-4g"><input type="checkbox" id="chk-4g" onchange="toggleCapa4G()">
+                        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 10v11M8.5 21h7M9 14l3-4 3 4"/><path d="M7.8 5.8a6 6 0 000 8.4M16.2 5.8a6 6 0 010 8.4"/></svg>Cobertura móvil</label>
+                    <label class="fila-capa"><input type="checkbox" id="chk-canopy" onchange="toggleCanopy()">
+                        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 22v-6M7 16h10l-5-8-5 8zM9 11h6l-3-6-3 6z"/></svg>Cubierta arbórea</label>
+                    <label class="fila-capa"><input type="checkbox" id="chk-nodos" checked onchange="toggleNodos()">
+                        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 20l6-11 4 7 3-4 5 8z"/></svg>Cumbres</label>
+                    <label class="fila-capa"><input type="checkbox" id="chk-3d" onchange="toggle3D()">
+                        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>Vista 3D</label>
+                </div>
             </div>
 
             <!-- Leyendas -->
@@ -434,7 +458,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.9.0';
+        const APP_VERSION = '1.10.0';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -546,6 +570,8 @@
                 fMHzDefecto: { ES: 800, OC: 700 },
                 umbrales: { buena: -100, usable: -110, marginal: -115 },   // RSRP (dBm)
                 pesos: { usable: 0.95, bonoOperador: 0.03 },               // buena señal y más operadores puntúan más
+                // 3G (solo Latinoamérica; en España ya está apagado o apagándose). Señal piloto CPICH, banda 850
+                tres: { eirpDbm: 45, fMHz: 850, umbrales: { buena: -90, usable: -102, marginal: -108 } },
                 pesoSinCuatroG: 0.6,          // sin «Verificar 4G en la zona»: penalización de un emplazamiento sin 4G usable
                 minNoOficial: 0.85,           // fuente colaborativa: nunca descarta, como mucho penaliza
                 // España: cobertura 4G declarada por los operadores al Ministerio (malla de 50 m, datos a 30/06/2024)
@@ -558,7 +584,11 @@
                     Telcel:   { buena: 'Radiomovil_Dipsa_4G_Garantizada_2do_Trimestre', usable: 'Radiomovil_Dipsa_4G_Diferenciada_2do_Trimestre' },
                     Movistar: { buena: 'Pegaso_PCS_4G_Garantizada_1er_Trimestre',       usable: 'Pegaso_PCS_4G_Diferenciada_1er_Trimestre' },
                     'AT&T':   { buena: 'AT&T_4G_Garantizada_2do_Trimestre',             usable: 'AT&T_4G_Diferenciada_2do_Trimestre' },
-                    'Altán':  { buena: 'Altan_Redes_4G_Garantizada_2do_Trimestre',      usable: 'Altan_Redes_4G_Diferenciada_2do_Trimestre' } } }
+                    'Altán':  { buena: 'Altan_Redes_4G_Garantizada_2do_Trimestre',      usable: 'Altan_Redes_4G_Diferenciada_2do_Trimestre' } },
+                    archivos3G: {
+                    Telcel:   { buena: 'Radiomovil_Dipsa_3G_Garantizada_2do_Trimestre', usable: 'Radiomovil_Dipsa_3G_Diferenciada_2do_Trimestre' },
+                    Movistar: { buena: 'Pegaso_PCS_3G_Garantizada_2do_Trimestre',       usable: 'Pegaso_PCS_3G_Diferenciada_2do_Trimestre' },
+                    'AT&T':   { buena: 'AT&T_3G_Garantizada_2do_Trimestre',             usable: 'AT&T_3G_Diferenciada_2do_Trimestre' } } }
             },
 
             cache: { clave: 'rfsim-cache-v3', diasValidez: 7, maxEntradas: 300 },
@@ -1061,15 +1091,17 @@
             return claseEstimada === 'buena' || claseEstimada === 'usable' ? 'posible' : 'sin';
         }
         // Resumen de una ficha 4G para la interfaz: ok (algún operador usable), satelite, nd (sin datos)
-        function resumen4G(info, oficial = true) {
+        function resumen4G(info, oficial = true, conTec = false) {
             if (!info) return null;
-            if (info.fuera) return { nivel: 'nd', texto: '4G fuera de la zona analizada' };
-            if (info.sinDatos) return { nivel: 'nd', texto: '4G sin datos · comprobar en campo' };
+            const red = conTec ? 'red móvil' : '4G', Red = conTec ? 'Red móvil' : '4G';
+            if (info.fuera) return { nivel: 'nd', texto: `${Red} fuera de la zona analizada` };
+            if (info.sinDatos) return { nivel: 'nd', texto: `${Red} sin datos · comprobar en campo` };
+            const nombre = o => conTec && o.tec ? `${o.op} ${o.tec}` : o.op;
             const usables = info.operadores.filter(o => o.clase === 'buena' || o.clase === 'usable');
-            if (usables.length) return { nivel: 'ok', texto: usables.map(o => o.op).join(' · '), usables };
+            if (usables.length) return { nivel: 'ok', texto: usables.map(nombre).join(' · '), usables, solo3G: usables.every(o => o.tec === '3G') };
             if (info.operadores.some(o => o.clase === 'posible')) return { nivel: 'posible', texto: '4G no declarado · posible, comprobar en campo' };
-            return oficial ? { nivel: 'satelite', texto: 'Sin 4G usable · requiere satélite' }
-                           : { nivel: 'nd', texto: '4G no confirmado · comprobar en campo' };
+            return oficial ? { nivel: 'satelite', texto: `Sin ${red} usable · requiere satélite` }
+                           : { nivel: 'nd', texto: `${Red} no confirmada · comprobar en campo` };
         }
 
         // País de la finca para elegir la fuente 4G. ES: InfoAntenas · MX: CRT · OC: OpenCelliD (resto)
@@ -1162,13 +1194,23 @@
         const SVG_CANDADO = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>';
 
         document.getElementById('app-version').innerText = 'v' + APP_VERSION;
+        (() => {
+            const CLAVE = 'rfsim-ui-v1';
+            let estado = {};
+            try { estado = JSON.parse(localStorage.getItem(CLAVE) || '{}') || {}; } catch (e) { estado = {}; }
+            document.querySelectorAll('details[data-recordar]').forEach(d => {
+                const id = d.dataset.recordar;
+                if (typeof estado[id] === 'boolean') d.open = estado[id];
+                d.addEventListener('toggle', () => { estado[id] = d.open; try { localStorage.setItem(CLAVE, JSON.stringify(estado)); } catch (e) { /* sin almacenamiento */ } });
+            });
+        })();
         document.querySelectorAll('.txt-objetivo').forEach(e => e.innerText = CONFIG.objetivoCoberturaPct);
         document.getElementById('num_antenas').addEventListener('input', () => { numAntenasTocado = true; actualizarTextoN(); });
         function actualizarTextoN() {
             const n = Math.max(1, parseInt(document.getElementById('num_antenas').value) || 1);
             const fijas = antenasActuales.filter(a => a.fija).length;
             const mov = Math.max(0, n - fijas);
-            document.getElementById('txt-btn-fijo').innerHTML = `Reubicar <span id="txt-n">${mov}</span> antena${mov === 1 ? '' : 's'}` +
+            document.getElementById('txt-btn-fijo').innerHTML = !geojsonKMLActual ? 'Carga una finca para empezar' : `Reubicar <span id="txt-n">${mov}</span> antena${mov === 1 ? '' : 's'}` +
                 (fijas ? ` <span style="font-weight:400; opacity:.85">· ${fijas} fija${fijas > 1 ? 's' : ''}</span>` : '');
         }
 
@@ -1187,11 +1229,19 @@
 
         function actualizarInfoEnlace() {
             const veg = document.getElementById('land_cover').value === '1' ? 'con vegetación' : 'sin vegetación';
-            document.getElementById('resumen-ajustes').innerText = `· mástil ${alturaMastil()} m, ${veg}`;
+            const con = document.getElementById('conexion_gw').value === '4g3g' ? '4G + 3G' : '4G';
+            document.getElementById('resumen-ajustes').innerText = `· mástil ${alturaMastil()} m, ${veg}, ${con}`;
+        }
+        // Al cambiar la conexión se rehace la ficha de red móvil de cada antena
+        function cambiarConexion() {
+            actualizarInfoEnlace();
+            if (red4g && red4g.estado === 'ok') { alCargarRed4G(); marcarResultadoObsoleto('Has cambiado la conexión de la gateway: vuelve a calcular para tenerla en cuenta.'); }
         }
 
         function cambiarPerfil() {
             document.getElementById('tx_height').value = perfilActivo().alturaMastilM;
+            document.getElementById('conexion_gw').value = document.getElementById('sim_profile').value === 'LATAM' ? '4g3g' : '4g';
+            if (red4g && red4g.estado === 'ok') alCargarRed4G();
             actualizarInfoEnlace();
             programarPrecalculo();
         }
@@ -1208,7 +1258,7 @@
             if (modo === 'punto') bloque.classList.add('hidden');
             else {
                 const panel = document.getElementById('modo-' + modo);
-                panel.insertBefore(bloque, panel.querySelector('.accion'));
+                panel.insertBefore(bloque, panel.querySelector('details.avanzado') || panel.querySelector('.accion'));
                 bloque.classList.remove('hidden');
             }
             if (modo !== 'optimizar' && colocandoActuales) toggleColocarActuales();
@@ -1330,6 +1380,7 @@
         let promesaRed4g = null;
         let capa4GVisible = false;
         let operadorCapa4G = 'Todos';
+        let tecCapa4G = '4G';
 
         async function enParalelo(lista, n, fn) {
             let i = 0;
@@ -1380,6 +1431,7 @@
             await terreno;
             if (pais === 'OC') {
                 r.operadores = [...new Set(r.sitios.map(s => s.op))];
+                r.con3G = r.sitios.some(s => s.tec === '3G');
                 r.sinDatos = !r.sitios.length;
             }
             return r;
@@ -1479,6 +1531,7 @@
                 const f = s.bandas && s.bandas.length ? frecuencia4GDeBandas(s.bandas) : null;
                 s.lte = s.bandas && s.bandas.length ? f !== null : true;      // ficha sin banda 4G → solo 2G/3G
                 s.fMHz = f || cfg.fMHzDefecto.ES;
+                s.tec = '4G';
             });
             r.sitios = sitios;
         }
@@ -1501,13 +1554,16 @@
                 const capa = decodificarMVT(t.data)[cfg.capa];
                 if (!capa) return;
                 for (const e of capa.entidades) {
-                    if (e.tipo !== 1 || e.props.radio !== 'LTE' || !e.partes.length) continue;
+                    const tec = e.props.radio === 'LTE' ? '4G' : e.props.radio === 'UMTS' ? '3G' : null;
+                    if (e.tipo !== 1 || !tec || !e.partes.length) continue;
                     const [lon, lat] = teselaALonLat(z, x, y, e.partes[0][0][0], e.partes[0][0][1], capa.extent);
-                    celdas.push({ op: operadorDeMcc(e.props.mcc, e.props.net), lon, lat, muestras: Number(e.props.samples) || 0 });
+                    celdas.push({ op: operadorDeMcc(e.props.mcc, e.props.net), tec, lon, lat, muestras: Number(e.props.samples) || 0 });
                 }
             });
             if (errores === teselas.length) throw new Error('OpenCelliD no responde');
-            r.sitios = agruparCeldas(celdas, 300).map(s => ({ ...s, lte: true, fMHz: CONFIG.red4g.fMHzDefecto.OC }));
+            r.sitios = [
+                ...agruparCeldas(celdas.filter(c => c.tec === '4G'), 300).map(s => ({ ...s, tec: '4G', lte: true, fMHz: CONFIG.red4g.fMHzDefecto.OC })),
+                ...agruparCeldas(celdas.filter(c => c.tec === '3G'), 300).map(s => ({ ...s, tec: '3G', fMHz: CONFIG.red4g.tres.fMHz }))];
         }
 
         async function cargarZonasMX(r) {
@@ -1518,15 +1574,17 @@
             for (let x = Math.floor(lon2tileX(w, z)); x <= Math.floor(lon2tileX(e, z)); x++)
                 for (let y = Math.floor(lat2tileY(n, z)); y <= Math.floor(lat2tileY(s, z)); y++) teselas.push([x, y]);
             const tareas = [];
-            for (const [op, archivos] of Object.entries(cfg.archivos))
-                for (const [clase, archivo] of Object.entries(archivos)) tareas.push({ op, clase, archivo });
+            for (const [tec, lista] of [['4G', cfg.archivos], ['3G', cfg.archivos3G || {}]])
+                for (const [op, archivos] of Object.entries(lista))
+                    for (const [clase, archivo] of Object.entries(archivos)) tareas.push({ op, tec, clase, archivo });
             const fallos = new Set();
-            // Los archivos cambian de nombre cada trimestre: si el configurado ya no existe, se prueban los demás
+            // Los archivos cambian de nombre cada trimestre: si el configurado ya no existe, se prueba del más reciente al más antiguo.
+            // La web de la CRT responde a los que no existen con un archivo vacío: getHeader lo rechaza (no es PMTiles)
             const abrir = async archivo => {
-                const nombres = [archivo, ...['1er', '2do', '3er', '4to'].map(q => archivo.replace(/_(1er|2do|3er|4to)_Trimestre$/, `_${q}_Trimestre`))];
+                const nombres = [archivo, ...['4to', '3er', '2do', '1er'].map(q => archivo.replace(/_(1er|2do|3er|4to)_Trimestre$/, `_${q}_Trimestre`))];
                 for (const nombre of [...new Set(nombres)]) {
                     const src = new pmtiles.PMTiles(`${CONFIG.red4g.workerUrl}/mx/${encodeURIComponent(nombre)}.pmtiles`);
-                    try { await src.getHeader(); return src; } catch (e) { /* siguiente */ }
+                    try { const h = await src.getHeader(); if (h && h.maxZoom >= z) return src; } catch (e) { /* siguiente */ }
                 }
                 throw new Error('archivo no disponible: ' + archivo);
             };
@@ -1546,18 +1604,23 @@
                             const anillos = ent.partes.map(a => a.map(([px, py]) => teselaALonLat(z, x, y, px, py, capa.extent)));
                             let bw = 180, bs = 90, be = -180, bn = -90;
                             anillos.forEach(a => a.forEach(([lng, lat]) => { bw = Math.min(bw, lng); be = Math.max(be, lng); bs = Math.min(bs, lat); bn = Math.max(bn, lat); }));
-                            r.zonas.push({ op: t.op, clase: t.clase, anillos, bbox: [bw, bs, be, bn] });
+                            r.zonas.push({ op: t.op, tec: t.tec, clase: t.clase, anillos, bbox: [bw, bs, be, bn] });
                         }
                     }
-                } catch (err) { console.warn('CRT', t.archivo, err); fallos.add(t.op); }
+                } catch (err) { console.warn('CRT', t.archivo, err); fallos.add(`${t.op}|${t.tec}`); }
             });
-            if (fallos.size === Object.keys(cfg.archivos).length) throw new Error('La CRT no responde');
-            if (fallos.size) r.avisos.push(`No se pudo leer la cobertura de ${[...fallos].join(', ')}.`);
+            const combinaciones = new Set(tareas.map(t => `${t.op}|${t.tec}`));
+            if (fallos.size === combinaciones.size) throw new Error('La CRT no responde');
+            const falla4G = [...fallos].filter(k => k.endsWith('|4G')).map(k => k.split('|')[0]);
+            if (falla4G.length) r.avisos.push(`No se pudo leer la cobertura 4G de ${falla4G.join(', ')}.`);
+            const falla3G = [...fallos].filter(k => k.endsWith('|3G')).map(k => k.split('|')[0]);
+            if (falla3G.length && falla3G.length < Object.keys(cfg.archivos3G || {}).length) r.avisos.push(`No se pudo leer la cobertura 3G de ${falla3G.join(', ')}.`);
             r.sinLeer = [...fallos];
+            r.con3G = Object.keys(cfg.archivos3G || {}).some(op => !fallos.has(`${op}|3G`));
         }
 
         // Señal 4G (RSRP, dBm) que recibe la gateway desde una torre: enlace de bajada con el terreno real
-        function rsrpDesde(sitio, lng, lat, hRx, dM) {
+        function rsrpDesde(sitio, lng, lat, hRx, dM, eirpDbm = CONFIG.red4g.eirpRsDbm) {
             const cfg = CONFIG.red4g;
             const d = Math.max(dM, 50);
             const n = Math.min(cfg.maxMuestras, Math.max(2, Math.ceil(d / cfg.pasoM)));
@@ -1570,49 +1633,71 @@
                 if (elev[n] === null || !isFinite(elev[n])) elev[n] = validos[validos.length - 1];
             }
             const L = evaluarEnlace(elev, d, sitio.fMHz, cfg.alturaTorreM, hRx, CONFIG.terreno.factorK, CONFIG.terreno.radioTierraM).perdidaDb;
-            return cfg.eirpRsDbm + cfg.gananciaRxDbi - cfg.perdidaAdicionalDb - L;
+            return eirpDbm + cfg.gananciaRxDbi - cfg.perdidaAdicionalDb - L;
         }
 
         // Ficha 4G de un punto: { operadores: [{ op, clase, rsrp, distKm, sitio }], sinDatos, fuera }
+        // Tecnologías que admite la gateway (ajuste «Conexión de la gateway»). España: solo 4G
+        function tecnologias() { return document.getElementById('conexion_gw').value === '4g3g' ? ['4G', '3G'] : ['4G']; }
+        function tecnologiasRed(r = red4g) { return r && r.pais !== 'ES' ? tecnologias() : ['4G']; }
+        function conTecnologia() { return tecnologiasRed().includes('3G'); }
+
+        function evaluarZonasMX(r, op, tec, lng, lat) {
+            if (r.sinLeer.includes(`${op}|${tec}`)) return null;
+            const cfg = CONFIG.red4g.mx;
+            if (!(tec === '3G' ? cfg.archivos3G || {} : cfg.archivos)[op]) return null;
+            let clase = 'sin';
+            for (const zn of r.zonas) {
+                if (zn.op !== op || zn.tec !== tec || ORDEN_CLASE_4G[zn.clase] <= ORDEN_CLASE_4G[clase]) continue;
+                const [bw, bs, be, bn] = zn.bbox;
+                if (lng < bw || lng > be || lat < bs || lat > bn) continue;
+                if (puntoEnAnillos(lng, lat, zn.anillos)) clase = zn.clase;
+            }
+            return { op, tec, clase, rsrp: null, distKm: null };
+        }
+
+        function evaluarSitios(r, op, tec, lng, lat, hRx, declarados) {
+            const cfg = CONFIG.red4g, radioM = (r.pais === 'ES' ? cfg.radioBusquedaKm : cfg.opencellid.radioKm) * 1000;
+            const propios = r.sitios.filter(x => x.op === op && (x.tec || '4G') === tec && x.lte !== false);
+            if (!propios.length && r.pais !== 'ES' && tec === '3G') return null;
+            const eirp = tec === '3G' ? cfg.tres.eirpDbm : cfg.eirpRsDbm, umbrales = tec === '3G' ? cfg.tres.umbrales : cfg.umbrales;
+            const cerca = propios.map(x => ({ x, d: distanciaM([lng, lat], [x.lon, x.lat]) })).filter(o => o.d <= radioM)
+                .sort((a, b) => a.d - b.d).slice(0, cfg.sitiosPorOperador);
+            let mejor = { op, tec, rsrp: null, distKm: null, sitio: null };
+            for (const { x, d } of cerca) {
+                const v = rsrpDesde(x, lng, lat, hRx, d, eirp);
+                if (mejor.rsrp === null || v > mejor.rsrp) mejor = { op, tec, rsrp: v, distKm: d / 1000, sitio: x };
+            }
+            mejor.clase = clase4G(mejor.rsrp, umbrales);
+            if (mejor.rsrp !== null) mejor.rsrp = Math.round(mejor.rsrp);
+            if (declarados && tec === '4G') { mejor.claseEstimada = mejor.clase; mejor.declarada = declarados.has(op); mejor.clase = combinar4G(mejor.clase, mejor.declarada); }
+            return mejor;
+        }
+
+        // Ficha de un punto: por operador, su mejor red (4G si es usable; si no, 3G cuando la gateway lo admite)
         function estimar4G(lng, lat, hRx) {
             const r = red4g;
             if (!r || r.estado !== 'ok' || !isFinite(lng) || !isFinite(lat)) return null;
-            const clave = `${lng.toFixed(5)},${lat.toFixed(5)},${hRx}`;
+            const tecs = tecnologiasRed(r);
+            const clave = `${lng.toFixed(5)},${lat.toFixed(5)},${hRx},${tecs.join('')}`;
             if (r.cache.has(clave)) return r.cache.get(clave);
             const [w, s, e, n] = r.valido;
             let info;
             if (lng < w || lng > e || lat < s || lat > n) info = { fuera: true, operadores: [] };
-            else if (r.pais === 'MX') {
-                info = { operadores: r.operadores.filter(op => !r.sinLeer.includes(op)).map(op => {
-                    let clase = 'sin';
-                    for (const zn of r.zonas) {
-                        if (zn.op !== op || ORDEN_CLASE_4G[zn.clase] <= ORDEN_CLASE_4G[clase]) continue;
-                        const [bw, bs, be, bn] = zn.bbox;
-                        if (lng < bw || lng > be || lat < bs || lat > bn) continue;
-                        if (puntoEnAnillos(lng, lat, zn.anillos)) clase = zn.clase;
-                    }
-                    return { op, clase, rsrp: null, distKm: null };
-                }) };
-            } else if (r.sinDatos) info = { sinDatos: true, operadores: [] };
+            else if (r.sinDatos) info = { sinDatos: true, operadores: [] };
             else {
-                const cfg = CONFIG.red4g, radioM = (r.pais === 'ES' ? cfg.radioBusquedaKm : cfg.opencellid.radioKm) * 1000;
                 const declarados = r.pais === 'ES' ? operadoresDeclarados(r, lng, lat) : null;
                 info = { operadores: r.operadores.map(op => {
-                    const cerca = r.sitios.filter(x => x.op === op && x.lte !== false)
-                        .map(x => ({ x, d: distanciaM([lng, lat], [x.lon, x.lat]) })).filter(o => o.d <= radioM)
-                        .sort((a, b) => a.d - b.d).slice(0, cfg.sitiosPorOperador);
-                    let mejor = { op, rsrp: null, distKm: null, sitio: null };
-                    for (const { x, d } of cerca) {
-                        const v = rsrpDesde(x, lng, lat, hRx, d);
-                        if (mejor.rsrp === null || v > mejor.rsrp) mejor = { op, rsrp: v, distKm: d / 1000, sitio: x };
+                    let mejor = null;
+                    for (const tec of tecs) {
+                        if (mejor && mejor.tec === '4G' && ORDEN_CLASE_4G[mejor.clase] >= ORDEN_CLASE_4G.usable) break;
+                        const v = r.pais === 'MX' ? evaluarZonasMX(r, op, tec, lng, lat) : evaluarSitios(r, op, tec, lng, lat, hRx, declarados);
+                        if (v && (!mejor || ORDEN_CLASE_4G[v.clase] > ORDEN_CLASE_4G[mejor.clase])) mejor = v;
                     }
-                    mejor.clase = clase4G(mejor.rsrp, cfg.umbrales);
-                    if (mejor.rsrp !== null) mejor.rsrp = Math.round(mejor.rsrp);
-                    if (declarados) { mejor.claseEstimada = mejor.clase; mejor.declarada = declarados.has(op); mejor.clase = combinar4G(mejor.clase, mejor.declarada); }
                     return mejor;
-                }) };
+                }).filter(Boolean) };
             }
-            info.operadores.sort((a, b) => (ORDEN_CLASE_4G[b.clase] - ORDEN_CLASE_4G[a.clase]) || ((b.rsrp ?? -999) - (a.rsrp ?? -999)));
+            info.operadores.sort((a, b) => (ORDEN_CLASE_4G[b.clase] - ORDEN_CLASE_4G[a.clase]) || ((a.tec === '4G' ? 0 : 1) - (b.tec === '4G' ? 0 : 1)) || ((b.rsrp ?? -999) - (a.rsrp ?? -999)));
             r.cache.set(clave, info);
             return info;
         }
@@ -1622,7 +1707,7 @@
         // ---------- Interfaz 4G
         const escHtml = t => String(t).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
         function tituloOperador4G(o) {
-            const p = [`${o.op}: ${NOMBRE_CLASE_4G[o.clase]}`];
+            const p = [`${o.op}${o.tec ? ' ' + o.tec : ''}: ${NOMBRE_CLASE_4G[o.clase]}`];
             if (o.rsrp !== null && o.rsrp !== undefined) p.push(`${o.rsrp} dBm estimados`);
             if (o.distKm !== null && o.distKm !== undefined) p.push(`torre a ${o.distKm.toLocaleString('es-ES', { maximumFractionDigits: 1 })} km`);
             if (o.sitio && o.sitio.bandas && o.sitio.bandas.length) p.push(`bandas ${o.sitio.bandas.join(', ')} MHz`);
@@ -1635,50 +1720,55 @@
         function chips4G(info, completo = false) {
             if (!info) return '';
             const oficial = !red4g || red4g.oficial;
-            const res = resumen4G(info, oficial);
+            const conTec = conTecnologia();
+            const res = resumen4G(info, oficial, conTec);
             if (res.nivel === 'nd') return `<span class="c4g nd">${res.texto}</span>`;
             if (res.nivel === 'posible' && !completo) return `<span class="c4g posible">${res.texto}</span>`;
             const lista = completo ? info.operadores : (res.nivel === 'ok' ? res.usables : []);
             if (!lista.length) return `<span class="c4g sin">${res.texto}</span>`;
             const dbm = v => String(v).replace('-', '−');
-            return lista.map(o => `<span class="c4g ${o.clase}" title="${escHtml(tituloOperador4G(o))}">${escHtml(o.op)}${completo && o.rsrp !== null && o.rsrp !== undefined ? ` <span class="mono">${dbm(o.rsrp)}</span>` : ''}</span>`).join('');
+            const tecTxt = o => conTec && o.tec ? ` <span class="tec${o.tec === '3G' ? ' t3g' : ''}">${o.tec}</span>` : '';
+            return lista.map(o => `<span class="c4g ${o.clase}" title="${escHtml(tituloOperador4G(o))}">${escHtml(o.op)}${tecTxt(o)}${completo && o.rsrp !== null && o.rsrp !== undefined ? ` <span class="mono">${dbm(o.rsrp)}</span>` : ''}</span>`).join('');
         }
         function htmlPopup4G(info) {
             if (!info) return '';
             const nota = red4g && !red4g.oficial ? ' (no oficial)' : '';
             const extra = red4g && red4g.pais !== 'MX' && !info.sinDatos && !info.fuera ? ` <span style="color:var(--tenue); font-weight:400">· ${red4g.cobertura ? 'oficial + ' : ''}dBm estimados</span>` : '';
             return `<div style="margin-top:6px; padding-top:6px; border-top:1px solid var(--borde)">
-                        <div style="font-size:12px; color:var(--tenue); margin-bottom:3px">4G de los operadores${nota}${extra}</div>
+                        <div style="font-size:12px; color:var(--tenue); margin-bottom:3px">${conTecnologia() ? 'Red móvil' : '4G'} de los operadores${nota}${extra}</div>
                         <div class="flex flex-wrap gap-1">${chips4G(info, true)}</div></div>`;
         }
 
         function pintarEstado4G() {
             const caja = document.getElementById('estado-4g');
-            const btn = document.getElementById('btn-4g');
-            if (!geojsonKMLActual) { caja.classList.add('hidden'); btn.classList.add('hidden'); return; }
+            const fila = document.getElementById('fila-4g');
+            if (!geojsonKMLActual) { caja.classList.add('hidden'); fila.classList.add('hidden'); return; }
             caja.classList.remove('hidden');
             const r = red4g && red4g.version === versionKML ? red4g : null;
+            const tecs = tecnologiasRed(r);
+            const Red = tecs.includes('3G') ? 'Red móvil' : '4G';
             let texto;
-            if (!r) texto = `<span>4G · cargando datos de los operadores…</span>`;
-            else if (r.estado === 'error') texto = `<span style="color:var(--aviso)">4G · no se pudieron cargar los datos (${escHtml(r.error)}).</span> <button class="enlace" onclick="reintentarRed4G()">Reintentar</button>`;
+            if (!r) texto = `<span>${Red} · cargando datos de los operadores…</span>`;
+            else if (r.estado === 'error') texto = `<span style="color:var(--aviso)">${Red} · no se pudieron cargar los datos (${escHtml(r.error)}).</span> <button class="enlace" onclick="reintentarRed4G()">Reintentar</button>`;
             else if (r.pais === 'MX') {
-                texto = `<span>4G · cobertura oficial (CRT) de ${r.operadores.filter(o => !r.sinLeer.includes(o)).join(', ')}</span>`;
+                const leidos = tec => r.operadores.filter(o => (tec === '3G' ? CONFIG.red4g.mx.archivos3G || {} : CONFIG.red4g.mx.archivos)[o] && !r.sinLeer.includes(`${o}|${tec}`));
+                texto = `<span>${Red} · cobertura oficial (CRT) · 4G: ${leidos('4G').join(', ') || 'sin datos'}${tecs.includes('3G') ? ` · 3G: ${leidos('3G').join(', ') || 'sin datos'}` : ''}</span>`;
             } else if (r.sinDatos) {
-                texto = `<span style="color:var(--aviso)">4G · sin antenas registradas a menos de ${CONFIG.red4g.opencellid.radioKm} km en ${escHtml(r.fuente)}: comprobar en campo.</span>`;
+                texto = `<span style="color:var(--aviso)">${Red} · sin antenas registradas a menos de ${CONFIG.red4g.opencellid.radioKm} km en ${escHtml(r.fuente)}: comprobar en campo.</span>`;
             } else {
                 const radio = r.pais === 'ES' ? CONFIG.red4g.radioBusquedaKm : CONFIG.red4g.opencellid.radioKm;
-                const n = r.sitios.filter(s => s.lte !== false).length;
+                const n4 = r.sitios.filter(s => (s.tec || '4G') === '4G' && s.lte !== false).length, n3 = r.sitios.filter(s => s.tec === '3G').length;
+                const nTxt = tecs.includes('3G') ? `${n4} antena${n4 === 1 ? '' : 's'} 4G y ${n3} 3G` : `${n4} antena${n4 === 1 ? '' : 's'}`;
                 const ops = r.cobertura ? [...new Set(r.cobertura.flatMap(z => z.ops))] : [];
                 texto = r.cobertura
-                    ? `<span>4G · cobertura oficial de ${ops.length ? ops.join(', ') : 'ningún operador'} · ${n} antena${n === 1 ? '' : 's'} a menos de ${radio} km</span>`
-                    : `<span>4G · ${n} antena${n === 1 ? '' : 's'} a menos de ${radio} km · ${escHtml(r.fuente)}${r.oficial ? '' : ': puede faltar alguna'}</span>`;
+                    ? `<span>4G · cobertura oficial de ${ops.length ? ops.join(', ') : 'ningún operador'} · ${nTxt} a menos de ${radio} km</span>`
+                    : `<span>${Red} · ${nTxt} a menos de ${radio} km · ${escHtml(r.fuente)}${r.oficial ? '' : ': puede faltar alguna'}</span>`;
             }
             if (r && r.avisos && r.avisos.length) texto += `<span style="color:var(--aviso)"> ${r.avisos.map(escHtml).join(' ')}</span>`;
             caja.innerHTML = texto;
             const conCapa = r && r.estado === 'ok' && (r.zonas.length || r.sitios.length || (r.cobertura && r.cobertura.length));
-            btn.classList.toggle('hidden', !conCapa);
-            const nombre = r && (r.pais === 'MX' || r.cobertura) ? 'cobertura 4G' : 'antenas 4G';
-            document.getElementById('text-4g').innerText = capa4GVisible ? 'Ocultar ' + nombre : nombre.charAt(0).toUpperCase() + nombre.slice(1);
+            fila.classList.toggle('hidden', !conCapa);
+            sincronizarCapas();
         }
 
         function alCargarRed4G() {
@@ -1691,7 +1781,7 @@
 
         function toggleCapa4G() {
             capa4GVisible = !capa4GVisible;
-            document.getElementById('btn-4g').classList.toggle('activo', capa4GVisible);
+            sincronizarCapas();
             pintarCapa4G();
             pintarEstado4G();
         }
@@ -1703,15 +1793,22 @@
         }
 
         // Cobertura (oficial) y antenas juntas, con selector de operador o «Todos»
+        // Cobertura (oficial) y antenas juntas, con selector de tecnología (si hay 3G) y de operador o «Todos»
         function pintarCapa4G() {
             quitarCapa4G();
             const r = red4g;
             if (!capa4GVisible || !mapaListo || !r || r.estado !== 'ok' || r.version !== versionKML) return;
             const leyenda = document.getElementById('leyenda-4g');
-            const conCobertura = r.pais === 'MX' ? r.zonas.length > 0 : !!(r.cobertura && r.cobertura.length);
-            const opsCapa = r.pais === 'MX' ? r.operadores.filter(o => !r.sinLeer.includes(o))
-                : [...new Set([...(r.cobertura || []).flatMap(z => z.ops), ...r.sitios.filter(s => s.lte !== false).map(s => s.op)])];
-            const orden = [...FUENTES_4G[r.pais].operadores, ...opsCapa.filter(o => !FUENTES_4G[r.pais].operadores.includes(o))].filter(o => opsCapa.includes(o));
+            const tecsDatos = r.pais === 'MX' ? [...new Set(r.zonas.map(z => z.tec))] : [...new Set(r.sitios.map(s => s.tec || '4G'))];
+            const tecsCapa = ['4G', '3G'].filter(t => (t === '4G' || tecnologiasRed(r).includes('3G')) && (tecsDatos.includes(t) || (t === '4G' && r.cobertura)));
+            if (!tecsCapa.includes(tecCapa4G)) tecCapa4G = tecsCapa[0] || '4G';
+            const tec = tecCapa4G;
+            const deTec = x => (x.tec || '4G') === tec;
+            const conCobertura = r.pais === 'MX' ? r.zonas.some(deTec) : (tec === '4G' && !!(r.cobertura && r.cobertura.length));
+            const opsCapa = r.pais === 'MX' ? [...new Set(r.zonas.filter(deTec).map(z => z.op))]
+                : [...new Set([...(tec === '4G' ? (r.cobertura || []).flatMap(z => z.ops) : []), ...r.sitios.filter(s => deTec(s) && s.lte !== false).map(s => s.op)])];
+            const base = FUENTES_4G[r.pais].operadores;
+            const orden = [...base.filter(o => opsCapa.includes(o)), ...opsCapa.filter(o => !base.includes(o))];
             if (operadorCapa4G !== 'Todos' && !orden.includes(operadorCapa4G)) operadorCapa4G = 'Todos';
             const sel = operadorCapa4G;
             const debajoDe = ['cobertura-layer', 'kml-fill'].find(id => map.getLayer(id));
@@ -1720,7 +1817,7 @@
             if (conCobertura) {
                 let features;
                 if (r.pais === 'MX') {
-                    features = r.zonas.filter(z => sel === 'Todos' || z.op === sel).map(z => ({ type: 'Feature',
+                    features = r.zonas.filter(z => deTec(z) && (sel === 'Todos' || z.op === sel)).map(z => ({ type: 'Feature',
                         properties: { clase: z.clase, n: 1 }, geometry: { type: 'Polygon', coordinates: z.anillos } }));
                 } else {
                     features = r.cobertura.filter(z => sel === 'Todos' || z.ops.includes(sel)).map(z => ({ type: 'Feature',
@@ -1740,7 +1837,7 @@
 
             // 2. Antenas (un punto por ubicación; si varios operadores comparten torre, se agrupan)
             const puntos = [];
-            r.sitios.filter(s => s.lte !== false && (sel === 'Todos' || s.op === sel)).forEach(s => {
+            r.sitios.filter(s => deTec(s) && s.lte !== false && (sel === 'Todos' || s.op === sel)).forEach(s => {
                 const p = puntos.find(x => distanciaM([x.lon, x.lat], [s.lon, s.lat]) < 80);
                 if (p) { if (!p.ops.includes(s.op)) p.ops.push(s.op); p.sitios.push(s); } else puntos.push({ lon: s.lon, lat: s.lat, ops: [s.op], sitios: [s] });
             });
@@ -1766,15 +1863,18 @@
                 <div class="flex items-center gap-2">${muestra('#3FB950', 0.9)}3 o más operadores</div>
                 <div class="flex items-center gap-2">${muestra('#3FB950', 0.55)}2 operadores</div>
                 <div class="flex items-center gap-2">${muestra('#E3B341', 0.6)}1 operador</div>`;
-            else if (conCobertura) filas = `<div class="flex items-center gap-2">${muestra('#3FB950', 0.75)}Con cobertura 4G de ${escHtml(sel)}</div>`;
-            if (puntos.length) filas += `<div class="flex items-center gap-2"><span style="width:11px;height:11px;border-radius:50%;background:#E6EDF3;border:2px solid #0D1117;box-shadow:0 0 0 1px #8B949E; flex-shrink:0"></span>Antena 4G</div>`;
-            const fuente = r.pais === 'MX' ? 'cobertura declarada por cada operador a la CRT'
-                : r.cobertura ? 'cobertura 4G declarada por los operadores al Ministerio (junio de 2024) y antenas de InfoAntenas'
+            else if (conCobertura) filas = `<div class="flex items-center gap-2">${muestra('#3FB950', 0.75)}Con cobertura ${tec} de ${escHtml(sel)}</div>`;
+            if (puntos.length) filas += `<div class="flex items-center gap-2"><span style="width:11px;height:11px;border-radius:50%;background:#E6EDF3;border:2px solid #0D1117;box-shadow:0 0 0 1px #8B949E; flex-shrink:0"></span>Antena ${tec}</div>`;
+            if (!filas) filas = `<div>Sin datos de ${tec} en esta zona.</div>`;
+            const fuente = r.pais === 'MX' ? `cobertura ${tec} declarada por cada operador a la CRT`
+                : r.cobertura && tec === '4G' ? 'cobertura 4G declarada por los operadores al Ministerio (junio de 2024) y antenas de InfoAntenas'
                 : escHtml(r.fuente) + (r.oficial ? '' : '. Puede faltar alguna antena');
             const zona = conCobertura ? ` Se muestra la finca y ${r.pais === 'MX' ? CONFIG.red4g.margenValidoKm : CONFIG.red4g.es.franjaKm} km alrededor.` : '';
-            leyenda.innerHTML = `<div class="flex items-center justify-between gap-2 mb-2"><span class="titulo-seccion">${conCobertura ? 'Cobertura 4G' : 'Antenas 4G'}</span>
-                    ${orden.length > 1 ? `<select class="campo !w-auto !py-0.5 !text-[12.5px]" onchange="operadorCapa4G=this.value; pintarCapa4G()" aria-label="Operador">
-                        ${['Todos', ...orden].map(o => `<option ${o === sel ? 'selected' : ''}>${escHtml(o)}</option>`).join('')}</select>` : ''}</div>
+            const selTec = tecsCapa.length > 1 ? `<div class="segmento" role="group" aria-label="Tecnología">${tecsCapa.map(t =>
+                `<button class="${t === tec ? 'activo' : ''}" aria-pressed="${t === tec}" onclick="tecCapa4G='${t}'; pintarCapa4G()">${t}</button>`).join('')}</div>` : '';
+            leyenda.innerHTML = `<div class="flex items-center justify-between gap-2 mb-2"><span class="titulo-seccion">${conCobertura ? 'Cobertura' : 'Antenas'} ${tec}</span>${selTec}</div>
+                ${orden.length > 1 ? `<select class="campo !py-0.5 !text-[12.5px] mb-2" onchange="operadorCapa4G=this.value; pintarCapa4G()" aria-label="Operador">
+                    ${['Todos', ...orden].map(o => `<option ${o === sel ? 'selected' : ''}>${escHtml(o)}</option>`).join('')}</select>` : ''}
                 <div class="flex flex-col gap-1.5 text-[13px]" style="color:var(--texto-2)">${filas}</div>
                 <p class="text-[11px] mt-2" style="color:var(--tenue)">Fuente: ${fuente}.${zona}</p>`;
             leyenda.classList.remove('hidden');
@@ -1823,23 +1923,26 @@
             const filas = sims.map(s => `<div class="flex items-start gap-2">
                     <span class="numero ${s.tipo === 'antena' ? '' : s.tipo}" style="min-width:24px; height:22px">${s.icono || ''}${s.etiqueta}</span>
                     <div class="flex flex-wrap gap-1 min-w-0" style="padding-top:1px">${chips4G(s.red4g, true)}</div></div>`).join('');
-            const sat = sims.filter(s => resumen4G(s.red4g, red4g.oficial)?.nivel === 'satelite');
-            const pos = sims.filter(s => resumen4G(s.red4g, red4g.oficial)?.nivel === 'posible');
+            const conTec = conTecnologia(), red = conTec ? 'red móvil' : '4G';
+            const sat = sims.filter(s => resumen4G(s.red4g, red4g.oficial, conTec)?.nivel === 'satelite');
+            const pos = sims.filter(s => resumen4G(s.red4g, red4g.oficial, conTec)?.nivel === 'posible');
+            const solo3 = sims.filter(s => resumen4G(s.red4g, red4g.oficial, conTec)?.solo3G);
             const c = res.ctx.red4g || {};
             const notas = [];
-            if (sat.length) notas.push(`<div style="color:#E3B341">${sat.map(s => s.etiqueta).join(', ')}: sin 4G usable de ningún operador. ${sat.length === 1 ? 'Requiere' : 'Requieren'} enlace por satélite.</div>`);
+            if (sat.length) notas.push(`<div style="color:#E3B341">${sat.map(s => s.etiqueta).join(', ')}: sin ${red} usable de ningún operador. ${sat.length === 1 ? 'Requiere' : 'Requieren'} enlace por satélite.</div>`);
+            if (solo3.length) notas.push(`<div style="color:#E3B341">${solo3.map(s => s.etiqueta).join(', ')}: solo 3G (red en proceso de apagado en la región).</div>`);
             if (c.exigido && c.descartados) {
-                notas.push(`<div>Se han descartado ${c.descartados} de ${c.permitidos} emplazamientos posibles por no tener 4G usable.</div>`);
+                notas.push(`<div>Se han descartado ${c.descartados} de ${c.permitidos} emplazamientos posibles por no tener ${red} usable.</div>`);
                 if (res.pct < CONFIG.objetivoCoberturaPct)
-                    notas.push(`<div style="color:#E3B341">Verificar el 4G impide llegar al ${CONFIG.objetivoCoberturaPct} %. Desactiva «Verificar 4G en la zona» para ver la propuesta con antenas que necesitarían enlace por satélite.</div>`);
+                    notas.push(`<div style="color:#E3B341">Verificar el 4G impide llegar al ${CONFIG.objetivoCoberturaPct} %. Desactiva «4G en la zona» para ver la propuesta con antenas que necesitarían enlace por satélite.</div>`);
             }
             if (pos.length) notas.push(`<div style="color:#E3B341">${pos.map(s => s.etiqueta).join(', ')}: ningún operador declara cobertura, aunque la señal estimada es suficiente. Comprobar en campo.</div>`);
-            if (c.relajado) notas.push(`<div style="color:#E3B341">Ningún emplazamiento posible tiene 4G usable: se ha calculado sin tener en cuenta el 4G.</div>`);
-            const fuente = red4g.pais === 'MX' ? 'Cobertura declarada por cada operador a la CRT.'
+            if (c.relajado) notas.push(`<div style="color:#E3B341">Ningún emplazamiento posible tiene ${red} usable: se ha calculado sin tenerla en cuenta.</div>`);
+            const fuente = red4g.pais === 'MX' ? `Cobertura ${conTec ? '4G y 3G ' : ''}declarada por cada operador a la CRT.`
                 : red4g.cobertura ? 'Cobertura declarada por los operadores al Ministerio (junio de 2024), con la señal estimada desde las torres de InfoAntenas y el terreno real (mástil incluido). Confirmar en campo antes de instalar.'
                 : `Señal estimada desde las torres de ${escHtml(red4g.fuente)} con el terreno real (mástil incluido). ${red4g.oficial ? 'Confirmar en campo antes de instalar.' : 'Datos colaborativos: puede faltar alguna antena.'}`;
             caja.innerHTML = `<div class="flex flex-col gap-1.5">
-                    <div style="font-size:13px; color:var(--tenue)">Conectividad 4G de cada antena</div>
+                    <div style="font-size:13px; color:var(--tenue)">${conTec ? 'Red móvil' : 'Conectividad 4G'} de cada antena</div>
                     <div class="flex flex-col gap-1.5">${filas}</div>${notas.join('')}
                     <div style="font-size:12px; color:var(--tenue)">${fuente}</div></div>`;
         }
@@ -2005,6 +2108,10 @@
         function renderActuales() {
             const n = antenasActuales.length, fijas = antenasActuales.filter(a => a.fija).length;
             document.getElementById('n-actuales').innerText = n ? `${n} marcada${n === 1 ? '' : 's'}${fijas ? ` · ${fijas} fija${fijas > 1 ? 's' : ''}` : ''}` : 'ninguna';
+            const resumen = document.getElementById('resumen-avz-optimizar');
+            resumen.innerText = n ? `· ${n} instalada${n === 1 ? '' : 's'}${fijas ? ` (${fijas} fija${fijas > 1 ? 's' : ''})` : ''}` : '· sin antenas instaladas';
+            resumen.title = n ? '' : 'Sin antenas instaladas no habrá comparación con la red de hoy.';
+            resumen.classList.toggle('aviso-suave', !n);
             document.getElementById('lista-actuales').innerHTML = antenasActuales.map((a, i) => `
                 <div class="flex items-center gap-2 text-[12.5px]">
                     <b class="mono" style="color:var(--texto)">A${i + 1}</b>
@@ -2074,6 +2181,7 @@
         function renderLuz() {
             const n = puntosLuz.length;
             document.getElementById('n-luz').innerText = n ? `${n} punto${n === 1 ? '' : 's'}` : 'ninguno';
+            document.getElementById('resumen-avz-planificar').innerText = n ? `· ${n} punto${n === 1 ? '' : 's'} de instalación` : '';
             document.getElementById('lista-luz').innerHTML = puntosLuz.map((p, i) => `
                 <div class="flex items-center gap-2 text-[12.5px]">
                     <span class="numero luz" style="min-width:24px; height:22px">${SVG_RAYO}${i + 1}</span>
@@ -2081,9 +2189,9 @@
                     <button onclick="eliminarPuntoLuz(${i})" aria-label="Quitar el punto de instalación ${i + 1}" title="Quitar" class="icono-accion">✕</button>
                 </div>`).join('');
             const obj = CONFIG.objetivoCoberturaPct;
-            document.getElementById('txt-btn-objetivo').innerHTML = n
+            document.getElementById('txt-btn-objetivo').innerHTML = !geojsonKMLActual ? 'Carga una finca para empezar' : n
                 ? `Calcular red con ${n} punto${n === 1 ? '' : 's'} de instalación`
-                : `Calcular red para <span class="txt-objetivo">${obj}</span>%`;
+                : `Calcular red para <span class="txt-objetivo">${obj}</span> %`;
         }
 
         async function cargarActualesKML(event) {
@@ -2119,51 +2227,49 @@
         // =======================================================================
         function toggleCanopy() {
             canopyActivo = !canopyActivo;
-            const btn = document.getElementById('btn-canopy');
-            const text = document.getElementById('text-canopy');
-            const legend = document.getElementById('canopy-legend');
             map.setLayoutProperty('capa-canopy-raster', 'visibility', canopyActivo ? 'visible' : 'none');
-            btn.classList.toggle('active-3d', canopyActivo);
-            text.innerText = canopyActivo ? "Ocultar Cubierta" : "Cubierta Arbórea";
-            legend.classList.toggle('hidden', !canopyActivo);
+            document.getElementById('canopy-legend').classList.toggle('hidden', !canopyActivo);
+            sincronizarCapas();
         }
 
         function toggle3D() {
-            const btn = document.getElementById('btn-3d');
-            const icon = document.getElementById('icon-3d');
-            const text = document.getElementById('text-3d');
             is3D = !is3D;
             if (is3D) {
                 map.setMaxPitch(85);
-                btn.classList.add('active-3d');
-                text.innerText = "Modo 2D";
-                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>`;
                 map.easeTo({ pitch: 65, bearing: map.getBearing() + 45, duration: 2000 });
             } else {
-                btn.classList.remove('active-3d');
-                text.innerText = "Modo 3D";
-                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>`;
                 map.easeTo({ pitch: 0, bearing: 0, duration: 2000 });
                 map.once('moveend', () => { if (!is3D) map.setMaxPitch(0); });
             }
+            sincronizarCapas();
         }
 
         function toggleNodos() {
             nodosVisibles = !nodosVisibles;
-            const btn = document.getElementById('btn-nodos');
-            const icon = document.getElementById('icon-nodos');
-            const text = document.getElementById('text-nodos');
             cumbreMarkers.forEach(m => m.getElement().style.display = nodosVisibles ? 'flex' : 'none');
-            if (nodosVisibles) {
-                btn.classList.remove('active-nodos');
-                text.innerText = "Ocultar Cumbres";
-                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
-            } else {
-                btn.classList.add('active-nodos');
-                text.innerText = "Ver Cumbres";
-                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />`;
-            }
+            sincronizarCapas();
         }
+
+        // Menú «Capas»
+        function sincronizarCapas() {
+            const marcar = (id, v) => { const el = document.getElementById(id); if (el) el.checked = !!v; };
+            marcar('chk-huecos', huecosVisibles); marcar('chk-4g', capa4GVisible); marcar('chk-canopy', canopyActivo);
+            marcar('chk-nodos', nodosVisibles); marcar('chk-3d', is3D);
+            const activas = [capa4GVisible, canopyActivo, is3D].filter(Boolean).length;
+            document.getElementById('n-capas').innerText = activas ? `· ${activas}` : '';
+        }
+        function toggleMenuCapas(abrir) {
+            const menu = document.getElementById('menu-capas'), btn = document.getElementById('btn-capas');
+            const abierto = abrir === undefined ? menu.classList.contains('hidden') : abrir;
+            menu.classList.toggle('hidden', !abierto);
+            btn.setAttribute('aria-expanded', abierto);
+            btn.classList.toggle('activo', abierto);
+        }
+        document.addEventListener('click', e => {
+            const menu = document.getElementById('menu-capas');
+            if (!menu.classList.contains('hidden') && !e.target.closest('#menu-capas') && !e.target.closest('#btn-capas')) toggleMenuCapas(false);
+        });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleMenuCapas(false); });
 
         function extraerDeMaps() {
             const input = document.getElementById('gmaps_url');
@@ -2241,6 +2347,7 @@
             const [w, s, e, n] = turf.bbox(geojsonTodas);
             map.fitBounds([[w, s], [e, n]], { padding: 50, duration: 1500 });
             if (!zonas.some(z => z.activa)) { zonas[0].activa = true; zonas[0].feature.properties.activa = true; }
+            setTimeout(() => { renderLuz(); actualizarTextoN(); }, 0);
 
             await aplicarZonas({ inicial: true });
             mostrarLoader('Cargando terreno...');
@@ -2332,7 +2439,7 @@
 
         // Zonas de la finca sin cobertura con las simulaciones activas (misma lectura que los porcentajes)
         async function actualizarMascaraHuecos(activas) {
-            const btn = document.getElementById('btn-huecos');
+            const btn = document.getElementById('fila-huecos');
             const quitar = () => {
                 if (map.getLayer('huecos-layer')) map.removeLayer('huecos-layer');
                 if (map.getSource('huecos-source')) map.removeSource('huecos-source');
@@ -2373,8 +2480,7 @@
         function toggleHuecos() {
             huecosVisibles = !huecosVisibles;
             if (map.getLayer('huecos-layer')) map.setLayoutProperty('huecos-layer', 'visibility', huecosVisibles ? 'visible' : 'none');
-            document.getElementById('btn-huecos').classList.toggle('active-nodos', !huecosVisibles);
-            document.getElementById('text-huecos').innerText = huecosVisibles ? 'Ocultar zonas sin cobertura' : 'Ver zonas sin cobertura';
+            sincronizarCapas();
         }
 
         // Puntos alrededor de la finca para medir la cobertura exterior (franja y alcance por dirección)
@@ -3027,7 +3133,7 @@
         // 💾 PROYECTOS: guardar y abrir (.rfproj = zip con proyecto.json + imágenes de cobertura)
         // =======================================================================
         const FORMATO_PROYECTO = 'ixorigue-rf-proyecto';
-        const AJUSTES_PROYECTO = ['sim_profile', 'formato_dispositivo', 'tx_height', 'land_cover', 'permitir_fuera', 'dist_fuera', 'exigir_4g', 'num_antenas'];
+        const AJUSTES_PROYECTO = ['sim_profile', 'formato_dispositivo', 'tx_height', 'land_cover', 'conexion_gw', 'permitir_fuera', 'dist_fuera', 'exigir_4g', 'num_antenas'];
         const imagenesLocales = new Map();   // clave de simulación → datos con la imagen del proyecto abierto (sin volver a CloudRF)
 
         const nombreArchivo = t => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') || 'proyecto';
@@ -3377,7 +3483,7 @@
             // Tabla de antenas
             const tipoTxt = { antena: res && res.modo === 'fijo' ? 'Reubicada' : 'Nueva', luz: 'Punto de instalación', fija: 'Fija (se mantiene)', actual: 'Actual', punto: 'Punto comprobado' };
             const filas = d.enMapa.map(s => {
-                const r4 = s.red4g ? resumen4G(s.red4g, !red4g || red4g.oficial) : null;
+                const r4 = s.red4g ? resumen4G(s.red4g, !red4g || red4g.oficial, conTecnologia()) : null;
                 return [s.etiqueta, tipoTxt[s.tipo] || s.tipo, `${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}`,
                         s.elev !== null && s.elev !== undefined ? `${Math.round(s.elev)} m` : '-', `${s.alt} m`,
                         s.coberturaLocal !== null && s.coberturaLocal !== undefined ? `${fmt1(s.coberturaLocal)} %` : '-',
@@ -3391,7 +3497,7 @@
             tituloSeccion('Antenas');
             doc.autoTable({
                 startY: y, margin: { left: M, right: M },
-                head: [['Nº', 'Tipo', 'Coordenadas (lat, lon)', 'Altitud', 'Mástil', 'Cubre', '4G disponible']],
+                head: [['Nº', 'Tipo', 'Coordenadas (lat, lon)', 'Altitud', 'Mástil', 'Cubre', conTecnologia() ? 'Red móvil' : '4G disponible']],
                 body: filas,
                 styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 1.8, textColor: oscuro, lineColor: [220, 225, 230], lineWidth: 0.1 },
                 headStyles: { fillColor: oscuro, textColor: 255, fontStyle: 'bold' },
@@ -3500,7 +3606,7 @@
                      distFueraKm: parseFloat(document.getElementById('dist_fuera').value) || CONFIG.optimizador.haloKm };
         }
         function sincronizarPermisos() {
-            document.getElementById('dist_fuera').disabled = !document.getElementById('permitir_fuera').checked;
+            document.getElementById('dist_fuera').classList.toggle('hidden', !document.getElementById('permitir_fuera').checked);
         }
         document.getElementById('permitir_fuera').addEventListener('change', sincronizarPermisos);
         sincronizarPermisos();
