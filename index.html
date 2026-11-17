@@ -249,13 +249,6 @@
                                     <option value="0">No</option>
                                 </select>
                             </div>
-                            <div class="col-span-2">
-                                <label class="etiqueta" for="conexion_gw">Conexión de la gateway</label>
-                                <select id="conexion_gw" onchange="cambiarConexion()" class="campo cursor-pointer" title="Red móvil por la que la gateway envía los datos. 3G solo cuenta en Latinoamérica.">
-                                    <option value="4g" selected>4G</option>
-                                    <option value="4g3g">4G + 3G (Latinoamérica)</option>
-                                </select>
-                            </div>
                         </div>
                     </details>
                 </section>
@@ -343,6 +336,11 @@
                              title="Descarta los emplazamientos sin red móvil usable para la gateway (4G, o 3G si la conexión lo admite). Solo con datos oficiales (España y México).">
                           <span class="interruptor"><input type="checkbox" id="exigir_4g" checked><span></span></span>
                           4G en la zona
+                      </label>
+                      <label for="incluir_3g" class="flex items-center gap-2 text-[13px] cursor-pointer select-none" style="color:var(--texto-2)"
+                             title="Para la gateway compatible con 3G: cuenta también la cobertura 3G de los operadores. Solo hay datos de 3G en Latinoamérica.">
+                          <span class="interruptor"><input type="checkbox" id="incluir_3g" onchange="cambiarConexion()"><span></span></span>
+                          Incluir 3G (Latinoamérica)
                       </label>
                     </div>
 
@@ -458,7 +456,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.10.0';
+        const APP_VERSION = '1.10.1';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -1229,19 +1227,16 @@
 
         function actualizarInfoEnlace() {
             const veg = document.getElementById('land_cover').value === '1' ? 'con vegetación' : 'sin vegetación';
-            const con = document.getElementById('conexion_gw').value === '4g3g' ? '4G + 3G' : '4G';
-            document.getElementById('resumen-ajustes').innerText = `· mástil ${alturaMastil()} m, ${veg}, ${con}`;
+            document.getElementById('resumen-ajustes').innerText = `· mástil ${alturaMastil()} m, ${veg}`;
         }
-        // Al cambiar la conexión se rehace la ficha de red móvil de cada antena
+        // «Incluir 3G»: se rehace la ficha de red móvil de cada antena
         function cambiarConexion() {
-            actualizarInfoEnlace();
-            if (red4g && red4g.estado === 'ok') { alCargarRed4G(); marcarResultadoObsoleto('Has cambiado la conexión de la gateway: vuelve a calcular para tenerla en cuenta.'); }
+            if (red4g && red4g.estado === 'ok') { alCargarRed4G(); marcarResultadoObsoleto('Has cambiado «Incluir 3G»: vuelve a calcular para tenerlo en cuenta.'); }
+            else pintarEstado4G();
         }
 
         function cambiarPerfil() {
             document.getElementById('tx_height').value = perfilActivo().alturaMastilM;
-            document.getElementById('conexion_gw').value = document.getElementById('sim_profile').value === 'LATAM' ? '4g3g' : '4g';
-            if (red4g && red4g.estado === 'ok') alCargarRed4G();
             actualizarInfoEnlace();
             programarPrecalculo();
         }
@@ -1638,7 +1633,7 @@
 
         // Ficha 4G de un punto: { operadores: [{ op, clase, rsrp, distKm, sitio }], sinDatos, fuera }
         // Tecnologías que admite la gateway (ajuste «Conexión de la gateway»). España: solo 4G
-        function tecnologias() { return document.getElementById('conexion_gw').value === '4g3g' ? ['4G', '3G'] : ['4G']; }
+        function tecnologias() { return document.getElementById('incluir_3g').checked ? ['4G', '3G'] : ['4G']; }
         function tecnologiasRed(r = red4g) { return r && r.pais !== 'ES' ? tecnologias() : ['4G']; }
         function conTecnologia() { return tecnologiasRed().includes('3G'); }
 
@@ -1764,6 +1759,7 @@
                     ? `<span>4G · cobertura oficial de ${ops.length ? ops.join(', ') : 'ningún operador'} · ${nTxt} a menos de ${radio} km</span>`
                     : `<span>${Red} · ${nTxt} a menos de ${radio} km · ${escHtml(r.fuente)}${r.oficial ? '' : ': puede faltar alguna'}</span>`;
             }
+            if (r && r.estado === 'ok' && r.pais === 'ES' && tecnologias().includes('3G')) texto += `<span> · 3G: sin datos en España, solo cuenta el 4G.</span>`;
             if (r && r.avisos && r.avisos.length) texto += `<span style="color:var(--aviso)"> ${r.avisos.map(escHtml).join(' ')}</span>`;
             caja.innerHTML = texto;
             const conCapa = r && r.estado === 'ok' && (r.zonas.length || r.sitios.length || (r.cobertura && r.cobertura.length));
@@ -3133,7 +3129,7 @@
         // 💾 PROYECTOS: guardar y abrir (.rfproj = zip con proyecto.json + imágenes de cobertura)
         // =======================================================================
         const FORMATO_PROYECTO = 'ixorigue-rf-proyecto';
-        const AJUSTES_PROYECTO = ['sim_profile', 'formato_dispositivo', 'tx_height', 'land_cover', 'conexion_gw', 'permitir_fuera', 'dist_fuera', 'exigir_4g', 'num_antenas'];
+        const AJUSTES_PROYECTO = ['sim_profile', 'formato_dispositivo', 'tx_height', 'land_cover', 'permitir_fuera', 'dist_fuera', 'exigir_4g', 'incluir_3g', 'num_antenas'];
         const imagenesLocales = new Map();   // clave de simulación → datos con la imagen del proyecto abierto (sin volver a CloudRF)
 
         const nombreArchivo = t => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') || 'proyecto';
@@ -3160,6 +3156,7 @@
         }
         function aplicarAjustes(a) {
             if (!a) return;
+            if (a.incluir_3g === undefined && a.conexion_gw !== undefined) a.incluir_3g = a.conexion_gw === '4g3g';   // proyectos de la v1.10.0
             AJUSTES_PROYECTO.forEach(id => {
                 const el = document.getElementById(id);
                 if (a[id] === undefined || !el) return;
