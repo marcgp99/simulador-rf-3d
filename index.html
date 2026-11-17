@@ -107,6 +107,7 @@
         .fila-capa:hover { background: rgba(255,255,255,.05); color: var(--texto); }
         .fila-capa.hidden { display: none; }
         .fila-capa input { accent-color: #3FB950; width: 15px; height: 15px; }
+        .fila-capa input:disabled { opacity: .4; }
         .aviso-suave { color: var(--aviso) !important; font-weight: 400; }
         .enlace { color: #58A6FF; font-weight: 500; } .enlace:hover { text-decoration: underline; }
 
@@ -452,7 +453,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.11.3';
+        const APP_VERSION = '1.12.0';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -539,9 +540,9 @@
                 muyBuenaDbm: -110,
                 buenaDbm: -120,
                 colores: {                       // RGBA por código: 3 muy buena, 2 buena, 1 suficiente, 4 sin clave
-                    3: [34, 211, 238, 215],
-                    2: [34, 211, 238, 135],
-                    1: [165, 243, 252, 95],
+                    3: [63, 185, 80, 205],     // muy buena: verde
+                    2: [227, 190, 60, 175],    // buena: amarillo
+                    1: [240, 120, 50, 165],    // suficiente: naranja
                     4: [34, 211, 238, 150]
                 },
                 maxLadoCapa: 1400                // píxeles máximos por lado de la capa combinada
@@ -1171,6 +1172,7 @@
         let mallaMascara = null;         // Malla fina de la finca para pintar las zonas sin cobertura
         let urlMascara = null;
         let huecosVisibles = true;
+        let loraVisible = true;          // cobertura de las simulaciones (Capas → Cobertura LoRa)
         let modoActual = 'planificar';
         let antenasActuales = [];        // [{lat, lon, marker}] antenas instaladas hoy (modo Optimizar)
         let colocandoActuales = false;
@@ -1392,6 +1394,7 @@
         let promesaRed4g = null;
         let capa4GVisible = false;
         let operadorCapa4G = 'Todos';
+        const VIOLETA = { claro: '#C4B5FD', medio: '#A78BFA', intenso: '#7C3AED' };   // cobertura móvil en el mapa
         let tecCapa4G = 'Todas';
 
         async function enParalelo(lista, n, fn) {
@@ -1818,6 +1821,8 @@
 
         function toggleCapa4G() {
             capa4GVisible = !capa4GVisible;
+            loraVisible = !capa4GVisible;      // con la cobertura móvil se oculta la LoRa (y vuelve al quitarla)
+            aplicarVisibilidadLora();
             sincronizarCapas();
             pintarCapa4G();
             pintarEstado4G();
@@ -1865,12 +1870,12 @@
                 map.addSource('red4g-poligonos', { type: 'geojson', data: { type: 'FeatureCollection', features }, tolerance: 0.2 });
                 let color, opacidad;
                 if (r.pais === 'MX') {
-                    color = ['match', ['get', 'clase'], 'buena', '#3FB950', '#E3B341'];
-                    opacidad = sel === 'Todos' ? 0.12 : ['match', ['get', 'clase'], 'buena', 0.24, 0.18];
+                    color = ['match', ['get', 'clase'], 'buena', VIOLETA.intenso, VIOLETA.claro];
+                    opacidad = sel === 'Todos' ? 0.16 : ['match', ['get', 'clase'], 'buena', 0.4, 0.3];
                 } else if (sel === 'Todos') {
-                    color = ['step', ['get', 'n'], '#E3B341', 2, '#3FB950'];
-                    opacidad = ['step', ['get', 'n'], 0.22, 2, 0.2, 3, 0.36];
-                } else { color = '#3FB950'; opacidad = 0.28; }
+                    color = ['step', ['get', 'n'], VIOLETA.claro, 2, VIOLETA.medio, 3, VIOLETA.intenso];
+                    opacidad = ['step', ['get', 'n'], 0.3, 2, 0.36, 3, 0.45];
+                } else { color = VIOLETA.medio; opacidad = 0.38; }
                 map.addLayer({ id: 'red4g-zonas', type: 'fill', source: 'red4g-poligonos', paint: { 'fill-color': color, 'fill-opacity': opacidad, 'fill-antialias': false } }, debajoDe);
             }
 
@@ -1897,13 +1902,13 @@
             const muestra = (c, a) => `<span class="muestra" style="background:${c}; opacity:${a}"></span>`;
             let filas = '';
             if (conCobertura && r.pais === 'MX') filas = `
-                <div class="flex items-center gap-2">${muestra('#3FB950', 0.75)}Garantizada</div>
-                <div class="flex items-center gap-2">${muestra('#E3B341', 0.65)}Diferenciada (señal variable)</div>`;
+                <div class="flex items-center gap-2">${muestra(VIOLETA.intenso, 0.9)}Garantizada</div>
+                <div class="flex items-center gap-2">${muestra(VIOLETA.claro, 0.8)}Diferenciada (señal variable)</div>`;
             else if (conCobertura && sel === 'Todos') filas = `
-                <div class="flex items-center gap-2">${muestra('#3FB950', 0.9)}3 o más operadores</div>
-                <div class="flex items-center gap-2">${muestra('#3FB950', 0.55)}2 operadores</div>
-                <div class="flex items-center gap-2">${muestra('#E3B341', 0.6)}1 operador</div>`;
-            else if (conCobertura) filas = `<div class="flex items-center gap-2">${muestra('#3FB950', 0.75)}Con cobertura ${todas ? 'móvil' : tec} de ${escHtml(sel)}</div>`;
+                <div class="flex items-center gap-2">${muestra(VIOLETA.intenso, 0.95)}3 o más operadores</div>
+                <div class="flex items-center gap-2">${muestra(VIOLETA.medio, 0.85)}2 operadores</div>
+                <div class="flex items-center gap-2">${muestra(VIOLETA.claro, 0.8)}1 operador</div>`;
+            else if (conCobertura) filas = `<div class="flex items-center gap-2">${muestra(VIOLETA.medio, 0.85)}Con cobertura ${todas ? 'móvil' : tec} de ${escHtml(sel)}</div>`;
             if (puntos.length) filas += `<div class="flex items-center gap-2"><span style="width:11px;height:11px;border-radius:50%;background:#E6EDF3;border:2px solid #0D1117;box-shadow:0 0 0 1px #8B949E; flex-shrink:0"></span>Antena ${nombreTec}</div>`;
             if (!filas) filas = `<div>Sin datos de ${nombreTec} en esta zona.</div>`;
             const fuente = r.pais === 'MX' ? `cobertura ${nombreTec} declarada por cada operador a la CRT`
@@ -2305,7 +2310,8 @@ Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">�
         // Menú «Capas»
         function sincronizarCapas() {
             const marcar = (id, v) => { const el = document.getElementById(id); if (el) el.checked = !!v; };
-            marcar('chk-huecos', huecosVisibles); marcar('chk-4g', capa4GVisible); marcar('chk-canopy', canopyActivo);
+            marcar('chk-huecos', huecosVisibles); marcar('chk-4g', capa4GVisible);
+            const filaHuecos = document.getElementById('chk-huecos'); if (filaHuecos) filaHuecos.disabled = !loraVisible; marcar('chk-canopy', canopyActivo);
             marcar('chk-nodos', nodosVisibles); marcar('chk-3d', is3D);
             const activas = [capa4GVisible, canopyActivo, is3D].filter(Boolean).length;
             document.getElementById('n-capas').innerText = activas ? `· ${activas}` : '';
@@ -2521,7 +2527,7 @@ Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">�
             else {
                 map.addSource('huecos-source', { type: 'image', url, coordinates: coords });
                 map.addLayer({ id: 'huecos-layer', type: 'raster', source: 'huecos-source',
-                    layout: { visibility: huecosVisibles ? 'visible' : 'none' },
+                    layout: { visibility: huecosVisibles && loraVisible ? 'visible' : 'none' },
                     paint: { 'raster-opacity': 0.9, 'raster-resampling': 'nearest' } });
             }
             if (urlMascara) URL.revokeObjectURL(urlMascara);
@@ -2531,8 +2537,15 @@ Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">�
 
         function toggleHuecos() {
             huecosVisibles = !huecosVisibles;
-            if (map.getLayer('huecos-layer')) map.setLayoutProperty('huecos-layer', 'visibility', huecosVisibles ? 'visible' : 'none');
+            aplicarVisibilidadLora();
             sincronizarCapas();
+        }
+        function toggleLora() { if (capa4GVisible) toggleCapa4G(); }
+        function aplicarVisibilidadLora() {
+            if (map.getLayer('cobertura-layer')) map.setLayoutProperty('cobertura-layer', 'visibility', loraVisible ? 'visible' : 'none');
+            if (map.getLayer('huecos-layer')) map.setLayoutProperty('huecos-layer', 'visibility', loraVisible && huecosVisibles ? 'visible' : 'none');
+            const ley = document.getElementById('leyenda-senal');
+            if (ley) ley.style.display = loraVisible ? '' : 'none';
         }
 
         // Puntos alrededor de la finca para medir la cobertura exterior (franja y alcance por dirección)
@@ -2970,6 +2983,7 @@ Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">�
             const lat = parseFloat(customLat !== null ? customLat : document.getElementById('lat').value);
             const lon = parseFloat(customLon !== null ? customLon : document.getElementById('lon').value);
             if (!coordenadasValidas(lat, lon)) return alert("Indica un punto: haz clic en el mapa o escribe las coordenadas.");
+            if (capa4GVisible) toggleCapa4G();
             const btn = document.getElementById('btnSimular');
             btn.disabled = true;
             mostrarLoader('Procesando modelo ITM...');
@@ -3150,7 +3164,8 @@ Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">�
             else {
                 map.addSource('cobertura-source', { type: 'image', url, coordinates: coords });
                 const debajoDe = ['kml-fill', 'huecos-layer'].find(id => map.getLayer(id));
-                map.addLayer({ id: 'cobertura-layer', type: 'raster', source: 'cobertura-source', paint: { 'raster-opacity': 1, 'raster-resampling': 'nearest', 'raster-fade-duration': 0 } }, debajoDe);
+                map.addLayer({ id: 'cobertura-layer', type: 'raster', source: 'cobertura-source', layout: { visibility: loraVisible ? 'visible' : 'none' },
+                               paint: { 'raster-opacity': 1, 'raster-resampling': 'nearest', 'raster-fade-duration': 0 } }, debajoDe);
             }
             if (urlCobertura) URL.revokeObjectURL(urlCobertura);
             urlCobertura = url;
@@ -3371,7 +3386,11 @@ Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">�
             const bw = Math.min(w, ...pts.map(p => p[0])), bs = Math.min(s, ...pts.map(p => p[1]));
             const be = Math.max(e, ...pts.map(p => p[0])), bn = Math.max(n, ...pts.map(p => p[1]));
             const esperarIdle = () => new Promise(r => { let hecho = false; const fin = () => { if (!hecho) { hecho = true; r(); } }; map.once('idle', fin); setTimeout(fin, 9000); });
+            // El informe es de cobertura LoRa: se muestra aunque esté oculta y se quita la capa móvil mientras se captura
+            const loraAntes = loraVisible, movilAntes = ['red4g-zonas', 'red4g-circulo', 'red4g-texto'].filter(id => map.getLayer(id));
             try {
+                if (!loraVisible) { loraVisible = true; aplicarVisibilidadLora(); }
+                movilAntes.forEach(id => map.setLayoutProperty(id, 'visibility', 'none'));
                 map.jumpTo({ pitch: 0, bearing: 0 });
                 map.fitBounds([[bw, bs], [be, bn]], { padding: 70, duration: 0 });
                 await esperarIdle();
@@ -3396,6 +3415,8 @@ Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">�
                 return { url: c.toDataURL('image/jpeg', 0.88), w: c.width, h: c.height };
             } finally {
                 map.jumpTo(cam);
+                movilAntes.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'visible'); });
+                if (loraVisible !== loraAntes) { loraVisible = loraAntes; aplicarVisibilidadLora(); }
             }
         }
 
@@ -3732,6 +3753,7 @@ Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">�
         async function optimizarRed(modo, opciones = {}) {
             if (!geojsonKMLActual) return alert("Primero debes delimitar una zona cargando un archivo KML.");
             if (optimizadorEnCurso) return;
+            if (capa4GVisible) toggleCapa4G();
             const cfg = CONFIG.optimizador;
             const objetivo = CONFIG.objetivoCoberturaPct;
             const nContratadas = opciones.nContratadas || Math.min(cfg.maxAntenas, Math.max(1, parseInt(document.getElementById('num_antenas').value) || 1));
