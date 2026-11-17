@@ -379,10 +379,6 @@
                     <div class="flex items-center justify-between px-3.5 py-2.5">
                         <div class="titulo-seccion">Antenas <span id="contador-sims" class="mono ml-1 text-[12px]" style="font-weight:400; color:var(--tenue)"></span></div>
                         <span class="flex items-center gap-3">
-                        <button id="btn-informe" onclick="generarInforme()" class="hidden text-[13px] font-medium flex items-center gap-1 hover:underline" style="color:#58A6FF">
-                            <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
-                            Informe PDF
-                        </button>
                         <button id="btn-descargar-todo" onclick="descargarTodo()" class="hidden text-[13px] font-medium flex items-center gap-1 hover:underline" style="color:#58A6FF">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                             Descargar todo
@@ -456,7 +452,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.11.1';
+        const APP_VERSION = '1.11.2';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -3608,7 +3604,6 @@ Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">�
             const activasN = simulaciones.filter(x => x.visible).length;
             document.getElementById('contador-sims').innerText = simulaciones.length ? `${activasN}/${simulaciones.length} visibles` : '';
             document.getElementById('btn-descargar-todo').classList.toggle('hidden', !simulaciones.length);
-            document.getElementById('btn-informe').classList.toggle('hidden', !simulaciones.length || !geojsonKMLActual);
             const rango = { fija: 0, luz: 0, antena: 0, actual: 1, punto: 2 };
             const orden = [...simulaciones].sort((a, b) => ((rango[a.tipo] ?? 3) - (rango[b.tipo] ?? 3)) || (a.id - b.id));
             const ico = {
