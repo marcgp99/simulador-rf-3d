@@ -453,7 +453,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.12.0';
+        const APP_VERSION = '1.12.1';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -3182,7 +3182,7 @@ Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">�
             const filas = [
                 [esc.colores[3], 'Muy buena', `≥ ${menos(esc.muyBuenaDbm)}`],
                 [esc.colores[2], 'Buena', `${menos(esc.muyBuenaDbm)} a ${menos(esc.buenaDbm)}`],
-                [esc.colores[1], 'Suficiente', `${menos(esc.buenaDbm)} a ${menos(u)}`]
+                [esc.colores[1], 'Justa', `${menos(esc.buenaDbm)} a ${menos(u)}`]
             ];
             const sinClave = activas.some(s => !s.niveles || !s.niveles.conClave);
             let html = filas.map(([c, nombre, rango]) => `
@@ -3535,7 +3535,7 @@ Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">�
 
             // Leyenda (colores de la capa mezclados sobre un fondo oscuro de satélite)
             const mezcla = c => [0, 1, 2].map(i => Math.round(c[i] * c[3] / 255 + [60, 62, 44][i] * (1 - c[3] / 255)));
-            const ley = [[esc.colores[3], 'Señal muy buena'], [esc.colores[2], 'Señal buena'], [esc.colores[1], 'Señal suficiente']];
+            const ley = [[esc.colores[3], 'Señal muy buena'], [esc.colores[2], 'Señal buena'], [esc.colores[1], 'Señal justa']];
             doc.setFontSize(8.5);
             let lx = M;
             ley.forEach(([c, t]) => {
@@ -4208,15 +4208,8 @@ Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">�
             }
             if (pilaDeshacer.length) p.push(`<button onclick="deshacerCambio()" class="btn-recomendacion boton boton-sec">Deshacer último cambio</button>`);
             p.push('</div>');
-            const permiso = ctx.permisos.permitirFuera ? `antenas hasta ${ctx.permisos.distFueraKm * 1000} m fuera de la finca` : 'solo antenas dentro de la finca';
-            const cal = ctx.cal ? `calibración: desfase ${ctx.cal.offsetDb >= 0 ? '+' : ''}${ctx.cal.offsetDb} dB · vegetación ${ctx.cal.coefVegDb} dB · acierto ${ctx.cal.precision === null ? '–' : (ctx.cal.precision * 100).toFixed(0) + ' %'}<br>` : '';
-            p.push(`<details class="avanzado">
-                        <summary><span>Detalles técnicos</span><svg aria-hidden="true" class="flecha w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></summary>
-                        <div class="mono mt-2" style="font-size:11.5px; color:var(--tenue); line-height:1.6">
-                            ${permiso}, mástil ${ctx.hTx} m<br>${cal}
-                            CloudRF: ${ctx.contador.sims} nuevas · ${ctx.contador.cache} en caché · ${Math.round(ctx.segundos)} s
-                        </div>
-                    </details>`);
+            // Los datos técnicos (calibración, créditos de CloudRF) van solo a la consola del navegador
+            console.info('Detalles técnicos:', { permisos: ctx.permisos, mastilM: ctx.hTx, calibracion: ctx.cal, cloudrf: { nuevas: ctx.contador.sims, cache: ctx.contador.cache, segundos: Math.round(ctx.segundos) } });
             document.getElementById('opt-resumen').innerHTML = p.join('');
             pintar4GResultado();
             const panel = document.getElementById('opt-panel');
