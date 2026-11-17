@@ -94,6 +94,10 @@
         .c4g.nd { color: var(--tenue); border-color: var(--borde); border-style: dashed; font-weight: 500; }
         .c4g .tec { font-size: 10px; font-weight: 600; opacity: .8; }
         .c4g .tec.t3g { padding: 0 3px; border-radius: 3px; background: rgba(227,179,65,.18); color: #E3B341; opacity: 1; }
+        .ley-c4g { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .ley-c4g i { width: 10px; height: 10px; border-radius: 999px; border: 1.5px solid; display: inline-block; }
+        .ley-c4g i.buena { border-color: #238636; background: rgba(63,185,80,.25); }
+        .ley-c4g i.usable { border-color: #1F6FEB; background: rgba(56,139,253,.25); }
         .segmento { display: inline-flex; border: 1px solid var(--borde); border-radius: 6px; overflow: hidden; }
         .segmento button { font-size: 12px; font-weight: 600; padding: 1px 9px; color: var(--tenue); }
         .segmento button.activo { background: var(--superficie-2, #21262D); color: var(--texto); }
@@ -452,7 +456,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.11.0';
+        const APP_VERSION = '1.11.1';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -1758,8 +1762,8 @@
             const conTec = conTecnologia();
             const res = resumen4G(info, oficial, conTec);
             if (res.nivel === 'nd') return `<span class="c4g nd">${res.texto}</span>`;
-            if (res.nivel === 'posible' && !completo) return `<span class="c4g posible">${res.texto}</span>`;
-            const lista = completo ? info.operadores : (res.nivel === 'ok' ? res.usables : []);
+            if (res.nivel === 'posible') return `<span class="c4g posible">${res.texto}</span>`;
+            const lista = res.nivel === 'ok' ? res.usables : [];   // solo lo que realmente cubre; el resto es ruido
             if (!lista.length) return `<span class="c4g sin">${res.texto}</span>`;
             const dbm = v => String(v).replace('-', '−');
             const tecTxt = o => conTec && o.tec ? ` <span class="tec${o.tec === '3G' ? ' t3g' : ''}">${o.tec}</span>` : '';
@@ -1771,7 +1775,8 @@
             const extra = red4g && red4g.pais !== 'MX' && !info.sinDatos && !info.fuera ? ` <span style="color:var(--tenue); font-weight:400">· ${red4g.cobertura ? 'oficial + ' : ''}dBm estimados</span>` : '';
             return `<div style="margin-top:6px; padding-top:6px; border-top:1px solid var(--borde)">
                         <div style="font-size:12px; color:var(--tenue); margin-bottom:3px">Cobertura móvil de los operadores${nota}${extra}</div>
-                        <div class="flex flex-wrap gap-1">${chips4G(info, true)}</div></div>`;
+                        <div class="flex flex-wrap gap-1">${chips4G(info, true)}</div>
+                        <div style="font-size:11px; color:var(--tenue); margin-top:3px">Verde: buena · azul: usable · número: señal estimada (dBm)</div></div>`;
         }
 
         function pintarEstado4G() {
@@ -1984,7 +1989,16 @@
                 : red4g.cobertura ? 'Cobertura declarada por los operadores al Ministerio (junio de 2024), con la señal estimada desde las torres de InfoAntenas y el terreno real (mástil incluido). Confirmar en campo antes de instalar.'
                 : `Señal estimada desde las torres de ${escHtml(red4g.fuente)} con el terreno real (mástil incluido). ${red4g.oficial ? 'Confirmar en campo antes de instalar.' : 'Datos colaborativos: puede faltar alguna antena.'}`;
             caja.innerHTML = `<div class="flex flex-col gap-1.5">
-                    <div style="font-size:13px; color:var(--tenue)">Cobertura móvil de cada antena</div>
+                    <div class="flex flex-col gap-0.5" style="font-size:13px; color:var(--tenue)">
+                        <span>Cobertura móvil de cada antena</span>
+                        <span class="flex items-center gap-2.5 text-[12px]">
+                            <span class="ley-c4g"><i class="buena"></i>Buena</span><span class="ley-c4g"><i class="usable"></i>Usable</span>
+                            <span>· número: señal estimada (dBm)</span>
+                            <span class="cursor-help" style="color:var(--texto-2)" title="Solo se muestran los operadores que cubren el punto.
+El número es la señal estimada en el mástil (dBm): cuanto más cerca de 0, mejor.
+−70 a −90: excelente · −90 a −100: buena · −100 a −110: usable.
+Pasa el ratón por un operador para ver la torre, la distancia y las bandas.">ⓘ</span>
+                        </span></div>
                     <div class="flex flex-col gap-1.5">${filas}</div>${notas.join('')}
                     <div style="font-size:12px; color:var(--tenue)">${fuente}</div></div>`;
         }
