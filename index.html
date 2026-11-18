@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ixorigue RF Simulator | Pro 3D</title>
+    <title>CowPro Simulator</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -103,6 +103,9 @@
         .ley-c4g i.sin { border-color: #F85149; background: rgba(248,81,73,.25); }
         /* Nombre de la antena en un recuadro del color de su cobertura móvil */
         .col-numero { flex: 0 0 48px; display: flex; justify-content: center; }
+        .atributos-antena { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 7px; padding-left: 46px; }
+        .boton-resimular { height: 26px; padding: 0 10px; border-radius: 6px; font-size: 12.5px; font-weight: 600; color: #0D1117; background: var(--acento); }
+        .boton-resimular:hover { filter: brightness(1.1); }
         .nombre-antena { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 3px 10px;
                          border-radius: 7px; border: 1.5px solid var(--borde); font-size: 14px; font-weight: 600; cursor: default; }
         .nombre-antena.movil-buena { border-color: #3FB950; background: rgba(63,185,80,.12); }
@@ -145,7 +148,7 @@
         .relleno { height: 8px; background: var(--acento); border-radius: 4px; }
 
         .lista { background: var(--panel); border: 1px solid var(--borde); border-radius: 6px; overflow: hidden; }
-        .item-antena { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--borde-suave); transition: background .15s, opacity .15s; }
+        .item-antena { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--borde-suave); transition: background .15s, opacity .15s; }
         .item-antena:hover { background: #1A1F26; }
         .item-antena.seleccionada { background: var(--panel-alto); }
         .item-antena.apagada { opacity: 0.5; }
@@ -221,8 +224,9 @@
 
     <header class="py-3 px-5 flex items-center justify-between z-10 relative gap-4" style="background:var(--fondo); border-bottom:1px solid var(--borde-suave)">
         <div class="flex items-center gap-3 min-w-0">
-            <svg aria-hidden="true" class="w-6 h-6 flex-shrink-0" style="color:var(--acento)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.106-.53-.106a.75.75 0 01-.6-1.07l.6-.8a.75.75 0 011.2 0l.6.8a.75.75 0 01-.6 1.07z"></path></svg>
-            <h1 class="text-[15px] font-semibold whitespace-nowrap" style="letter-spacing:.01em">Ixorigue RF Coverage Simulator</h1>
+            <h1 class="flex items-center gap-2 text-[15px] font-semibold whitespace-nowrap" style="letter-spacing:.01em">
+                <img id="logo-app" alt="CowPro" style="height:20px; width:auto; display:block">
+                <span>Simulator</span></h1>
             <span id="app-version" class="mono text-[11px] whitespace-nowrap" style="color:var(--tenue)"></span>
         </div>
         <div id="nombre-proyecto" class="hidden text-[13px] truncate" style="color:var(--texto-2)"></div>
@@ -249,6 +253,8 @@
                             <span id="kml-detalle" class="block text-[12.5px]" style="color:var(--tenue)">Archivo .kml o .kmz con el perímetro</span>
                         </span>
                     </label>
+                    <input id="cliente" type="text" class="campo" placeholder="Cliente (opcional)" aria-label="Nombre del cliente" autocomplete="off"
+                           title="Sale en el informe PDF. Si lo dejas vacío, se usa el nombre de la finca.">
                     <div id="estado-4g" class="hidden text-[12.5px] leading-snug" style="color:var(--tenue)"></div>
                     <div id="bloque-zonas" class="hidden bloque-interno">
                         <div class="flex items-center justify-between gap-2">
@@ -492,9 +498,9 @@
 
     <script>
         // =======================================================================
-        // IXORIGUE RF SIMULATOR PRO 3D
+        // COWPRO SIMULATOR (antes Ixorigue RF Simulator Pro 3D)
         // =======================================================================
-        const APP_VERSION = '1.14.1';
+        const APP_VERSION = '1.15.0';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -1235,6 +1241,10 @@
             wifi: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M2.5 9a14 14 0 0119 0M6 12.8a9 9 0 0112 0M9.4 16.4a4 4 0 015.2 0"/><circle cx="12" cy="19.6" r="1.2" fill="currentColor"/></svg>',
             starlink: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><g transform="rotate(-45 12 12)"><rect x="9.5" y="8.5" width="5" height="7" rx="1"/><rect x="1" y="9.5" width="7" height="5" rx=".6"/><rect x="16" y="9.5" width="7" height="5" rx=".6"/><rect x="8" y="11.3" width="1.5" height="1.4"/><rect x="14.5" y="11.3" width="1.5" height="1.4"/></g></svg>'
         };
+        // Logo de CowPro en blanco (texto blanco y punto verde) para fondos oscuros: cabecera de la app y del informe
+        const LOGO_COWPRO = 'data:image/png;base64,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';
+        const LOGO_COWPRO_PROPORCION = 312 / 65;
+        document.getElementById('logo-app').src = LOGO_COWPRO;
         const NOMBRE_ALIM = { enchufable: 'Enchufable', solar: 'Panel solar', desconocida: 'Desconocida' };
         // En España se dice «móvil»; en LATAM, «celular». Sale de la región, que se elige sola por la posición de la finca
         function esLatam() { return document.getElementById('sim_profile')?.value === 'LATAM'; }
@@ -2302,7 +2312,7 @@ ${escHtml(fuente)}">ⓘ</span>
             if (colocandoActuales && colocandoLuz) toggleColocarLuz();
             const b = document.getElementById('btn-colocar-actuales');
             b.classList.toggle('activo', colocandoActuales);
-            b.innerText = colocandoActuales ? 'Terminar' : 'Marcar en el mapa';
+            b.textContent = colocandoActuales ? 'Terminar' : 'Marcar en el mapa';
             map.getCanvas().style.cursor = colocandoActuales ? 'crosshair' : (modoActual === 'punto' ? 'crosshair' : '');
             avisoMapa(colocandoActuales ? 'Haz clic en el mapa donde está cada antena instalada. Pulsa «Terminar» al acabar.' : null);
         }
@@ -2374,7 +2384,7 @@ ${escHtml(fuente)}">ⓘ</span>
             if (colocandoLuz && colocandoActuales) toggleColocarActuales();
             const b = document.getElementById('btn-colocar-luz');
             b.classList.toggle('activo', colocandoLuz);
-            b.innerText = colocandoLuz ? 'Terminar' : 'Marcar en el mapa';
+            b.textContent = colocandoLuz ? 'Terminar' : 'Marcar en el mapa';
             map.getCanvas().style.cursor = colocandoLuz ? 'crosshair' : (modoActual === 'punto' ? 'crosshair' : '');
             avisoMapa(colocandoLuz ? 'Haz clic en el mapa en cada punto de instalación del cliente. Pulsa «Terminar» al acabar.' : null);
         }
@@ -3157,7 +3167,7 @@ ${escHtml(fuente)}">ⓘ</span>
                 <div style="font-size:12.5px; color:var(--texto-2)">Cubre ${pct}</div>${cal}
                 <div class="mono" style="font-size:11.5px; color:var(--tenue); margin-top:4px">${sim.lat.toFixed(5)}, ${sim.lon.toFixed(5)}</div>
                 <div class="mono" style="font-size:11.5px; color:var(--tenue)">${sim.elev !== null ? Math.round(sim.elev) + ' m · ' : ''}mástil ${sim.alt} m</div>${htmlPopup4G(sim.red4g)}${sim.tipo === 'antena' ? `
-                <div class="pop-atributos"><span>Conexión</span>${selectorConexion('sim:' + sim.id, sim)}</div>` : ''}`;
+` : ''}`;
         }
 
         function verSimulacion(id) {
@@ -3471,7 +3481,7 @@ ${escHtml(fuente)}">ⓘ</span>
                                 ...(s.tipo === 'antena' ? { alim: s.alim, conexion: s.conexion } : {}) });
                 }
                 const proyecto = {
-                    formato: FORMATO_PROYECTO, version: 1, app: APP_VERSION, guardado: new Date().toISOString(), nombre: nombreProyecto,
+                    formato: FORMATO_PROYECTO, version: 1, app: APP_VERSION, guardado: new Date().toISOString(), nombre: nombreProyecto, cliente: nombreCliente(),
                     zonas: zonas.map(z => ({ nombre: z.nombre, activa: z.activa, anillos: z.feature.geometry.coordinates })),
                     ajustes: leerAjustes(),
                     puntosInstalacion: puntosLuz.map(p => ({ lat: p.lat, lon: p.lon, alt: p.alt, alim: p.alim, conexion: p.conexion })),
@@ -3514,6 +3524,7 @@ ${escHtml(fuente)}">ⓘ</span>
                 imagenesLocales.clear();
 
                 nombreProyecto = P.nombre || String(nombreFichero).replace(/(_\d{8})?\.rfproj$/i, '');
+                document.getElementById('cliente').value = P.cliente || '';
                 aplicarAjustes(P.ajustes);
                 await montarFinca(P.zonas.map(z => z.anillos), P.zonas.map(z => z.nombre || 'Zona'), P.zonas.map(z => z.activa !== false));
                 (P.puntosInstalacion || []).forEach(p => anadirPuntoLuz(p.lat, p.lon, p));
@@ -3629,6 +3640,8 @@ ${escHtml(fuente)}">ⓘ</span>
         const txtPdf = t => String(t ?? '').replace(/[−–—]/g, '-').replace(/≥/g, '>=').replace(/≤/g, '<=').replace(/→/g, '->')
             .replace(/[“”«»]/g, '"').replace(/[‘’]/g, "'").replace(/ /g, ' ').replace(/[^\x00-\xFF]/g, '');
 
+        function nombreCliente() { return (document.getElementById('cliente')?.value || '').trim(); }
+
         function datosInforme() {
             const visibles = simulaciones.filter(s => s.visible && s.pixeles);
             const res = ultimoResultado && ultimoResultado.resumen ? ultimoResultado.resumen : null;
@@ -3650,7 +3663,7 @@ ${escHtml(fuente)}">ⓘ</span>
                 textoLoader('Capturando el mapa…');
                 const imagen = await capturarMapa(d.visibles);
                 const doc = construirInformePdf(jsPDF, d, imagen);
-                descargarBlob(doc.output('blob'), `${nombreArchivo(nombreProyecto || 'finca')}_informe_cobertura_${fechaArchivo()}.pdf`);
+                descargarBlob(doc.output('blob'), `${nombreArchivo(nombreCliente() || nombreProyecto || 'finca')}_informe_cobertura_${fechaArchivo()}.pdf`);
                 return doc;
             } catch (e) {
                 console.error('Informe PDF:', e);
@@ -3677,16 +3690,17 @@ ${escHtml(fuente)}">ⓘ</span>
             doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
             T('Informe de cobertura LoRaWAN', M, 11);
             doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(200, 208, 216);
-            T('Ixorigue', M, 17.5);
+            doc.addImage(LOGO_COWPRO, 'PNG', M, 14, 4.6 * LOGO_COWPRO_PROPORCION, 4.6);
             T(fecha, W - M, 11, { align: 'right' });
             T(titulo, W - M, 17.5, { align: 'right' });
 
             let y = 34;
             doc.setTextColor(...oscuro); doc.setFont('helvetica', 'bold'); doc.setFontSize(17);
-            T(nombreProyecto || 'Finca', M, y);
+            const cliente = nombreCliente();
+            T(cliente || nombreProyecto || 'Finca', M, y);
             doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...gris);
             const nZonas = zonas.filter(z => z.activa).length;
-            T(`${fmt0(d.ha)} ha${zonas.length > 1 ? ` en ${nZonas} zona${nZonas > 1 ? 's' : ''}` : ''} · ${formatoActivo().nombre}`, M, y + 6);
+            T(`${cliente && nombreProyecto ? nombreProyecto + ' · ' : ''}${fmt0(d.ha)} ha${zonas.length > 1 ? ` en ${nZonas} zona${nZonas > 1 ? 's' : ''}` : ''} · ${formatoActivo().nombre}`, M, y + 6);
             y += 12;
 
             // Frase clara para el ganadero
@@ -3793,7 +3807,7 @@ ${escHtml(fuente)}">ⓘ</span>
             const n = doc.getNumberOfPages();
             for (let i = 1; i <= n; i++) {
                 doc.setPage(i); doc.setFontSize(8); doc.setTextColor(...gris);
-                T(`Ixorigue · Simulador de cobertura RF v${APP_VERSION}`, M, 290);
+                T(`CowPro Simulator v${APP_VERSION}`, M, 290);
                 T(`Página ${i} de ${n}`, W - M, 290, { align: 'right' });
             }
             return doc;
@@ -3820,12 +3834,81 @@ ${escHtml(fuente)}">ⓘ</span>
                 if (fallidos.length) zip.file('enlaces_kmz.txt', 'Estos KMZ no se pudieron incluir; se pueden descargar desde estos enlaces:\n\n' + fallidos.join('\n'));
                 const blob = await zip.generateAsync({ type: 'blob' });
                 const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob); a.download = `${base}_ixorigue.zip`;
+                a.href = URL.createObjectURL(blob); a.download = `${base}_cowpro.zip`;
                 document.body.appendChild(a); a.click(); a.remove();
                 setTimeout(() => URL.revokeObjectURL(a.href), 10000);
             } catch (e) {
                 alert('No se pudo preparar la descarga: ' + e.message);
             } finally { ocultarLoader(); }
+        }
+
+        function claveSim(sim) {
+            if (sim.tipo === 'luz') return 'luz:' + (parseInt(sim.etiqueta, 10) - 1);
+            if (sim.tipo === 'fija' || sim.tipo === 'actual') return 'act:' + (parseInt(String(sim.etiqueta).slice(1), 10) - 1);
+            return 'sim:' + sim.id;
+        }
+        const editableEnLista = sim => conAtributos(sim) && sim.tipo !== 'actual' && !sim.nota;
+        // Mástil que se quiere: en las propuestas, el escrito en la lista; en instalaciones y fijas, el de su punto (o el general)
+        function altDeseada(sim) {
+            if (sim.tipo === 'antena') return sim.altDeseada ?? sim.alt;
+            return refDe(sim).alt || alturaMastil();
+        }
+        function htmlAtributosSim(sim) {
+            const ref = refDe(sim), clave = claveSim(sim), des = altDeseada(sim);
+            const cambia = Math.abs(des - sim.alt) > 0.01;
+            return `<div class="atributos-antena">
+                <label class="mini-mastil" title="Altura del mástil de esta antena">Mástil
+                    <input type="number" min="1" max="60" step="0.5" value="${des}" onchange="fijarAlturaSim(${sim.id}, this.value)" class="campo mono" aria-label="Mástil de ${escHtml(sim.name)}">m</label>
+                ${selectorAlim(clave, ref)}${selectorConexion(clave, ref)}
+                ${cambia ? `<button type="button" class="boton-resimular" onclick="resimularAntena(${sim.id})" title="Vuelve a simular esta antena con un mástil de ${des} m (1 simulación)">Resimular</button>` : ''}
+            </div>`;
+        }
+        function fijarAlturaSim(id, valor) {
+            const sim = simulaciones.find(s => s.id === id);
+            if (!sim) return;
+            const v = parseFloat(String(valor).replace(',', '.'));
+            const alt = v > 0 ? Math.min(60, Math.max(1, Math.round(v * 10) / 10)) : null;
+            if (sim.tipo === 'antena') sim.altDeseada = alt ?? sim.alt;
+            else refDe(sim).alt = alt;      // el mismo dato que en la lista de Opciones avanzadas
+            refrescarAtributos();
+        }
+        async function resimularAntena(id) {
+            const sim = simulaciones.find(s => s.id === id);
+            if (!sim || optimizadorEnCurso) return;
+            const alt = altDeseada(sim);
+            mostrarLoader(`Resimulando ${sim.name} con mástil de ${alt} m…`);
+            try {
+                const r = await simularCloudRF({ lat: sim.lat, lon: sim.lon, alt });
+                Object.assign(sim, { alt: r.alt, radioKm: r.radioKm, kmz: r.kmz, imageUrl: r.imageUrl, boundsCloudRF: r.boundsCloudRF, proyeccion: r.proyeccion,
+                                     pixeles: r.pixeles, niveles: r.niveles, res: r.res, clave: r.clave || null, claveColores: (r.data && r.data.key) || null });
+                delete sim.altDeseada;
+                info4GSim(sim);
+                recalcularDatosSim(sim);
+                actualizarResultadoTrasCambio(`${sim.name}: mástil cambiado a ${sim.alt} m`);
+                await actualizarInterfazGlobal();
+                pintar4GResultado();
+            } catch (e) {
+                console.error('Resimular:', e);
+                alert('No se pudo resimular la antena: ' + e.message);
+            } finally { ocultarLoader(); }
+        }
+        // Recalcula las cifras del resultado con las simulaciones actuales (tras resimular una antena)
+        function actualizarResultadoTrasCambio(motivo) {
+            const r = ultimoResultado;
+            if (!r || !geojsonKMLActual) return;
+            const sims = r.ids.map(i => simulaciones.find(s => s.id === i)).filter(s => s && s.pixeles && !s.nota);
+            const pct = sims.length ? pctUnion(sims, mallaFinca) : 0, calidad = sims.length ? calidadUnion(sims, mallaFinca) : null;
+            r.cambiosManuales = [...(r.cambiosManuales || []), motivo];
+            if (r.restaurado) {
+                r.pct = pct; r.calidad = calidad;
+                if (r.resumen) { r.resumen.pct = pct; r.resumen.calidad = calidad; r.resumen.ok = pct >= CONFIG.objetivoCoberturaPct; }
+                marcarResultadoObsoleto('Has cambiado el mástil de una antena: las cifras de este panel no se han recalculado. El mapa y el informe PDF sí están actualizados.');
+                return;
+            }
+            r.curva = sims.map((_, k) => pctUnion(sims.slice(0, k + 1), mallaFinca));
+            r.pct = pct; r.calidad = calidad;
+            r.recs = [];        // las recomendaciones eran para la red calculada
+            pintarResumenOptimizador(r, null);
         }
 
         function renderizarHistorial() {
@@ -3858,6 +3941,7 @@ ${escHtml(fuente)}">ⓘ</span>
                     <button class="icono-accion" aria-label="Ver ${sim.name} en el mapa" title="Ver en el mapa" onclick="verSimulacion(${sim.id})">${ico.ver}</button>
                     <a class="icono-accion" href="${sim.kmz}" target="_blank" aria-label="Descargar KMZ de ${sim.name}" title="Descargar KMZ">${ico.kmz}</a>
                     ${sim.tipo === 'punto' ? `<button class="icono-accion" aria-label="Eliminar ${sim.name}" title="Eliminar" onclick="eliminarSimulacionUI(${sim.id})">${ico.borrar}</button>` : ''}
+                    ${editableEnLista(sim) ? htmlAtributosSim(sim) : ''}
                 </div>`;
             }).join('');
         }
@@ -3965,6 +4049,8 @@ ${escHtml(fuente)}">ⓘ</span>
             const fijas = modo === 'fijo' ? antenasActuales.filter(a => a.fija) : [];
             if (modo === 'fijo' && nContratadas <= fijas.length)
                 return alert('Todas las antenas contratadas están marcadas como fijas: no queda ninguna para reubicar. Sube el número de antenas contratadas o marca alguna como reubicable.');
+            if (colocandoLuz) toggleColocarLuz();               // si estaba marcando puntos en el mapa, «Terminar» automático
+            if (colocandoActuales) toggleColocarActuales();
             const luces = modo === 'objetivo' ? puntosLuz.slice(0, CONFIG.puntosLuz.max) : [];
             // Conexión a internet: solo se pregunta por los puntos de instalación que marca el usuario (las antenas propuestas van por red móvil)
             const sinConexion = luces.map((p, i) => ({ ref: p, html: htmlNumeroFuente('luz', i + 1, p) })).filter(x => !x.ref.conexion);
@@ -4367,6 +4453,8 @@ ${escHtml(fuente)}">ⓘ</span>
                         <div style="text-align:right"><div style="font-size:30px; font-weight:700; line-height:1; color:var(--texto)">${n}</div>
                              <div style="font-size:13px; color:var(--tenue); margin-top:6px">${plural(n, 'antena', 'antenas')}${detalleN ? `<br>${detalleN}` : ''}</div></div>
                     </div>`);
+            if (r.cambiosManuales && r.cambiosManuales.length)
+                p.push(`<div style="color:var(--texto-2)">Cifras recalculadas tras cambios a mano (${escHtml(r.cambiosManuales.join(' · '))}).</div>`);
             if (r.calidad !== null && r.calidad !== undefined)
                 p.push(`<div>Señal buena o muy buena en el <b class="mono" style="color:var(--texto)">${fmt1(r.calidad)}</b> de la finca.</div>`);
             if (r.aLaBaja)
