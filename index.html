@@ -158,7 +158,7 @@
 
         /* Mapa */
         .mapboxgl-marker { cursor: pointer; z-index: 20; }
-        .pin-num { position: relative; display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); }
+        .pin-num { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); }
         .pin-num .cabeza { min-width: 26px; height: 26px; padding: 0 5px; gap: 2px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
                            font: 600 12px var(--mono); background: var(--texto); color: var(--fondo); box-shadow: 0 0 0 2px var(--fondo); transition: box-shadow .15s; }
         .pin-num .punta { width: 2px; height: 10px; background: var(--texto); }
@@ -167,6 +167,7 @@
         .pin-num.fija .cabeza { background: #484F58; color: var(--texto); border: 1.5px solid var(--texto-2); }
         .pin-num.luz .cabeza { background: #E3B341; color: #1F1500; }
         .pin-num.alim-desconocida .cabeza { box-shadow: 0 0 0 2px var(--fondo), 0 0 0 4.5px #9CA3AF; }
+        .pin-num .cabeza { position: relative; }
         .pin-num .insignia { position: absolute; top: -9px; right: -11px; width: 17px; height: 17px; border-radius: 50%; background: #0D1117; color: #FFFFFF;
                              border: 1.5px solid #E6EDF3; display: flex; align-items: center; justify-content: center; }
         .pin-num .insignia svg { width: 10px; height: 10px; }
@@ -474,7 +475,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.13.0';
+        const APP_VERSION = '1.13.1';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -2145,14 +2146,17 @@ ${escHtml(fuente)}">ⓘ</span>
             return htmlNumeroFuente(clase, sim.etiqueta, refDe(sim), sim.tipo === 'fija' ? SVG_CANDADO : '', estilo);
         }
         function decorarPin(el, etiqueta, ref, prefijo = '') {
-            el.querySelector('.cabeza').innerHTML = prefijo + iconoAlim(ref.alim) + etiqueta;
+            // La insignia va dentro de la cabeza: el elemento del pin es el marcador de Mapbox y no se le puede cambiar el posicionamiento
+            const cab = el.querySelector('.cabeza');
+            cab.innerHTML = prefijo + iconoAlim(ref.alim) + etiqueta;
             el.classList.toggle('alim-desconocida', alimDesconocida(ref));
-            let b = el.querySelector('.insignia');
             if (ref.conexion) {
-                if (!b) { b = document.createElement('div'); b.className = 'insignia'; el.appendChild(b); }
+                const b = document.createElement('span');
+                b.className = 'insignia';
                 b.innerHTML = SVG_CONEXION[ref.conexion];
                 b.title = 'Conexión: ' + NOMBRE_CONEXION[ref.conexion];
-            } else if (b) b.remove();
+                cab.appendChild(b);
+            }
         }
         function botonAtributo(clave, ref, campo, valor, html, titulo) {
             const on = ref[campo] === valor || (campo === 'alim' && valor === 'desconocida' && alimDesconocida(ref));
@@ -2254,7 +2258,8 @@ ${escHtml(fuente)}">ⓘ</span>
         function etiquetarActuales() {
             antenasActuales.forEach((a, k) => {
                 const el = a.marker.getElement();
-                el.className = 'pin-num ' + (a.fija ? 'fija' : 'actual');
+                el.classList.toggle('fija', !!a.fija);
+                el.classList.toggle('actual', !a.fija);
                 decorarPin(el, 'A' + (k + 1), a, a.fija ? SVG_CANDADO : '');
             });
         }
