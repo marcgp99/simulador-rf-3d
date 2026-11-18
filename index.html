@@ -376,7 +376,7 @@
                       <label for="exigir_4g" class="flex items-center gap-2 text-[13px] cursor-pointer select-none" style="color:var(--texto-2)"
                              title="En España (mapas oficiales) descarta los emplazamientos donde ningún operador da cobertura móvil usable a la gateway. En LATAM no descarta nada: da preferencia a los que tienen cobertura. Las antenas con WiFi o Starlink no se descartan.">
                           <span class="interruptor"><input type="checkbox" id="exigir_4g" checked><span></span></span>
-                          Cobertura móvil en la zona
+                          <span>Cobertura <span class="txt-movil">móvil</span> en la zona</span>
                       </label>
                     </div>
 
@@ -422,7 +422,7 @@
                         </span>
                     </div>
                     <div id="leyenda-antenas" class="px-3.5 pb-2 text-[12px]" style="color:var(--tenue); display:none; flex-wrap:wrap; align-items:center; gap:4px 12px">
-                        <span>Cobertura móvil:</span>
+                        <span>Cobertura <span class="txt-movil">móvil</span>:</span>
                         <span class="ley-c4g"><i class="buena"></i>Buena</span><span class="ley-c4g"><i class="usable"></i>Usable</span>
                         <span class="ley-c4g"><i class="posible"></i>Posible</span><span class="ley-c4g"><i class="sindatos"></i>Sin datos</span>
                         <span class="ley-c4g"><i class="sin"></i>Sin cobertura</span>
@@ -450,7 +450,7 @@
                 <div id="menu-capas" class="hidden glass-panel rounded-md menu-capas" role="menu">
                     <label class="fila-capa hidden" id="fila-huecos"><input type="checkbox" id="chk-huecos" onchange="toggleHuecos()"><span class="muestra muestra-rayada" style="width:12px;height:12px"></span>Zonas sin cobertura</label>
                     <label class="fila-capa hidden" id="fila-4g"><input type="checkbox" id="chk-4g" onchange="toggleCapa4G()">
-                        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 10v11M8.5 21h7M9 14l3-4 3 4"/><path d="M7.8 5.8a6 6 0 000 8.4M16.2 5.8a6 6 0 010 8.4"/></svg>Cobertura móvil</label>
+                        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 10v11M8.5 21h7M9 14l3-4 3 4"/><path d="M7.8 5.8a6 6 0 000 8.4M16.2 5.8a6 6 0 010 8.4"/></svg>Cobertura&nbsp;<span class="txt-movil">móvil</span></label>
                     <label class="fila-capa"><input type="checkbox" id="chk-canopy" onchange="toggleCanopy()">
                         <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 22v-6M7 16h10l-5-8-5 8zM9 11h6l-3-6-3 6z"/></svg>Cubierta arbórea</label>
                     <label class="fila-capa"><input type="checkbox" id="chk-nodos" checked onchange="toggleNodos()">
@@ -494,7 +494,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.14.0';
+        const APP_VERSION = '1.14.1';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -1127,9 +1127,9 @@
             return claseEstimada === 'buena' || claseEstimada === 'usable' ? 'posible' : 'sin';
         }
         // Resumen de una ficha 4G para la interfaz: ok (algún operador usable), satelite, nd (sin datos)
-        function resumen4G(info, oficial = true, conTec = false) {
+        function resumen4G(info, oficial = true, conTec = false, termino = 'móvil') {
             if (!info) return null;
-            const red = conTec ? 'cobertura móvil' : '4G', Red = conTec ? 'Cobertura móvil' : '4G';
+            const red = conTec ? 'cobertura ' + termino : '4G', Red = conTec ? 'Cobertura ' + termino : '4G';
             if (info.fuera) return { nivel: 'nd', texto: `${Red} fuera de la zona analizada` };
             if (info.sinDatos) return { nivel: 'nd', texto: `${Red} sin datos · comprobar en campo` };
             const nombre = o => conTec && o.tec ? `${o.op} ${o.tec}` : o.op;
@@ -1235,8 +1235,17 @@
             wifi: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M2.5 9a14 14 0 0119 0M6 12.8a9 9 0 0112 0M9.4 16.4a4 4 0 015.2 0"/><circle cx="12" cy="19.6" r="1.2" fill="currentColor"/></svg>',
             starlink: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><g transform="rotate(-45 12 12)"><rect x="9.5" y="8.5" width="5" height="7" rx="1"/><rect x="1" y="9.5" width="7" height="5" rx=".6"/><rect x="16" y="9.5" width="7" height="5" rx=".6"/><rect x="8" y="11.3" width="1.5" height="1.4"/><rect x="14.5" y="11.3" width="1.5" height="1.4"/></g></svg>'
         };
-        const NOMBRE_ALIM = { enchufable: 'Enchufable', solar: 'Solar', desconocida: 'Desconocida' };
-        const NOMBRE_CONEXION = { celular: 'Celular', wifi: 'WiFi', starlink: 'Starlink' };
+        const NOMBRE_ALIM = { enchufable: 'Enchufable', solar: 'Panel solar', desconocida: 'Desconocida' };
+        // En España se dice «móvil»; en LATAM, «celular». Sale de la región, que se elige sola por la posición de la finca
+        function esLatam() { return document.getElementById('sim_profile')?.value === 'LATAM'; }
+        function MOV() { return esLatam() ? 'celular' : 'móvil'; }
+        function Mov() { return esLatam() ? 'Celular' : 'Móvil'; }
+        const NOMBRE_CONEXION = { get celular() { return Mov(); }, wifi: 'WiFi', starlink: 'Starlink' };
+        function aplicarTerminoMovil() {
+            document.querySelectorAll('.txt-movil').forEach(el => { el.textContent = MOV(); });
+            const t = document.getElementById('exigir_4g')?.closest('label');
+            if (t) t.title = `En España (mapas oficiales) descarta los emplazamientos donde ningún operador da cobertura ${MOV()} usable a la gateway. En LATAM no descarta nada: da preferencia a los que tienen cobertura. Las antenas con WiFi o Starlink no se descartan.`;
+        }
         const SVG_CANDADO = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>';
 
         document.getElementById('app-version').innerText = 'v' + APP_VERSION;
@@ -1296,6 +1305,8 @@
 
         function cambiarPerfil() {
             document.getElementById('tx_height').value = perfilActivo().alturaMastilM;
+            aplicarTerminoMovil();
+            renderLuz(); renderActuales(); renderizarHistorial();
             actualizarInfoEnlace();
             programarPrecalculo();
         }
@@ -1799,7 +1810,7 @@
             if (!info) return '';
             const oficial = !red4g || red4g.oficial;
             const conTec = conTecnologia();
-            const res = resumen4G(info, oficial, conTec);
+            const res = resumen4G(info, oficial, conTec, MOV());
             if (res.nivel === 'nd') return `<span class="c4g nd">${res.texto}</span>`;
             if (res.nivel === 'posible') return `<span class="c4g posible">${res.texto}</span>`;
             const lista = res.nivel === 'ok' ? res.usables : [];   // solo lo que realmente cubre; el resto es ruido
@@ -1815,13 +1826,13 @@
         }
         function estadoMovil(sim) {
             const otra = conexionNoMovil(sim);
-            if (otra) return { clase: 'otra', titulo: `Conexión por ${NOMBRE_CONEXION[otra]}: no usa la red móvil` };
-            const res = sim.red4g && red4g ? resumen4G(sim.red4g, red4g.oficial, conTecnologia()) : null;
-            if (!res || res.nivel === 'nd') return { clase: 'sindatos', titulo: 'Sin datos de cobertura móvil' };
-            if (res.nivel === 'posible') return { clase: 'posible', titulo: 'Cobertura móvil posible: ningún operador la declara. Comprobar en campo' };
-            if (res.nivel === 'satelite') return { clase: 'sin', titulo: 'Sin cobertura móvil' };
+            if (otra) return { clase: 'otra', titulo: `Conexión por ${NOMBRE_CONEXION[otra]}: no usa la red ${MOV()}` };
+            const res = sim.red4g && red4g ? resumen4G(sim.red4g, red4g.oficial, conTecnologia(), MOV()) : null;
+            if (!res || res.nivel === 'nd') return { clase: 'sindatos', titulo: `Sin datos de cobertura ${MOV()}` };
+            if (res.nivel === 'posible') return { clase: 'posible', titulo: `Cobertura ${MOV()} posible: ningún operador la declara. Comprobar en campo` };
+            if (res.nivel === 'satelite') return { clase: 'sin', titulo: `Sin cobertura ${MOV()}` };
             const buena = res.usables.some(o => o.clase === 'buena');
-            return { clase: buena ? 'buena' : 'usable', titulo: buena ? 'Señal móvil buena' : 'Señal móvil usable' };
+            return { clase: buena ? 'buena' : 'usable', titulo: `Señal ${MOV()} ${buena ? 'buena' : 'usable'}` };
         }
 
         function htmlPopup4G(info) {
@@ -1829,7 +1840,7 @@
             const nota = red4g && !red4g.oficial ? ' (no oficial)' : '';
             const extra = red4g && red4g.pais !== 'MX' && !info.sinDatos && !info.fuera ? ` <span style="color:var(--tenue); font-weight:400">· ${red4g.cobertura ? 'oficial + ' : ''}dBm estimados</span>` : '';
             return `<div style="margin-top:6px; padding-top:6px; border-top:1px solid var(--borde)">
-                        <div style="font-size:12px; color:var(--tenue); margin-bottom:3px">Cobertura móvil de los operadores${nota}${extra}</div>
+                        <div style="font-size:12px; color:var(--tenue); margin-bottom:3px">Cobertura ${MOV()} de los operadores${nota}${extra}</div>
                         <div class="flex flex-wrap gap-1">${chips4G(info, true)}</div>
                         <div style="font-size:11px; color:var(--tenue); margin-top:3px">Verde: buena · azul: usable · número: señal estimada (dBm)</div></div>`;
         }
@@ -1841,7 +1852,7 @@
             caja.classList.remove('hidden');
             const r = red4g && red4g.version === versionKML ? red4g : null;
             const tecs = tecnologiasRed(r);
-            const Red = 'Cobertura móvil';
+            const Red = 'Cobertura ' + MOV();
             let texto;
             if (!r) texto = `<span>${Red} · cargando datos de los operadores…</span>`;
             else if (r.estado === 'error') texto = `<span style="color:var(--aviso)">${Red} · no se pudieron cargar los datos (${escHtml(r.error)}).</span> <button class="enlace" onclick="reintentarRed4G()">Reintentar</button>`;
@@ -1964,7 +1975,7 @@
                 <div class="flex items-center gap-2">${muestra(VIOLETA.intenso, 0.95)}3 o más operadores</div>
                 <div class="flex items-center gap-2">${muestra(VIOLETA.medio, 0.85)}2 operadores</div>
                 <div class="flex items-center gap-2">${muestra(VIOLETA.claro, 0.8)}1 operador</div>`;
-            else if (conCobertura) filas = `<div class="flex items-center gap-2">${muestra(VIOLETA.medio, 0.85)}Con cobertura ${todas ? 'móvil' : tec} de ${escHtml(sel)}</div>`;
+            else if (conCobertura) filas = `<div class="flex items-center gap-2">${muestra(VIOLETA.medio, 0.85)}Con cobertura ${todas ? MOV() : tec} de ${escHtml(sel)}</div>`;
             if (puntos.length) filas += `<div class="flex items-center gap-2"><span style="width:11px;height:11px;border-radius:50%;background:#E6EDF3;border:2px solid #0D1117;box-shadow:0 0 0 1px #8B949E; flex-shrink:0"></span>Antena ${nombreTec}</div>`;
             if (!filas) filas = `<div>Sin datos de ${nombreTec} en esta zona.</div>`;
             const fuente = r.pais === 'MX' ? `cobertura ${nombreTec} declarada por cada operador a la CRT`
@@ -1973,7 +1984,7 @@
             const zona = conCobertura ? ` Se muestra la finca y ${r.pais === 'MX' ? CONFIG.red4g.margenValidoKm : CONFIG.red4g.es.franjaKm} km alrededor.` : '';
             const selTec = tecsCapa.length > 1 ? `<div class="segmento" role="group" aria-label="Tecnología">${tecsCapa.map(t =>
                 `<button class="${t === tec ? 'activo' : ''}" aria-pressed="${t === tec}" onclick="tecCapa4G='${t}'; pintarCapa4G()">${t}</button>`).join('')}</div>` : '';
-            leyenda.innerHTML = `<div class="flex items-center justify-between gap-2 mb-2"><span class="titulo-seccion">${conCobertura ? 'Cobertura' : 'Antenas'} ${todas ? 'móvil' : tec}</span>${selTec}</div>
+            leyenda.innerHTML = `<div class="flex items-center justify-between gap-2 mb-2"><span class="titulo-seccion">${conCobertura ? 'Cobertura' : 'Antenas'} ${todas ? MOV() : tec}</span>${selTec}</div>
                 ${orden.length > 1 ? `<select class="campo !py-0.5 !text-[12.5px] mb-2" onchange="operadorCapa4G=this.value; pintarCapa4G()" aria-label="Operador">
                     ${['Todos', ...orden].map(o => `<option ${o === sel ? 'selected' : ''}>${escHtml(o)}</option>`).join('')}</select>` : ''}
                 <div class="flex flex-col gap-1.5 text-[13px]" style="color:var(--texto-2)">${filas}</div>
@@ -2024,20 +2035,20 @@
             if (!res || !red4g || red4g.estado !== 'ok') { caja.innerHTML = ''; return; }
             const sims = res.ids.map(id => simulaciones.find(s => s.id === id)).filter(s => s && s.tipo !== 'actual' && !(s.tipo === 'luz' && s.nota === 'no usada'));
             if (!sims.length) { caja.innerHTML = ''; return; }
-            const conTec = conTecnologia(), red = 'cobertura móvil';
+            const conTec = conTecnologia(), red = 'cobertura ' + MOV();
             const chipsFila = s => {
                 const otra = conexionNoMovil(s);
-                if (otra && resumen4G(s.red4g, red4g.oficial, conTec)?.nivel !== 'ok')
-                    return `<span class="c4g nd">Conexión por ${NOMBRE_CONEXION[otra]} · no usa la red móvil</span>`;
+                if (otra && resumen4G(s.red4g, red4g.oficial, conTec, MOV())?.nivel !== 'ok')
+                    return `<span class="c4g nd">Conexión por ${NOMBRE_CONEXION[otra]} · no usa la red ${MOV()}</span>`;
                 return chips4G(s.red4g, true);
             };
             const filas = sims.map(s => `<div class="flex items-start gap-2">
                     ${htmlNumero(s)}
                     <div class="flex flex-wrap gap-1 min-w-0" style="padding-top:1px">${chipsFila(s)}</div></div>`).join('');
             const movil = sims.filter(s => !conexionNoMovil(s));   // los avisos solo afectan a las antenas que van por red móvil
-            const sat = movil.filter(s => resumen4G(s.red4g, red4g.oficial, conTec)?.nivel === 'satelite');
-            const pos = movil.filter(s => resumen4G(s.red4g, red4g.oficial, conTec)?.nivel === 'posible');
-            const solo3 = movil.filter(s => resumen4G(s.red4g, red4g.oficial, conTec)?.solo3G);
+            const sat = movil.filter(s => resumen4G(s.red4g, red4g.oficial, conTec, MOV())?.nivel === 'satelite');
+            const pos = movil.filter(s => resumen4G(s.red4g, red4g.oficial, conTec, MOV())?.nivel === 'posible');
+            const solo3 = movil.filter(s => resumen4G(s.red4g, red4g.oficial, conTec, MOV())?.solo3G);
             const c = res.ctx.red4g || {};
             const notas = [];
             if (sat.length) notas.push(`<div style="color:#E3B341">${sat.map(s => s.etiqueta).join(', ')}: sin ${red} usable de ningún operador. ${sat.length === 1 ? 'Requiere' : 'Requieren'} enlace por satélite.</div>`);
@@ -2045,7 +2056,7 @@
             // Solo avisos que piden una acción (los descartes y la fuente no se muestran en el panel)
             if (c.exigido && c.descartados) {
                 if (res.pct < CONFIG.objetivoCoberturaPct)
-                    notas.push(`<div style="color:#E3B341">Exigir cobertura móvil impide llegar al ${CONFIG.objetivoCoberturaPct} %. Desactiva «Cobertura móvil en la zona» para ver la propuesta con antenas que necesitarían enlace por satélite.</div>`);
+                    notas.push(`<div style="color:#E3B341">Exigir cobertura ${MOV()} impide llegar al ${CONFIG.objetivoCoberturaPct} %. Desactiva «Cobertura ${MOV()} en la zona» para ver la propuesta con antenas que necesitarían enlace por satélite.</div>`);
             }
             if (pos.length) notas.push(`<div style="color:#E3B341">${pos.map(s => s.etiqueta).join(', ')}: ningún operador declara cobertura, aunque la señal estimada es suficiente. Comprobar en campo.</div>`);
             if (c.relajado) notas.push(`<div style="color:#E3B341">Ningún emplazamiento posible tiene ${red} usable: se ha calculado sin tenerla en cuenta.</div>`);
@@ -2055,7 +2066,7 @@
                 : 'Fuente: OpenCelliD (colaborativo, puede faltar alguna antena), con el terreno real.';
             caja.innerHTML = `<div class="flex flex-col gap-1.5">
                     <div class="flex flex-col gap-0.5" style="font-size:13px; color:var(--tenue)">
-                        <span>Cobertura móvil de cada antena</span>
+                        <span>Cobertura ${MOV()} de cada antena</span>
                         <span class="flex items-center gap-2.5 text-[12px]">
                             <span class="ley-c4g"><i class="buena"></i>Buena</span><span class="ley-c4g"><i class="usable"></i>Usable</span>
                             <span>· número: señal estimada (dBm)</span>
@@ -2185,8 +2196,14 @@ ${escHtml(fuente)}">ⓘ</span>
         }
         function htmlNumero(sim, estilo = 'min-width:24px; height:22px') {
             const clase = sim.tipo === 'antena' ? '' : sim.tipo;
-            if (!conAtributos(sim)) return `<span class="numero ${clase}" style="${estilo}">${sim.icono || ''}${sim.etiqueta}</span>`;
+            if (!conAtributos(sim) || sim.tipo === 'antena') return `<span class="numero ${clase}" style="${estilo}">${sim.icono || ''}${sim.etiqueta}</span>`;
             return htmlNumeroFuente(clase, sim.etiqueta, refDe(sim), sim.tipo === 'fija' ? SVG_CANDADO : '', estilo);
+        }
+        // Antena propuesta: en el mapa, bolita blanca con el número (la alimentación solo sale en el PDF);
+        // la insignia de conexión solo si no es la habitual (red móvil)
+        function decorarPinPropuesta(el, sim, prefijo = '') {
+            decorarPin(el, sim.etiqueta, { alim: 'enchufable', conexion: sim.conexion === 'celular' ? null : sim.conexion }, prefijo);
+            el.querySelector('.cabeza').innerHTML = prefijo + sim.etiqueta + (el.querySelector('.insignia') ? el.querySelector('.insignia').outerHTML : '');
         }
         function decorarPin(el, etiqueta, ref, prefijo = '') {
             // La insignia va dentro de la cabeza: el elemento del pin es el marcador de Mapbox y no se le puede cambiar el posicionamiento
@@ -2232,7 +2249,7 @@ ${escHtml(fuente)}">ⓘ</span>
             etiquetarLuces(); etiquetarActuales(); renderLuz(); renderActuales();
             simulaciones.forEach(s => {
                 if (s.tipo !== 'antena' || !s.pinMarker) return;
-                decorarPin(s.pinMarker.getElement(), s.etiqueta, s, s.icono || '');
+                decorarPinPropuesta(s.pinMarker.getElement(), s, s.icono || '');
                 s.pinMarker.getPopup()?.setHTML(htmlPopup(s));
             });
             pintar4GResultado();
@@ -3107,7 +3124,7 @@ ${escHtml(fuente)}">ⓘ</span>
                 boundsCloudRF: r.boundsCloudRF, proyeccion: r.proyeccion, pixeles: r.pixeles, niveles: r.niveles,
                 res: r.res, clave: r.clave || null, claveColores: (r.data && r.data.key) || null,
                 lat: r.lat, lon: r.lon, elev: DEM.valor(r.lon, r.lat),
-                alim: op.alim || 'desconocida', conexion: op.conexion || (tipo === 'antena' ? 'celular' : null)
+                alim: op.alim || (tipo === 'antena' ? 'solar' : 'desconocida'), conexion: op.conexion || (tipo === 'antena' ? 'celular' : null)
             };
             info4GSim(sim);
             recalcularDatosSim(sim);
@@ -3115,7 +3132,7 @@ ${escHtml(fuente)}">ⓘ</span>
             const conPin = op.pin ?? !['actual', 'fija', 'luz'].includes(tipo);
             if (conPin) {
                 const el = elementoPin(icono + etiqueta, { punto: 'punto' }[tipo] || '');
-                if (tipo === 'antena') decorarPin(el, etiqueta, sim, icono);
+                if (tipo === 'antena') decorarPinPropuesta(el, sim, icono);
                 el.addEventListener('click', () => seleccionarSim(id));
                 sim.pinMarker = new mapboxgl.Marker(el, { anchor: 'bottom' })
                     .setLngLat([r.lon, r.lat]).setPopup(new mapboxgl.Popup({ offset: 30 }).setHTML(htmlPopup(sim)));
@@ -3140,7 +3157,7 @@ ${escHtml(fuente)}">ⓘ</span>
                 <div style="font-size:12.5px; color:var(--texto-2)">Cubre ${pct}</div>${cal}
                 <div class="mono" style="font-size:11.5px; color:var(--tenue); margin-top:4px">${sim.lat.toFixed(5)}, ${sim.lon.toFixed(5)}</div>
                 <div class="mono" style="font-size:11.5px; color:var(--tenue)">${sim.elev !== null ? Math.round(sim.elev) + ' m · ' : ''}mástil ${sim.alt} m</div>${htmlPopup4G(sim.red4g)}${sim.tipo === 'antena' ? `
-                <div class="pop-atributos"><span>Alimentación</span>${selectorAlim('sim:' + sim.id, sim)}<span>Conexión</span>${selectorConexion('sim:' + sim.id, sim)}</div>` : ''}`;
+                <div class="pop-atributos"><span>Conexión</span>${selectorConexion('sim:' + sim.id, sim)}</div>` : ''}`;
         }
 
         function verSimulacion(id) {
@@ -3744,12 +3761,12 @@ ${escHtml(fuente)}">ⓘ</span>
 
             // Tabla de antenas
             const filas = d.enMapa.map(s => {
-                const r4 = s.red4g ? resumen4G(s.red4g, !red4g || red4g.oficial, conTecnologia()) : null;
+                const r4 = s.red4g ? resumen4G(s.red4g, !red4g || red4g.oficial, conTecnologia(), MOV()) : null;
                 const ref = conAtributos(s) ? refDe(s) : null;
                 const con = ref ? ref.conexion : (r4 ? 'celular' : null);
                 const conexion = !con ? '-'
                     : con !== 'celular' ? NOMBRE_CONEXION[con]
-                    : r4 && r4.nivel === 'ok' ? `Celular · ${r4.texto}` : 'Celular · comprobar cobertura en la instalación';
+                    : r4 && r4.nivel === 'ok' ? `${Mov()} · ${r4.texto}` : `${Mov()} · comprobar cobertura en la instalación`;
                 return [s.etiqueta, `${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}`, `${s.alt} m`,
                         s.coberturaLocal !== null && s.coberturaLocal !== undefined ? `${fmt1(s.coberturaLocal)} %` : '-',
                         ref ? NOMBRE_ALIM[ref.alim] || 'Desconocida' : '-', conexion].map(txtPdf);
@@ -3952,7 +3969,7 @@ ${escHtml(fuente)}">ⓘ</span>
             // Conexión a internet: solo se pregunta por los puntos de instalación que marca el usuario (las antenas propuestas van por red móvil)
             const sinConexion = luces.map((p, i) => ({ ref: p, html: htmlNumeroFuente('luz', i + 1, p) })).filter(x => !x.ref.conexion);
             if (sinConexion.length && !await pedirConexiones(sinConexion,
-                    'Con WiFi o Starlink el punto no necesita cobertura móvil. Puedes cambiarla después en la lista de puntos de instalación.')) return;
+                    `Con WiFi o Starlink el punto no necesita cobertura ${MOV()}. Puedes cambiarla después en la lista de puntos de instalación.`)) return;
             const anterior = opciones.encadenar && ultimoResultado && !ultimoResultado.restaurado ? ultimoResultado : null;
 
             bloquearOptimizador(true);
@@ -4367,7 +4384,7 @@ ${escHtml(fuente)}">ⓘ</span>
                     ${htmlNumeroFuente('luz', x.i + 1, puntosLuz[x.i])}
                     <div class="pista"><div class="relleno" style="width:${Math.max(1, x.pct ?? 0)}%; background:#E3B341"></div></div>
                     <span class="mono" style="text-align:right; color:var(--texto)">${x.pct === null ? '–' : fmt0(x.pct) + ' %'}</span>
-                    <span style="font-size:12px; color:${x.usado ? 'var(--acento)' : x.sinMovil ? 'var(--aviso)' : 'var(--tenue)'}"${x.sinMovil ? ' title="Conexión celular sin cobertura móvil usable de ningún operador. Elige WiFi o Starlink para poder usarlo."' : ''}>${x.sinMovil ? 'sin red móvil' : x.error ? 'sin respuesta' : (x.usado ? 'se usa' : 'no necesario')}</span>`).join('');
+                    <span style="font-size:12px; color:${x.usado ? 'var(--acento)' : x.sinMovil ? 'var(--aviso)' : 'var(--tenue)'}"${x.sinMovil ? ' title="Conexión ${MOV()} sin cobertura ${MOV()} usable de ningún operador. Elige WiFi o Starlink para poder usarlo."' : ''}>${x.sinMovil ? 'sin red ' + MOV() : x.error ? 'sin respuesta' : (x.usado ? 'se usa' : 'no necesario')}</span>`).join('');
                 const basePct = nLuz ? r.curva[nLuz - 1] : 0;
                 let explica;
                 if (ctx.luz.alcanzado) explica = nLuz < ctx.luz.total
