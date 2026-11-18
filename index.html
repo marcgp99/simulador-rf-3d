@@ -500,7 +500,7 @@
         // =======================================================================
         // COWPRO SIMULATOR (antes Ixorigue RF Simulator Pro 3D)
         // =======================================================================
-        const APP_VERSION = '1.15.0';
+        const APP_VERSION = '1.15.1';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -3700,7 +3700,7 @@ ${escHtml(fuente)}">ⓘ</span>
             T(cliente || nombreProyecto || 'Finca', M, y);
             doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...gris);
             const nZonas = zonas.filter(z => z.activa).length;
-            T(`${cliente && nombreProyecto ? nombreProyecto + ' · ' : ''}${fmt0(d.ha)} ha${zonas.length > 1 ? ` en ${nZonas} zona${nZonas > 1 ? 's' : ''}` : ''} · ${formatoActivo().nombre}`, M, y + 6);
+            T(`${fmt0(d.ha)} ha${zonas.length > 1 ? ` en ${nZonas} zona${nZonas > 1 ? 's' : ''}` : ''} · ${formatoActivo().nombre}`, M, y + 6);
             y += 12;
 
             // Frase clara para el ganadero
