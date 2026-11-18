@@ -98,6 +98,19 @@
         .ley-c4g i { width: 10px; height: 10px; border-radius: 999px; border: 1.5px solid; display: inline-block; }
         .ley-c4g i.buena { border-color: #238636; background: rgba(63,185,80,.25); }
         .ley-c4g i.usable { border-color: #1F6FEB; background: rgba(56,139,253,.25); }
+        .ley-c4g i.posible { border-color: #F0883E; background: rgba(240,136,62,.25); }
+        .ley-c4g i.sindatos { border-color: #8B949E; background: rgba(139,148,158,.2); }
+        .ley-c4g i.sin { border-color: #F85149; background: rgba(248,81,73,.25); }
+        /* Nombre de la antena en un recuadro del color de su cobertura móvil */
+        .col-numero { flex: 0 0 48px; display: flex; justify-content: center; }
+        .nombre-antena { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 3px 10px;
+                         border-radius: 7px; border: 1.5px solid var(--borde); font-size: 14px; font-weight: 600; cursor: default; }
+        .nombre-antena.movil-buena { border-color: #3FB950; background: rgba(63,185,80,.12); }
+        .nombre-antena.movil-usable { border-color: #388BFD; background: rgba(56,139,253,.12); }
+        .nombre-antena.movil-posible { border-color: #F0883E; background: rgba(240,136,62,.12); }
+        .nombre-antena.movil-sindatos { border-color: #8B949E; background: rgba(139,148,158,.1); }
+        .nombre-antena.movil-sin { border-color: #F85149; background: rgba(248,81,73,.12); }
+        .nombre-antena.movil-otra { border-color: var(--borde); }
         .segmento { display: inline-flex; border: 1px solid var(--borde); border-radius: 6px; overflow: hidden; }
         .segmento button { font-size: 12px; font-weight: 600; padding: 1px 9px; color: var(--tenue); }
         .segmento button.activo { background: var(--superficie-2, #21262D); color: var(--texto); }
@@ -408,6 +421,12 @@
                         </button>
                         </span>
                     </div>
+                    <div id="leyenda-antenas" class="px-3.5 pb-2 text-[12px]" style="color:var(--tenue); display:none; flex-wrap:wrap; align-items:center; gap:4px 12px">
+                        <span>Cobertura móvil:</span>
+                        <span class="ley-c4g"><i class="buena"></i>Buena</span><span class="ley-c4g"><i class="usable"></i>Usable</span>
+                        <span class="ley-c4g"><i class="posible"></i>Posible</span><span class="ley-c4g"><i class="sindatos"></i>Sin datos</span>
+                        <span class="ley-c4g"><i class="sin"></i>Sin cobertura</span>
+                    </div>
                     <p id="emptyHistoryMsg" class="text-[13px] text-center py-5" style="color:var(--tenue); border-top:1px solid var(--borde)">Aún no hay simulaciones.</p>
                     <div id="simulationList" class="flex flex-col"></div>
                     <div id="resumen-exterior" class="hidden"></div>
@@ -475,7 +494,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.13.2';
+        const APP_VERSION = '1.14.0';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -1789,6 +1808,22 @@
             const tecTxt = o => conTec && o.tec ? ` <span class="tec${o.tec === '3G' ? ' t3g' : ''}">${o.tec}</span>` : '';
             return lista.map(o => `<span class="c4g ${o.clase}" title="${escHtml(tituloOperador4G(o))}">${escHtml(o.op)}${tecTxt(o)}${completo && o.rsrp !== null && o.rsrp !== undefined ? ` <span class="mono">${dbm(o.rsrp)}</span>` : ''}</span>`).join('');
         }
+        // buena / usable / posible / sin (mapa oficial: no hay) / sindatos / otra (WiFi o Starlink: no usa la red móvil)
+        function conexionNoMovil(sim) {
+            const ref = conAtributos(sim) ? refDe(sim) : null;
+            return ref && (ref.conexion === 'wifi' || ref.conexion === 'starlink') ? ref.conexion : null;
+        }
+        function estadoMovil(sim) {
+            const otra = conexionNoMovil(sim);
+            if (otra) return { clase: 'otra', titulo: `Conexión por ${NOMBRE_CONEXION[otra]}: no usa la red móvil` };
+            const res = sim.red4g && red4g ? resumen4G(sim.red4g, red4g.oficial, conTecnologia()) : null;
+            if (!res || res.nivel === 'nd') return { clase: 'sindatos', titulo: 'Sin datos de cobertura móvil' };
+            if (res.nivel === 'posible') return { clase: 'posible', titulo: 'Cobertura móvil posible: ningún operador la declara. Comprobar en campo' };
+            if (res.nivel === 'satelite') return { clase: 'sin', titulo: 'Sin cobertura móvil' };
+            const buena = res.usables.some(o => o.clase === 'buena');
+            return { clase: buena ? 'buena' : 'usable', titulo: buena ? 'Señal móvil buena' : 'Señal móvil usable' };
+        }
+
         function htmlPopup4G(info) {
             if (!info) return '';
             const nota = red4g && !red4g.oficial ? ' (no oficial)' : '';
@@ -1989,13 +2024,20 @@
             if (!res || !red4g || red4g.estado !== 'ok') { caja.innerHTML = ''; return; }
             const sims = res.ids.map(id => simulaciones.find(s => s.id === id)).filter(s => s && s.tipo !== 'actual' && !(s.tipo === 'luz' && s.nota === 'no usada'));
             if (!sims.length) { caja.innerHTML = ''; return; }
+            const conTec = conTecnologia(), red = 'cobertura móvil';
+            const chipsFila = s => {
+                const otra = conexionNoMovil(s);
+                if (otra && resumen4G(s.red4g, red4g.oficial, conTec)?.nivel !== 'ok')
+                    return `<span class="c4g nd">Conexión por ${NOMBRE_CONEXION[otra]} · no usa la red móvil</span>`;
+                return chips4G(s.red4g, true);
+            };
             const filas = sims.map(s => `<div class="flex items-start gap-2">
                     ${htmlNumero(s)}
-                    <div class="flex flex-wrap gap-1 min-w-0" style="padding-top:1px">${chips4G(s.red4g, true)}</div></div>`).join('');
-            const conTec = conTecnologia(), red = 'cobertura móvil';
-            const sat = sims.filter(s => resumen4G(s.red4g, red4g.oficial, conTec)?.nivel === 'satelite');
-            const pos = sims.filter(s => resumen4G(s.red4g, red4g.oficial, conTec)?.nivel === 'posible');
-            const solo3 = sims.filter(s => resumen4G(s.red4g, red4g.oficial, conTec)?.solo3G);
+                    <div class="flex flex-wrap gap-1 min-w-0" style="padding-top:1px">${chipsFila(s)}</div></div>`).join('');
+            const movil = sims.filter(s => !conexionNoMovil(s));   // los avisos solo afectan a las antenas que van por red móvil
+            const sat = movil.filter(s => resumen4G(s.red4g, red4g.oficial, conTec)?.nivel === 'satelite');
+            const pos = movil.filter(s => resumen4G(s.red4g, red4g.oficial, conTec)?.nivel === 'posible');
+            const solo3 = movil.filter(s => resumen4G(s.red4g, red4g.oficial, conTec)?.solo3G);
             const c = res.ctx.red4g || {};
             const notas = [];
             if (sat.length) notas.push(`<div style="color:#E3B341">${sat.map(s => s.etiqueta).join(', ')}: sin ${red} usable de ningún operador. ${sat.length === 1 ? 'Requiere' : 'Requieren'} enlace por satélite.</div>`);
@@ -3704,10 +3746,13 @@ ${escHtml(fuente)}">ⓘ</span>
             const filas = d.enMapa.map(s => {
                 const r4 = s.red4g ? resumen4G(s.red4g, !red4g || red4g.oficial, conTecnologia()) : null;
                 const ref = conAtributos(s) ? refDe(s) : null;
+                const con = ref ? ref.conexion : (r4 ? 'celular' : null);
+                const conexion = !con ? '-'
+                    : con !== 'celular' ? NOMBRE_CONEXION[con]
+                    : r4 && r4.nivel === 'ok' ? `Celular · ${r4.texto}` : 'Celular · comprobar cobertura en la instalación';
                 return [s.etiqueta, `${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}`, `${s.alt} m`,
                         s.coberturaLocal !== null && s.coberturaLocal !== undefined ? `${fmt1(s.coberturaLocal)} %` : '-',
-                        ref ? NOMBRE_ALIM[ref.alim] || 'Desconocida' : '-', ref && ref.conexion ? NOMBRE_CONEXION[ref.conexion] : '-',
-                        r4 ? r4.texto : '-'].map(txtPdf);
+                        ref ? NOMBRE_ALIM[ref.alim] || 'Desconocida' : '-', conexion].map(txtPdf);
             });
             const tituloSeccion = (t) => {
                 if (y > 262) { doc.addPage(); y = 20; }
@@ -3717,13 +3762,13 @@ ${escHtml(fuente)}">ⓘ</span>
             tituloSeccion('Antenas');
             doc.autoTable({
                 startY: y, margin: { left: M, right: M },
-                head: [['Nº', 'Coordenadas (lat, lon)', 'Mástil', 'Cubre', 'Alimentación', 'Conexión', 'Red móvil']],
+                head: [['Nº', 'Coordenadas (lat, lon)', 'Mástil', 'Cubre', 'Alimentación', 'Conexión']],
                 body: filas,
                 styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 1.8, textColor: oscuro, lineColor: [220, 225, 230], lineWidth: 0.1 },
                 headStyles: { fillColor: oscuro, textColor: 255, fontStyle: 'bold' },
                 alternateRowStyles: { fillColor: [246, 248, 250] },
                 columnStyles: { 0: { cellWidth: 10, fontStyle: 'bold' }, 1: { cellWidth: 36 }, 2: { cellWidth: 15, halign: 'right' }, 3: { cellWidth: 16, halign: 'right' },
-                                4: { cellWidth: 24 }, 5: { cellWidth: 20 } }
+                                4: { cellWidth: 24 } }
             });
             y = doc.lastAutoTable.finalY + 8;
 
@@ -3780,22 +3825,18 @@ ${escHtml(fuente)}">ⓘ</span>
                 kmz: '<svg aria-hidden="true" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"/></svg>',
                 borrar: '<svg aria-hidden="true" width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>'
             };
-            const fmt = v => v.toLocaleString('es-ES', { maximumFractionDigits: 1 });
+            document.getElementById('leyenda-antenas').style.display = simulaciones.length ? 'flex' : 'none';
             lista.innerHTML = orden.map(sim => {
-                const pct = sim.coberturaLocal !== null && sim.coberturaLocal !== undefined ? `${fmt(sim.coberturaLocal)} %` : '–';
-                const cal = sim.calidadLocal !== null && sim.calidadLocal !== undefined ? `buena ${fmt(sim.calidadLocal)} %` : null;
-                const datos = [pct, cal, sim.elev !== null ? `${Math.round(sim.elev)} m` : null].filter(Boolean).join(' · ');
                 const nota = sim.nota ? ` <span style="color:var(--tenue); font-weight:400">· ${sim.nota}</span>` : '';
+                const em = estadoMovil(sim);
                 return `
                 <div class="item-antena ${sim.visible ? '' : 'apagada'} ${sim.id === simSeleccionada ? 'seleccionada' : ''}" data-id="${sim.id}">
                     <label class="interruptor" title="${sim.visible ? 'Ocultar' : 'Mostrar'} cobertura">
                         <input type="checkbox" ${sim.visible ? 'checked' : ''} onchange="toggleCapa(${sim.id}, this.checked)" aria-label="Mostrar la cobertura de ${sim.name}"><span></span>
                     </label>
-                    ${htmlNumero(sim, '')}
-                    <div class="flex-1 min-w-0">
-                        <div class="text-[14px] font-semibold truncate">${sim.name}${nota}</div>
-                        <div class="mono text-[11.5px] truncate" style="color:var(--tenue)" title="${sim.lat.toFixed(5)}, ${sim.lon.toFixed(5)} · mástil ${sim.alt} m">${datos}</div>
-                        ${sim.red4g ? `<div class="flex flex-wrap gap-1 mt-1">${chips4G(sim.red4g)}</div>` : ''}
+                    <span class="col-numero">${htmlNumero(sim, '')}</span>
+                    <div class="flex-1 min-w-0 flex">
+                        <span class="nombre-antena movil-${em.clase}" title="${escHtml(em.titulo)}">${sim.name}${nota}</span>
                     </div>
                     <button class="icono-accion" aria-label="Ver ${sim.name} en el mapa" title="Ver en el mapa" onclick="verSimulacion(${sim.id})">${ico.ver}</button>
                     <a class="icono-accion" href="${sim.kmz}" target="_blank" aria-label="Descargar KMZ de ${sim.name}" title="Descargar KMZ">${ico.kmz}</a>
