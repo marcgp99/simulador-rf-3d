@@ -475,7 +475,7 @@
         // =======================================================================
         // IXORIGUE RF SIMULATOR PRO 3D
         // =======================================================================
-        const APP_VERSION = '1.13.1';
+        const APP_VERSION = '1.13.2';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -2059,7 +2059,8 @@ ${escHtml(fuente)}">ⓘ</span>
             center: [1.669, 42.025],
             zoom: 13,
             pitch: 0,
-            maxPitch: 0
+            maxPitch: 0,
+            preserveDrawingBuffer: true   // el informe puede leer el mapa sin depender del siguiente fotograma
         });
 
         map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-left');
@@ -3064,7 +3065,7 @@ ${escHtml(fuente)}">ⓘ</span>
                 boundsCloudRF: r.boundsCloudRF, proyeccion: r.proyeccion, pixeles: r.pixeles, niveles: r.niveles,
                 res: r.res, clave: r.clave || null, claveColores: (r.data && r.data.key) || null,
                 lat: r.lat, lon: r.lon, elev: DEM.valor(r.lon, r.lat),
-                alim: op.alim || 'desconocida', conexion: op.conexion || null
+                alim: op.alim || 'desconocida', conexion: op.conexion || (tipo === 'antena' ? 'celular' : null)
             };
             info4GSim(sim);
             recalcularDatosSim(sim);
@@ -3539,7 +3540,8 @@ ${escHtml(fuente)}">ⓘ</span>
                 map.fitBounds([[bw, bs], [be, bn]], { padding: 70, duration: 0 });
                 await esperarIdle();
                 const lienzo = map.getCanvas();
-                const base = await new Promise(r => { map.once('render', () => r(lienzo.toDataURL('image/png'))); map.triggerRepaint(); });
+                await Promise.race([new Promise(r => { map.once('render', r); map.triggerRepaint(); }), new Promise(r => setTimeout(r, 2500))]);
+                const base = lienzo.toDataURL('image/png');
                 const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = base; });
                 const c = document.createElement('canvas');
                 c.width = img.width; c.height = img.height;
@@ -3583,9 +3585,6 @@ ${escHtml(fuente)}">ⓘ</span>
             const d = datosInforme();
             if (!d.visibles.length) return alert('No hay coberturas visibles para el informe.');
             if (optimizadorEnCurso) return alert('Espera a que termine el cálculo.');
-            const sinConexion = d.enMapa.filter(s => conAtributos(s) && !refDe(s).conexion);
-            if (sinConexion.length && !await pedirConexiones(sinConexion.map(s => ({ ref: refDe(s), html: htmlNumero(s) })),
-                    'Sale en la tabla del informe. Puedes cambiarla después pulsando cada antena en el mapa.')) return;
             mostrarLoader('Preparando el informe…');
             try {
                 const jsPDF = await asegurarLibsInforme();
@@ -3595,6 +3594,7 @@ ${escHtml(fuente)}">ⓘ</span>
                 descargarBlob(doc.output('blob'), `${nombreArchivo(nombreProyecto || 'finca')}_informe_cobertura_${fechaArchivo()}.pdf`);
                 return doc;
             } catch (e) {
+                console.error('Informe PDF:', e);
                 alert('No se pudo generar el informe: ' + e.message);
             } finally { ocultarLoader(); }
         }
@@ -3908,12 +3908,10 @@ ${escHtml(fuente)}">ⓘ</span>
             if (modo === 'fijo' && nContratadas <= fijas.length)
                 return alert('Todas las antenas contratadas están marcadas como fijas: no queda ninguna para reubicar. Sube el número de antenas contratadas o marca alguna como reubicable.');
             const luces = modo === 'objetivo' ? puntosLuz.slice(0, CONFIG.puntosLuz.max) : [];
-            // Conexión a internet de los puntos de instalación (Planificar) y de las antenas fijas (Optimizar)
-            const sinConexion = modo === 'objetivo'
-                ? luces.map((p, i) => ({ ref: p, html: htmlNumeroFuente('luz', i + 1, p) })).filter(x => !x.ref.conexion)
-                : fijas.map(a => { const i = antenasActuales.indexOf(a); return { ref: a, html: htmlNumeroFuente('fija', 'A' + (i + 1), a, SVG_CANDADO) }; }).filter(x => !x.ref.conexion);
+            // Conexión a internet: solo se pregunta por los puntos de instalación que marca el usuario (las antenas propuestas van por red móvil)
+            const sinConexion = luces.map((p, i) => ({ ref: p, html: htmlNumeroFuente('luz', i + 1, p) })).filter(x => !x.ref.conexion);
             if (sinConexion.length && !await pedirConexiones(sinConexion,
-                    'Con WiFi o Starlink la antena no necesita cobertura móvil. Puedes cambiarla después en la lista de cada antena.')) return;
+                    'Con WiFi o Starlink el punto no necesita cobertura móvil. Puedes cambiarla después en la lista de puntos de instalación.')) return;
             const anterior = opciones.encadenar && ultimoResultado && !ultimoResultado.restaurado ? ultimoResultado : null;
 
             bloquearOptimizador(true);
