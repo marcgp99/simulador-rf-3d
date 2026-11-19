@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CowPro Simulator</title>
+    <title>CowPro · Simulador de cobertura LoRa</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -174,6 +174,7 @@
 
         /* Mapa */
         .mapboxgl-marker { cursor: pointer; z-index: 20; }
+        .mapboxgl-popup { z-index: 30; }   /* el globo, siempre por encima de los pines */
         .pin-num { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); }
         .pin-num .cabeza { min-width: 26px; height: 26px; padding: 0 5px; gap: 2px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
                            font: 600 12px var(--mono); background: var(--texto); color: var(--fondo); box-shadow: 0 0 0 2px var(--fondo); transition: box-shadow .15s; }
@@ -226,7 +227,7 @@
         <div class="flex items-center gap-3 min-w-0">
             <h1 class="flex items-center gap-2 text-[15px] font-semibold whitespace-nowrap" style="letter-spacing:.01em">
                 <img id="logo-app" alt="CowPro" style="height:20px; width:auto; display:block">
-                <span>Simulator</span></h1>
+                <span>Simulador de cobertura LoRa</span></h1>
             <span id="app-version" class="mono text-[11px] whitespace-nowrap" style="color:var(--tenue)"></span>
         </div>
         <div id="nombre-proyecto" class="hidden text-[13px] truncate" style="color:var(--texto-2)"></div>
@@ -500,7 +501,7 @@
         // =======================================================================
         // COWPRO SIMULATOR (antes Ixorigue RF Simulator Pro 3D)
         // =======================================================================
-        const APP_VERSION = '1.15.1';
+        const APP_VERSION = '1.15.2';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -2206,15 +2207,11 @@ ${escHtml(fuente)}">ⓘ</span>
         }
         function htmlNumero(sim, estilo = 'min-width:24px; height:22px') {
             const clase = sim.tipo === 'antena' ? '' : sim.tipo;
-            if (!conAtributos(sim) || sim.tipo === 'antena') return `<span class="numero ${clase}" style="${estilo}">${sim.icono || ''}${sim.etiqueta}</span>`;
+            if (!conAtributos(sim)) return `<span class="numero ${clase}" style="${estilo}">${sim.icono || ''}${sim.etiqueta}</span>`;
             return htmlNumeroFuente(clase, sim.etiqueta, refDe(sim), sim.tipo === 'fija' ? SVG_CANDADO : '', estilo);
         }
-        // Antena propuesta: en el mapa, bolita blanca con el número (la alimentación solo sale en el PDF);
-        // la insignia de conexión solo si no es la habitual (red móvil)
-        function decorarPinPropuesta(el, sim, prefijo = '') {
-            decorarPin(el, sim.etiqueta, { alim: 'enchufable', conexion: sim.conexion === 'celular' ? null : sim.conexion }, prefijo);
-            el.querySelector('.cabeza').innerHTML = prefijo + sim.etiqueta + (el.querySelector('.insignia') ? el.querySelector('.insignia').outerHTML : '');
-        }
+        // Antena propuesta: bolita blanca con su icono de alimentación y la insignia de conexión (v1.15.2)
+        function decorarPinPropuesta(el, sim, prefijo = '') { decorarPin(el, sim.etiqueta, sim, prefijo); }
         function decorarPin(el, etiqueta, ref, prefijo = '') {
             // La insignia va dentro de la cabeza: el elemento del pin es el marcador de Mapbox y no se le puede cambiar el posicionamiento
             const cab = el.querySelector('.cabeza');
@@ -3807,7 +3804,7 @@ ${escHtml(fuente)}">ⓘ</span>
             const n = doc.getNumberOfPages();
             for (let i = 1; i <= n; i++) {
                 doc.setPage(i); doc.setFontSize(8); doc.setTextColor(...gris);
-                T(`CowPro Simulator v${APP_VERSION}`, M, 290);
+                T(`CowPro · Simulador de cobertura LoRa v${APP_VERSION}`, M, 290);
                 T(`Página ${i} de ${n}`, W - M, 290, { align: 'right' });
             }
             return doc;
