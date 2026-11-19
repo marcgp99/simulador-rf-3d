@@ -175,9 +175,14 @@
         /* Mapa */
         .mapboxgl-marker { cursor: pointer; z-index: 20; }
         .mapboxgl-popup { z-index: 30; }
-        .creditos { display: inline-flex; flex-shrink: 0; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--borde);
+        .creditos { display: inline-flex; flex-shrink: 0; align-items: center; gap: 6px; background: transparent; cursor: pointer; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--borde);
                     font-size: 12px; color: var(--tenue); white-space: nowrap; cursor: default; }
         .creditos.hidden { display: none; }
+        .creditos:hover { border-color: #484F58; }
+        .boton-peligro { background: #DA3633; color: #FFFFFF; border: 1px solid #F85149; }
+        .boton-peligro:hover:not(:disabled) { background: #F85149; }
+        .boton-peligro:disabled { opacity: .5; cursor: default; }
+        .modal .campo-modal { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--texto-2); }
         .creditos b { color: var(--texto); font-size: 12.5px; }
         .creditos-barra { width: 44px; height: 5px; border-radius: 3px; background: #30363D; overflow: hidden; }
         .creditos-barra i { display: block; height: 100%; background: var(--acento); }
@@ -239,9 +244,9 @@
             <span id="app-version" class="mono text-[11px] whitespace-nowrap" style="color:var(--tenue)"></span>
         </div>
         <div class="flex items-center gap-3 min-w-0">
-            <div id="creditos-cloudrf" class="creditos hidden" role="status" aria-label="Créditos de CloudRF restantes">
+            <button type="button" id="creditos-cloudrf" class="creditos hidden" onclick="abrirLiberarEspacio()" aria-label="Créditos de CloudRF restantes. Pulsa para liberar espacio">
                 <span>CloudRF</span><b class="creditos-num mono"></b><span>créditos</span><span class="creditos-barra" aria-hidden="true"><i></i></span>
-            </div>
+            </button>
             <div id="nombre-proyecto" class="hidden text-[13px] truncate" style="color:var(--texto-2)"></div>
         </div>
     </header>
@@ -514,7 +519,7 @@
         // =======================================================================
         // COWPRO SIMULATOR (antes Ixorigue RF Simulator Pro 3D)
         // =======================================================================
-        const APP_VERSION = '1.16.1';
+        const APP_VERSION = '1.17.0';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -3096,12 +3101,77 @@ ${escHtml(fuente)}">ⓘ</span>
                 el.querySelector('.creditos-num').textContent = c.restantes.toLocaleString('es-ES');
                 el.querySelector('.creditos-barra i').style.width = Math.max(2, Math.round(frac * 100)) + '%';
                 el.title = (total ? `${usados.toLocaleString('es-ES')} de ${total.toLocaleString('es-ES')} simulaciones usadas` : 'Simulaciones restantes')
-                         + (fecha && !isNaN(fecha) ? ` desde el ${fecha.toLocaleDateString('es-ES')}` : '') + '. Se actualiza tras cada cálculo.';
+                         + (fecha && !isNaN(fecha) ? ` desde el ${fecha.toLocaleDateString('es-ES')}` : '') + '. Se actualiza tras cada cálculo. Pulsa para liberar espacio en CloudRF.';
             } catch (e) {
                 el.className = 'creditos hidden';      // si el Worker aún no tiene la ruta, no se muestra nada
                 console.info('Créditos de CloudRF no disponibles:', e.message);
             }
         }
+        // ---------- «Liberar espacio»: borra simulaciones antiguas del archivo de CloudRF.
+        // La contraseña la comprueba el Worker (aquí no se guarda); solo toca la red del simulador.
+        function abrirLiberarEspacio() {
+            if (document.getElementById('modal-archivo')) return;
+            const fondo = document.createElement('div');
+            fondo.className = 'modal-fondo'; fondo.id = 'modal-archivo';
+            fondo.innerHTML = `<div class="modal tarjeta" role="dialog" aria-modal="true" aria-labelledby="archivo-titulo">
+                <div id="archivo-titulo" class="text-[15px] font-semibold">Liberar espacio en CloudRF</div>
+                <p class="text-[12.5px]" style="color:var(--tenue)">Borra del archivo de CloudRF las simulaciones de este simulador con más antigüedad de la indicada.
+                   Los proyectos guardados no se ven afectados; solo se pierde la descarga KMZ de esas simulaciones. <b style="color:var(--texto-2)">No se puede deshacer.</b></p>
+                <label class="campo-modal">Antigüedad
+                    <select id="archivo-dias" class="campo"><option value="7">Más de 7 días</option><option value="30" selected>Más de 30 días</option><option value="60">Más de 60 días</option><option value="90">Más de 90 días</option></select></label>
+                <label class="campo-modal">Contraseña
+                    <input id="archivo-clave" type="password" class="campo" autocomplete="off" spellcheck="false"></label>
+                <div id="archivo-estado" class="text-[12.5px]" role="status" aria-live="polite"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" data-accion="cerrar" class="boton boton-sec">Cancelar</button>
+                    <button type="button" data-accion="contar" class="boton boton-primario">Contar simulaciones</button></div></div>`;
+            const estado = (html, color = 'var(--texto-2)') => { const e = fondo.querySelector('#archivo-estado'); e.style.color = color; e.innerHTML = html; };
+            const pedir = async accion => {
+                const r = await fetch(CONFIG.proxyUrl.replace(/\/$/, '') + '/archivo', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clave: fondo.querySelector('#archivo-clave').value, dias: Number(fondo.querySelector('#archivo-dias').value), accion }) });
+                const j = await r.json().catch(() => ({}));
+                if (!r.ok) throw new Error(j.error || `El Worker respondió ${r.status}`);
+                return j;
+            };
+            const fmtF = iso => iso ? new Date(iso).toLocaleDateString('es-ES') : '';
+            let ocupado = false, aBorrar = 0;
+            const botonAccion = () => fondo.querySelector('[data-accion="contar"], [data-accion="borrar"]');
+            fondo.querySelector('#archivo-dias').addEventListener('change', () => { const b = botonAccion(); b.dataset.accion = 'contar'; b.className = 'boton boton-primario'; b.textContent = 'Contar simulaciones'; estado(''); });
+            fondo.addEventListener('click', async e => {
+                const b = e.target.closest('button');
+                if (!b || ocupado) return;
+                if (b.dataset.accion === 'cerrar') { fondo.remove(); return; }
+                if (!fondo.querySelector('#archivo-clave').value) { estado('Escribe la contraseña.', 'var(--aviso)'); return; }
+                ocupado = true; b.disabled = true;
+                try {
+                    if (b.dataset.accion === 'contar') {
+                        estado('Consultando el archivo de CloudRF…');
+                        const j = await pedir('contar');
+                        aBorrar = j.antiguas || 0;
+                        if (!aBorrar) { estado(`No hay simulaciones de más de ${j.dias} días (hay ${j.total} en total).`); return; }
+                        estado(`Hay <b>${aBorrar}</b> simulaciones de más de ${j.dias} días (del ${fmtF(j.desde)} al ${fmtF(j.hasta)}), de ${j.total} en total.`);
+                        b.dataset.accion = 'borrar'; b.className = 'boton boton-peligro'; b.textContent = `Borrar ${aBorrar} simulaciones`;
+                        return;
+                    }
+                    let borradas = 0, fallos = 0;
+                    for (let vuelta = 0; vuelta < 100; vuelta++) {
+                        estado(`Borrando… ${borradas} de ${aBorrar}`);
+                        const j = await pedir('borrar');
+                        borradas += j.borradas || 0; fallos += j.fallos || 0;
+                        if (!j.quedan || !j.borradas) break;      // terminado, o CloudRF no deja borrar más
+                    }
+                    estado(`Listo: ${borradas} simulaciones borradas${fallos ? ` (${fallos} no se pudieron borrar)` : ''}. Comprueba el almacenamiento en tu cuenta de CloudRF.`,
+                           fallos ? 'var(--aviso)' : 'var(--acento)');
+                    b.dataset.accion = 'contar'; b.className = 'boton boton-primario'; b.textContent = 'Contar simulaciones';
+                    actualizarCreditos();
+                } catch (err) {
+                    estado(escHtml(err.message), 'var(--sin)');
+                } finally { ocupado = false; b.disabled = false; }
+            });
+            document.body.appendChild(fondo);
+            fondo.querySelector('#archivo-clave').focus();
+        }
+
         function programarCreditos() { clearTimeout(temporizadorCreditos); temporizadorCreditos = setTimeout(actualizarCreditos, 2500); }
 
         async function peticionCloudRF(payload) {
