@@ -174,15 +174,7 @@
 
         /* Mapa */
         .mapboxgl-marker { cursor: pointer; z-index: 20; }
-        .mapboxgl-popup { z-index: 30; }
-        .creditos { display: inline-flex; align-items: center; gap: 6px; margin-left: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--borde);
-                    font-size: 12px; color: var(--tenue); white-space: nowrap; cursor: default; }
-        .creditos.hidden { display: none; }
-        .creditos b { color: var(--texto); font-size: 12.5px; }
-        .creditos-barra { width: 44px; height: 5px; border-radius: 3px; background: #30363D; overflow: hidden; }
-        .creditos-barra i { display: block; height: 100%; background: var(--acento); }
-        .creditos.ambar { border-color: #9E6A03; } .creditos.ambar b { color: #E3B341; } .creditos.ambar .creditos-barra i { background: #E3B341; }
-        .creditos.rojo { border-color: #DA3633; } .creditos.rojo b { color: #F85149; } .creditos.rojo .creditos-barra i { background: #F85149; }   /* el globo, siempre por encima de los pines */
+        .mapboxgl-popup { z-index: 30; }   /* el globo, siempre por encima de los pines */
         .pin-num { display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); }
         .pin-num .cabeza { min-width: 26px; height: 26px; padding: 0 5px; gap: 2px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
                            font: 600 12px var(--mono); background: var(--texto); color: var(--fondo); box-shadow: 0 0 0 2px var(--fondo); transition: box-shadow .15s; }
@@ -237,9 +229,6 @@
                 <img id="logo-app" alt="CowPro" style="height:20px; width:auto; display:block">
                 <span>Simulador de cobertura LoRa</span></h1>
             <span id="app-version" class="mono text-[11px] whitespace-nowrap" style="color:var(--tenue)"></span>
-            <div id="creditos-cloudrf" class="creditos hidden" role="status" aria-label="Créditos de CloudRF restantes">
-                <span>CloudRF</span><b class="creditos-num mono"></b><span>créditos</span><span class="creditos-barra" aria-hidden="true"><i></i></span>
-            </div>
         </div>
         <div id="nombre-proyecto" class="hidden text-[13px] truncate" style="color:var(--texto-2)"></div>
     </header>
@@ -512,7 +501,7 @@
         // =======================================================================
         // COWPRO SIMULATOR (antes Ixorigue RF Simulator Pro 3D)
         // =======================================================================
-        const APP_VERSION = '1.16.0';
+        const APP_VERSION = '1.15.2';
 
         // =======================================================================
         // ⚙️ CONFIGURACIÓN CENTRAL (todos los parámetros ajustables viven aquí)
@@ -1271,7 +1260,6 @@
         const SVG_CANDADO = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>';
 
         document.getElementById('app-version').innerText = 'v' + APP_VERSION;
-        actualizarCreditos();
         (() => {
             const CLAVE = 'rfsim-ui-v1';
             let estado = {};
@@ -3076,39 +3064,13 @@ ${escHtml(fuente)}">ⓘ</span>
             }
         };
 
-        // ---------- Créditos de CloudRF (arriba a la izquierda). El Worker solo devuelve { usados, restantes, desde }
-        let temporizadorCreditos = null;
-        async function actualizarCreditos() {
-            const el = document.getElementById('creditos-cloudrf');
-            try {
-                const r = await fetch(CONFIG.proxyUrl.replace(/\/$/, '') + '/creditos');
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                const c = await r.json();
-                if (!Number.isFinite(c.restantes)) throw new Error('sin datos');
-                const usados = Number.isFinite(c.usados) ? c.usados : null;
-                const total = usados !== null ? usados + c.restantes : null;
-                const frac = total ? c.restantes / total : 1;
-                const nivel = frac < 0.05 ? 'rojo' : frac < 0.2 ? 'ambar' : 'ok';
-                const fecha = c.desde ? new Date(String(c.desde).replace(' ', 'T')) : null;
-                el.className = 'creditos ' + nivel;
-                el.querySelector('.creditos-num').textContent = c.restantes.toLocaleString('es-ES');
-                el.querySelector('.creditos-barra i').style.width = Math.max(2, Math.round(frac * 100)) + '%';
-                el.title = (total ? `${usados.toLocaleString('es-ES')} de ${total.toLocaleString('es-ES')} simulaciones usadas` : 'Simulaciones restantes')
-                         + (fecha && !isNaN(fecha) ? ` desde el ${fecha.toLocaleDateString('es-ES')}` : '') + '. Se actualiza tras cada cálculo.';
-            } catch (e) {
-                el.className = 'creditos hidden';      // si el Worker aún no tiene la ruta, no se muestra nada
-                console.info('Créditos de CloudRF no disponibles:', e.message);
-            }
-        }
-        function programarCreditos() { clearTimeout(temporizadorCreditos); temporizadorCreditos = setTimeout(actualizarCreditos, 2500); }
-
         async function peticionCloudRF(payload) {
             let ultimoError = null;
             for (let intento = 0; intento <= CONFIG.optimizador.reintentos; intento++) {
                 try {
                     const resp = await fetch(CONFIG.proxyUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     const data = await resp.json().catch(() => ({}));
-                    if (resp.ok && data.kmz) { programarCreditos(); return data; }
+                    if (resp.ok && data.kmz) return data;
                     ultimoError = new Error(data.error || `HTTP ${resp.status}`);
                     if (resp.status !== 429 && resp.status < 500) break; // error de petición: no se reintenta
                 } catch (e) { ultimoError = e; }
